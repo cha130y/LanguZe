@@ -1,0 +1,32 @@
+# Local development infrastructure only. Application processes run on the host via `pnpm dev`.
+# Host ports are non-default so LanguZe can run alongside other local PostgreSQL/Maildev instances.
+name: languze
+
+services:
+  postgres:
+    # PostgreSQL 18 with the pgvector extension available (enabled later by migration when RAG lands).
+    image: pgvector/pgvector:0.8.6-pg18
+    environment:
+      POSTGRES_USER: languze
+      POSTGRES_PASSWORD: languze
+      POSTGRES_DB: languze
+    ports:
+      - '${POSTGRES_PORT:-5435}:5432'
+    volumes:
+      # PostgreSQL 18 images store data under /var/lib/postgresql/<major>/, so mount the parent directory.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U languze -d languze']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  maildev:
+    # Captures outgoing SMTP mail in development (email verification, password reset).
+    image: maildev/maildev:2.2.1
+    ports:
+      - '${MAILDEV_SMTP_PORT:-1026}:1025'
+      - '${MAILDEV_WEB_PORT:-1081}:1080'
+
+volumes:
+  postgres-data:

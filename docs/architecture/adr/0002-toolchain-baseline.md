@@ -1,0 +1,41 @@
+# ADR-0002: Toolchain baseline and version pins
+
+- **Status:** Accepted
+- **Date:** 2026-09-17
+
+## Context
+
+The project foundation was scaffolded with the official generators (`create-next-app` 16.3.5, `@nestjs/cli` 12.0.3). Several "latest" npm dist-tags point at versions that are not safe defaults, and the generated templates differ from the originally planned stack (Jest for API tests). This ADR records what was chosen and why, so upgrades are deliberate.
+
+Guiding rule: **use the latest stable release, not the latest available release.**
+
+## Decision
+
+| Area              | Choice                                                                                                                     | Reason                                                                                                                                                                             |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime           | Node.js 24 LTS (`.nvmrc`, `engines: >=24 <25`)                                                                             | Node 26 is still "Current", not LTS.                                                                                                                                               |
+| Package manager   | pnpm 11 workspace (`apps/*`)                                                                                               | Planned baseline. pnpm 12 exists; upgrading is a separate decision.                                                                                                                |
+| Supply-chain gate | Respect pnpm's `minimumReleaseAge` (about one day)                                                                         | Prefer version ranges that resolve to releases older than the gate instead of adding `minimumReleaseAgeExclude` entries.                                                           |
+| TypeScript        | `~6.0.3` in both apps                                                                                                      | TypeScript 7 (native) is `latest` on npm, but typescript-eslint supports `<6.1.0`. The tilde range blocks 6.1 until typescript-eslint supports it.                                 |
+| Web framework     | Next.js 16.3, React 19.3, Tailwind CSS 4.3                                                                                 | Current stable releases.                                                                                                                                                           |
+| UI components     | shadcn/ui, `base-nova` style (Base UI primitives)                                                                          | shadcn CLI default. Switch before adding many components if Radix is preferred.                                                                                                    |
+| API framework     | NestJS 12, ESM (`"type": "module"`, `nodenext`)                                                                            | Official Nest 12 template. Relative imports use `.js` extensions.                                                                                                                  |
+| API tests         | Vitest 5 + Supertest (not Jest)                                                                                            | Nest 12's template uses Vitest; Jest's ESM support is still experimental. One test runner for the whole repository.                                                                |
+| Web tests         | Vitest 5 + Testing Library + jsdom                                                                                         | Planned baseline.                                                                                                                                                                  |
+| Linting           | ESLint in both apps (Nest 12's default oxlint replaced)                                                                    | One linter and config style across the monorepo.                                                                                                                                   |
+| ESLint major      | API: ESLint 10 · Web: ESLint 9                                                                                             | ESLint 9 is end-of-life, but `eslint-config-next` 16.3 depends on plugins (`import`, `jsx-a11y`, `react`) whose peer ranges stop at ESLint 9. Move web to 10 when they support it. |
+| Formatting        | Prettier 3 at the root (`singleQuote`, `trailingComma: all`); `eslint-config-prettier` in both apps                        | Formatting is Prettier's job; ESLint does not duplicate it.                                                                                                                        |
+| ORM               | Prisma 7.10 with `@prisma/adapter-pg`                                                                                      | **The `prisma` package's `latest` dist-tag is 8.0.0-rc.** Always install with an explicit version. Prisma 8 is not GA.                                                             |
+| Prisma config     | `apps/api/prisma7.config.ts`; generated client in `apps/api/src/generated/prisma` (gitignored, generated on `postinstall`) | Prisma 7.10 looks for `prisma7.config.*` first. `.env` is loaded with Node's built-in `process.loadEnvFile()` instead of adding `dotenv`.                                          |
+| Database          | PostgreSQL 18 via `pgvector/pgvector:0.8.6-pg18`                                                                           | pgvector is available for future RAG; the extension is not enabled until a migration needs it.                                                                                     |
+| Env validation    | `@nestjs/config` + class-validator (`src/config/env.validation.ts`)                                                        | Fail fast on misconfiguration without echoing secret values.                                                                                                                       |
+| CI                | GitHub Actions: format, lint, typecheck, test, build; API e2e against a PostgreSQL service                                 | Same checks as local development.                                                                                                                                                  |
+
+Deliberately **not** installed yet: Better Auth, TanStack Query, React Hook Form, Zod, Socket.IO, Redis, RabbitMQ, Cloudinary, AI provider SDKs. Each is added with the feature that needs it.
+
+## Consequences
+
+- Upgrading TypeScript past 6.0, moving web to ESLint 10, adopting Prisma 8, or moving to pnpm 12 each needs a compatibility check and an update to this ADR.
+- The Prisma CLI prints an "update available" notice pointing at `prisma@latest`; ignore it while that tag is a release candidate.
+- Imports inside `apps/api` must include `.js` extensions, including deep type imports such as `supertest/types.js`.
+- Code that uses class-transformer outside a Nest bootstrap (for example unit-tested utilities) must import `reflect-metadata`.
