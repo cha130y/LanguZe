@@ -4,11 +4,12 @@ Documentation grows with the product: a document is added when the decision or f
 
 ## Current documents
 
-| Document                                                                    | Purpose                                                 |
-| --------------------------------------------------------------------------- | ------------------------------------------------------- |
-| [ADR-0001: Modular monolith](architecture/adr/0001-modular-monolith.md)     | Why LanguZe starts as one deployable API                |
-| [ADR-0002: Toolchain baseline](architecture/adr/0002-toolchain-baseline.md) | Framework/tool versions, pins, and the reasons          |
-| [Local development](deployment/local-development.md)                        | Setup, environment variables, commands, troubleshooting |
+| Document                                                                    | Purpose                                                          |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [PRD](requirements/PRD.md) (draft)                                          | Product vision, target users, Release 1.0 scope, success metrics |
+| [ADR-0001: Modular monolith](architecture/adr/0001-modular-monolith.md)     | Why LanguZe starts as one deployable API                         |
+| [ADR-0002: Toolchain baseline](architecture/adr/0002-toolchain-baseline.md) | Framework/tool versions, pins, and the reasons                   |
+| [Local development](deployment/local-development.md)                        | Setup, environment variables, commands, troubleshooting          |
 
 ## Planned structure
 
