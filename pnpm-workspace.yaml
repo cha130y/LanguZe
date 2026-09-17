@@ -1,6 +1,12 @@
 packages:
   - apps/*
 
+# pnpm blocks dependency install scripts unless listed here; CI fails on unlisted ones.
 allowBuilds:
+  # Prisma CLI environment checks and engine download (used by `prisma migrate`).
+  '@prisma/engines': true
+  prisma: true
+  # Download telemetry pulled in by @nestjs/swagger -> swagger-ui-dist; not needed.
+  '@scarf/scarf': false
   sharp: false
   unrs-resolver: false
