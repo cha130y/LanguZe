@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# Build output and caches
+dist/
+build/
+out/
+.next/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Generated code
+apps/api/src/generated/
+
+# Environment files (commit only *.env.example)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+.pnpm-debug.log*
+
+# OS / tooling
+.DS_Store
+Thumbs.db
+.vercel
+*.pem
+
+# Claude Code local/project-only settings
+.claude/settings.local.json
+CLAUDE.local.md
