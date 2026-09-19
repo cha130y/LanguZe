@@ -1,9 +1,9 @@
 # LanguZe — Use Cases
 
-- **Document status:** Draft v0.2 — questions raised while writing, and their decisions, are in [Appendix A](#appendix-a-questions-raised-while-writing-the-use-cases)
+- **Document status:** Draft v0.3 — questions raised while writing, and their decisions, are in [Appendix A](#appendix-a-questions-raised-while-writing-the-use-cases)
 - **Date:** 2026-09-19
 - **Release covered:** Release 1.0
-- **Source:** [User stories](user-stories.md) v0.3 and [SRS](SRS.md) v0.7
+- **Source:** [User stories](user-stories.md) v0.4 and [SRS](SRS.md) v0.8
 - **Next documents:** process flows (authentication, image to vocabulary, game session, AI tutor)
 
 ## 1. Introduction
@@ -175,7 +175,7 @@ _Brief._ The learner chooses to delete their account. The system explains what w
 - **Trigger:** The learner chooses to create a world.
 - **Success guarantee:** A world exists with its name and privately stored photo and the status `ANALYZING`; one of today's analyses is reserved for it, and UC-020 has started.
 - **Minimal guarantee:** If no world is created, no photo is kept and no analysis is used.
-- **Stories and requirements:** US-008, US-010, US-080; FR-006, FR-010, FR-011, FR-012, FR-020, FR-080, FR-096, NFR-005, NFR-007, NFR-014
+- **Stories and requirements:** US-008, US-010, US-080; FR-006, FR-010, FR-011, FR-012, FR-017, FR-020, FR-080, FR-096, NFR-005, NFR-007, NFR-014
 
 **Main success scenario**
 
@@ -184,7 +184,7 @@ _Brief._ The learner chooses to delete their account. The system explains what w
 3. The learner enters a name and takes or chooses a photo.
 4. The learner submits.
 5. The system checks the name (1–50 characters) and the file: JPEG, PNG, or WebP, judged by its content, and at most 10 MB.
-6. The system repeats the checks of step 2, stores the photo privately, creates the world with the status `ANALYZING`, and reserves one of today's analyses for it.
+6. The system repeats the checks of step 2, prepares the photo (FR-017) and stores it privately, creates the world with the status `ANALYZING`, and reserves one of today's analyses for it.
 7. The system starts UC-020 without making the learner wait, and shows the world as `ANALYZING`. The learner may leave.
 
 **Extensions**
