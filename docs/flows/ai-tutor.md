@@ -35,7 +35,7 @@ sequenceDiagram
 - **Failure:** if the AI provider fails or times out at any point, the API releases the reserved message, saves nothing, and sends an error event; the learner can send the message again (FR-071, S6).
 - **Limit:** the message is reserved at step 4, in a transaction that locks the learner's usage, so two messages sent at the same moment cannot both take the last one of the day. A released message no longer counts.
 - **Disconnect:** if the learner leaves while the reply is streaming, the API still finishes and saves it, so the reply is there next time.
-- **Bounds:** at most 5 tool rounds per message and an overall time limit keep cost and waiting time bounded; the AI design fixes the exact values.
+- **Bounds:** at most 5 tool rounds per message and an overall time limit keep cost and waiting time bounded; [ADR-0004](../architecture/adr/0004-ai-provider.md) sets them to 5 rounds and 30 seconds, both configurable.
 - How many earlier messages are sent at step 6 is decided in the AI design.
 
 ## 2. Tools
