@@ -26,6 +26,28 @@ export class EnvironmentVariables {
 
   @IsUrl({ require_protocol: true, require_tld: false })
   WEB_ORIGIN: string = 'http://localhost:3003';
+
+  // Usage limits (SRS FR-012, FR-020, FR-071), configurable per environment (FR-081).
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  WORLD_LIMIT: number = 20;
+
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  DAILY_ANALYSIS_LIMIT: number = 10;
+
+  @IsInt()
+  @Min(1)
+  @Max(10000)
+  DAILY_TUTOR_MESSAGE_LIMIT: number = 30;
+
+  // Requests per minute per account, or per IP address when signed out (API design, section 5).
+  @IsInt()
+  @Min(1)
+  @Max(100000)
+  RATE_LIMIT_PER_MINUTE: number = 120;
 }
 
 /**

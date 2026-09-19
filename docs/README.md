@@ -21,6 +21,7 @@ Documentation grows with the product: a document is added when the decision or f
 | [ADR-0005: PostgreSQL and pgvector](architecture/adr/0005-postgresql-and-pgvector.md)    | PostgreSQL as the only database; pgvector when RAG arrives               |
 | [Local development](deployment/local-development.md)                                     | Setup, environment variables, commands, troubleshooting                  |
 | [Build plan](planning/build-plan.md) (draft)                                             | Release 1.0 increments, dependencies, and milestones                     |
+| [Testing strategy](testing/strategy.md) (draft)                                          | Test levels, conventions, what must be covered, and CI                   |
 
 ## Planned structure
 

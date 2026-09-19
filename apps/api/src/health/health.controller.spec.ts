@@ -1,5 +1,6 @@
-import { ServiceUnavailableException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { AppError } from '../platform/errors/app-error.js';
+import { ErrorCode } from '../platform/errors/error-codes.js';
 import { HealthController } from './health.controller.js';
 import { HealthService } from './health.service.js';
 
@@ -27,14 +28,19 @@ describe('HealthController', () => {
     });
   });
 
-  it('responds 503 when a dependency is down', async () => {
+  it('responds 503 SERVICE_UNAVAILABLE with the report when a dependency is down', async () => {
     healthService.check.mockResolvedValue({
       status: 'error',
       database: 'down',
     });
 
-    await expect(controller.check()).rejects.toBeInstanceOf(
-      ServiceUnavailableException,
-    );
+    const error = await controller.check().catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(AppError);
+    expect(error).toMatchObject({
+      code: ErrorCode.SERVICE_UNAVAILABLE,
+      details: { status: 'error', database: 'down' },
+    });
+    expect((error as AppError).getStatus()).toBe(503);
   });
 });

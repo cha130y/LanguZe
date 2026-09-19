@@ -24,6 +24,12 @@ DATABASE_URL=postgresql://languze:languze@localhost:5435/languze
 
 # Browser origin allowed by CORS (apps/web dev server)
 WEB_ORIGIN=http://localhost:3003
+
+# Usage limits (SRS FR-081) and the general rate limit, per minute
+WORLD_LIMIT=20
+DAILY_ANALYSIS_LIMIT=10
+DAILY_TUTOR_MESSAGE_LIMIT=30
+RATE_LIMIT_PER_MINUTE=120
 ```
 
 Only `DATABASE_URL` is required; the other values above are the defaults. The API validates these variables at startup and refuses to start if any are invalid.
@@ -64,6 +70,12 @@ Run from the repository root.
 | `pnpm --filter @languze/api exec prisma studio` | Browse data                                         |
 
 Commits run Husky's pre-commit hook: ESLint (per app) and Prettier on staged files only.
+
+## Calling the API by hand
+
+- LanguZe endpoints are under `/v1`; `/health` and `/docs` are at the root.
+- Every response has an `X-Request-Id` header. Error responses and log lines carry the same ID, so an error can be found in the logs.
+- Requests that change data (`POST`, `PUT`, `PATCH`, `DELETE`) are refused with `ORIGIN_NOT_ALLOWED` unless they send the web app's origin, for example `-H "Origin: http://localhost:3003"` with curl. This also applies to "Try it out" in the Swagger page, which runs on the API's own origin.
 
 ## Troubleshooting
 

@@ -5,9 +5,15 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { configureApp } from './app.setup.js';
 import { AppModule } from './app.module.js';
 import { NodeEnv, type EnvironmentVariables } from './config/env.validation.js';
+import { AppLogger } from './platform/logging/app-logger.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    // JSON lines in production for log collection; readable output while developing.
+    logger: new AppLogger({
+      json: process.env.NODE_ENV === NodeEnv.Production,
+    }),
+  });
   configureApp(app);
 
   const config =

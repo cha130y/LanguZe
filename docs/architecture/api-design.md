@@ -237,35 +237,44 @@ All admin endpoints require the `ADMIN` role, checked on every request; anyone e
 
 ## 4. Error codes
 
-| Code                       | Status | Meaning                                                                          |
-| -------------------------- | ------ | -------------------------------------------------------------------------------- |
-| `VALIDATION_FAILED`        | 400    | A field breaks a rule; `details.fields` lists them.                              |
-| `TERMS_NOT_ACCEPTED`       | 400    | Sign-up without accepting the Terms of Use.                                      |
-| `MESSAGE_TOO_LONG`         | 400    | A tutor message over 1,000 characters (V7).                                      |
-| `NOT_SIGNED_IN`            | 401    | No valid session.                                                                |
-| `ACCOUNT_SUSPENDED`        | 403    | The account is suspended (FR-105).                                               |
-| `TERMS_PENDING`            | 403    | A pending provider sign-up must accept the Terms first (FR-090).                 |
-| `AGE_BELOW_MINIMUM`        | 403    | The year of birth is under the limit (V20).                                      |
-| `NOT_VERIFIED`             | 403    | AI features need a verified account (FR-006).                                    |
-| `AI_SUSPENDED`             | 403    | AI features are suspended; `details` has the end time or review status (FR-096). |
-| `OWN_ACCOUNT`              | 403    | An admin action on the admin's own account (FR-105).                             |
-| `NOT_FOUND`                | 404    | Missing, someone else's, or an admin route for a non-admin.                      |
-| `EMAIL_ALREADY_REGISTERED` | 409    | Sign-up with an address that has an account (FR-001).                            |
-| `WORLD_LIMIT_REACHED`      | 409    | The learner already has 20 worlds (FR-012).                                      |
-| `WORLD_NOT_READY`          | 409    | A game for a world that is not `READY`.                                          |
-| `RETRY_NOT_AVAILABLE`      | 409    | Retry of a world that is not `FAILED` or whose photo was blocked.                |
-| `LAST_WORD`                | 409    | Removing a world's last word (V5).                                               |
-| `NOTHING_TO_REVIEW`        | 409    | No word qualifies for review (FR-053).                                           |
-| `SESSION_CLOSED`           | 409    | The session is completed or abandoned.                                           |
-| `QUESTION_UNAVAILABLE`     | 409    | The question's word was removed.                                                 |
-| `ACTION_NOT_APPLICABLE`    | 409    | The admin action does not fit the learner's state.                               |
-| `PHOTO_TOO_LARGE`          | 413    | Over 10 MB (FR-011).                                                             |
-| `PHOTO_TYPE_NOT_ALLOWED`   | 415    | Not JPEG, PNG, or WebP by content (FR-011).                                      |
-| `RATE_LIMITED`             | 429    | Too many requests in a short time (NFR-005).                                     |
-| `DAILY_ANALYSIS_LIMIT`     | 429    | No photo analyses left today (FR-020).                                           |
-| `DAILY_TUTOR_LIMIT`        | 429    | No tutor messages left today (FR-071).                                           |
-| `AI_PROVIDER_UNAVAILABLE`  | 503    | The AI provider failed; nothing was counted (FR-025, FR-071).                    |
-| `INTERNAL_ERROR`           | 500    | Unexpected; `details.requestId` identifies it in the logs.                       |
+The generic codes (`BAD_REQUEST`, `FORBIDDEN`, `CONFLICT`, `PAYLOAD_TOO_LARGE`, `UNSUPPORTED_MEDIA_TYPE`, `SERVICE_UNAVAILABLE`) are used when the framework or shared infrastructure raises an error without a more specific code. The list lives in `apps/api/src/platform/errors/error-codes.ts`.
+
+| Code                       | Status | Meaning                                                                                |
+| -------------------------- | ------ | -------------------------------------------------------------------------------------- |
+| `BAD_REQUEST`              | 400    | The request is malformed, for example a body that is not valid JSON.                   |
+| `VALIDATION_FAILED`        | 400    | A field breaks a rule; `details.fields` lists them.                                    |
+| `TERMS_NOT_ACCEPTED`       | 400    | Sign-up without accepting the Terms of Use.                                            |
+| `MESSAGE_TOO_LONG`         | 400    | A tutor message over 1,000 characters (V7).                                            |
+| `NOT_SIGNED_IN`            | 401    | No valid session.                                                                      |
+| `ACCOUNT_SUSPENDED`        | 403    | The account is suspended (FR-105).                                                     |
+| `TERMS_PENDING`            | 403    | A pending provider sign-up must accept the Terms first (FR-090).                       |
+| `AGE_BELOW_MINIMUM`        | 403    | The year of birth is under the limit (V20).                                            |
+| `NOT_VERIFIED`             | 403    | AI features need a verified account (FR-006).                                          |
+| `AI_SUSPENDED`             | 403    | AI features are suspended; `details` has the end time or review status (FR-096).       |
+| `OWN_ACCOUNT`              | 403    | An admin action on the admin's own account (FR-105).                                   |
+| `FORBIDDEN`                | 403    | Not allowed, when no more specific code applies.                                       |
+| `ORIGIN_NOT_ALLOWED`       | 403    | A request that changes data did not come from the web app (section 2.3).               |
+| `NOT_FOUND`                | 404    | Missing, someone else's, or an admin route for a non-admin.                            |
+| `EMAIL_ALREADY_REGISTERED` | 409    | Sign-up with an address that has an account (FR-001).                                  |
+| `WORLD_LIMIT_REACHED`      | 409    | The learner already has 20 worlds (FR-012).                                            |
+| `WORLD_NOT_READY`          | 409    | A game for a world that is not `READY`.                                                |
+| `RETRY_NOT_AVAILABLE`      | 409    | Retry of a world that is not `FAILED` or whose photo was blocked.                      |
+| `LAST_WORD`                | 409    | Removing a world's last word (V5).                                                     |
+| `NOTHING_TO_REVIEW`        | 409    | No word qualifies for review (FR-053).                                                 |
+| `SESSION_CLOSED`           | 409    | The session is completed or abandoned.                                                 |
+| `QUESTION_UNAVAILABLE`     | 409    | The question's word was removed.                                                       |
+| `ACTION_NOT_APPLICABLE`    | 409    | The admin action does not fit the learner's state.                                     |
+| `CONFLICT`                 | 409    | The resource is in the wrong state, when no more specific code applies.                |
+| `PAYLOAD_TOO_LARGE`        | 413    | The request body is too large, when no more specific code applies.                     |
+| `PHOTO_TOO_LARGE`          | 413    | Over 10 MB (FR-011).                                                                   |
+| `PHOTO_TYPE_NOT_ALLOWED`   | 415    | Not JPEG, PNG, or WebP by content (FR-011).                                            |
+| `UNSUPPORTED_MEDIA_TYPE`   | 415    | The body type is not accepted, when no more specific code applies.                     |
+| `RATE_LIMITED`             | 429    | Too many requests in a short time (NFR-005).                                           |
+| `DAILY_ANALYSIS_LIMIT`     | 429    | No photo analyses left today (FR-020).                                                 |
+| `DAILY_TUTOR_LIMIT`        | 429    | No tutor messages left today (FR-071).                                                 |
+| `AI_PROVIDER_UNAVAILABLE`  | 503    | The AI provider failed; nothing was counted (FR-025, FR-071).                          |
+| `SERVICE_UNAVAILABLE`      | 503    | A required service, such as the database, is unavailable; `GET /health` reports which. |
+| `INTERNAL_ERROR`           | 500    | Unexpected; `details.requestId` identifies it in the logs.                             |
 
 ## 5. Rate limits and other defaults
 
