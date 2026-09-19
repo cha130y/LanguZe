@@ -9,6 +9,7 @@ Documentation grows with the product: a document is added when the decision or f
 | [PRD](requirements/PRD.md) (draft)                                          | Product vision, target users, Release 1.0 scope, success metrics |
 | [SRS](requirements/SRS.md) (draft)                                          | Functional, AI, and non-functional requirements for Release 1.0  |
 | [User stories](requirements/user-stories.md) (draft)                        | Release 1.0 user stories with acceptance criteria (`US-xxx`)     |
+| [Use cases](requirements/use-cases.md) (draft)                              | Step-by-step interactions, including failures (`UC-xxx`)         |
 | [ADR-0001: Modular monolith](architecture/adr/0001-modular-monolith.md)     | Why LanguZe starts as one deployable API                         |
 | [ADR-0002: Toolchain baseline](architecture/adr/0002-toolchain-baseline.md) | Framework/tool versions, pins, and the reasons                   |
 | [Local development](deployment/local-development.md)                        | Setup, environment variables, commands, troubleshooting          |
