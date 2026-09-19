@@ -24,7 +24,7 @@ The API is the only component that talks to the database (SRS 2.1). LanguZe is b
 
 Use **Better Auth inside the NestJS API**, with the Prisma adapter and the four tables defined in the [data model](../data-model.md) (`users`, `sessions`, `auth_accounts`, `verifications`).
 
-The Better Auth request handler is mounted directly on the API's HTTP server under `/api/auth/*`, before Nest's body parsing, because Better Auth reads the raw request body. LanguZe's own NestJS guards read the session through Better Auth's API. The community NestJS integration package is not used, since LanguZe needs its own guards for status, role, verification, and the Terms step anyway.
+The Better Auth request handler is mounted directly on the API's HTTP server under `/auth/*` (a base path chosen in the [API design](../api-design.md), E1), before Nest's body parsing, because Better Auth reads the raw request body. LanguZe's own NestJS guards read the session through Better Auth's API. The community NestJS integration package is not used, since LanguZe needs its own guards for status, role, verification, and the Terms step anyway.
 
 | Area               | Setting                                                                                                                                                                                                                           | Reason                     |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
