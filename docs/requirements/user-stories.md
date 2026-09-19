@@ -1,9 +1,9 @@
 # LanguZe — User Stories
 
-- **Document status:** Draft v0.4 — questions raised while writing, and their decisions, are in [Appendix A](#appendix-a-questions-raised-while-writing-the-stories)
+- **Document status:** Draft v0.5 — questions raised while writing, and their decisions, are in [Appendix A](#appendix-a-questions-raised-while-writing-the-stories)
 - **Date:** 2026-09-19
 - **Release covered:** Release 1.0
-- **Source:** [SRS](SRS.md) v0.8 and [PRD](PRD.md) v0.7
+- **Source:** [SRS](SRS.md) v0.10 and [PRD](PRD.md) v0.7
 - **Next documents:** use cases (`UC-xxx`) → process flows
 
 ## 1. Introduction
@@ -70,11 +70,12 @@ The PRD release criterion is that a new learner completes this journey in produc
 
 As a **visitor**, I want to create an account with my email address and a password, so that my worlds and progress are kept in my own account.
 
-1. **Given** I am on the sign-up page, **when** I enter an email address, a display name, and a password of at least 8 characters, accept the Terms of Use and Privacy Policy, and submit, **then** my account is created, I am signed in, and a verification email is sent to me.
+1. **Given** I am on the sign-up page, **when** I enter an email address, a display name, a password of at least 8 characters, and my year of birth, accept the Terms of Use and Privacy Policy, and submit, **then** my account is created, I am signed in, and a verification email is sent to me.
 2. **Given** I have not accepted the Terms of Use and Privacy Policy, **when** I submit, **then** no account is created and I am asked to accept them.
 3. **Given** my password has fewer than 8 characters, **when** I submit, **then** no account is created and I see the password rule.
-4. **Given** the email address already has an account, **when** I submit, **then** no account is created, and I am told so and offered sign-in and password reset.
-5. **Given** I have not verified my email yet, **when** I use LanguZe, **then** I can use every feature except photo analysis and the AI tutor (US-008).
+4. **Given** my year of birth means I do not turn 18 this year, **when** I submit, **then** no account is created, I am told that LanguZe is for adults, and this browser cannot try again with another year for 24 hours.
+5. **Given** the email address already has an account, **when** I submit, **then** no account is created, and I am told so and offered sign-in and password reset.
+6. **Given** I have not verified my email yet, **when** I use LanguZe, **then** I can use every feature except photo analysis and the AI tutor (US-008).
 
 **Requirements:** FR-001, FR-004, FR-006, FR-090, NFR-005
 
@@ -103,13 +104,14 @@ As a **learner**, I want to sign in with my email and password and sign out when
 
 As a **visitor**, I want to sign in with my Google, LINE, or Facebook account, so that I do not need another password.
 
-1. **Given** I use a provider for the first time, **when** I finish the provider's sign-in, accept the Terms of Use and Privacy Policy, and confirm my display name (prefilled from the provider profile), **then** a LanguZe account is created and treated as verified.
+1. **Given** I use a provider for the first time, **when** I finish the provider's sign-in, accept the Terms of Use and Privacy Policy, confirm my display name (prefilled from the provider profile), and give my year of birth, **then** a LanguZe account is created and treated as verified.
 2. **Given** I use a provider for the first time, **when** I decline the Terms of Use, **then** no account is created.
-3. **Given** I have signed in with this provider before, **when** I sign in with it again, **then** I am signed in to the same account.
-4. **Given** the provider supplies a verified email address that matches the verified email of an existing account, **when** I sign in, **then** the sign-in is linked to that account.
-5. **Given** the provider supplies a verified email address that matches an account whose email is not verified, **when** I sign in, **then** the sign-in is linked to that account, the email becomes verified, and the account's password is removed.
-6. **Given** I cancel at the provider or the provider refuses the sign-in, **when** I return to LanguZe, **then** no account is created and I can choose another method.
-7. **Given** an admin has suspended my account, **when** I sign in with a provider, **then** I am treated as in US-003 criterion 4.
+3. **Given** I use a provider for the first time, **when** my year of birth means I do not turn 18 this year, **then** no account is created and I am told that LanguZe is for adults.
+4. **Given** I have signed in with this provider before, **when** I sign in with it again, **then** I am signed in to the same account.
+5. **Given** the provider supplies a verified email address that matches the verified email of an existing account, **when** I sign in, **then** the sign-in is linked to that account.
+6. **Given** the provider supplies a verified email address that matches an account whose email is not verified, **when** I sign in, **then** the sign-in is linked to that account, the email becomes verified, and the account's password is removed.
+7. **Given** I cancel at the provider or the provider refuses the sign-in, **when** I return to LanguZe, **then** no account is created and I can choose another method.
+8. **Given** an admin has suspended my account, **when** I sign in with a provider, **then** I am treated as in US-003 criterion 4.
 
 **Requirements:** FR-003, FR-009, FR-090, FR-105
 
@@ -474,7 +476,7 @@ As the **operator**, I want to set usage limits per environment without changing
 As a **visitor or learner**, I want to read the rules and how my data is used, so that I know what I agree to.
 
 1. **Given** any page, **then** it links to the Terms of Use and the Privacy Policy.
-2. **Given** I read the Terms of Use, **then** they state which photos are allowed (everyday places and objects) and which are prohibited (FR-091).
+2. **Given** I read the Terms of Use, **then** they state that LanguZe is for people aged 18 or older, and which photos are allowed (everyday places and objects) and which are prohibited (FR-091).
 3. **Given** I read the Privacy Policy or look in the app, **then** I find a contact address for abuse reports, suspension appeals, and personal-data requests.
 
 Accepting the Terms of Use and Privacy Policy at sign-up is covered in US-001 and US-004.

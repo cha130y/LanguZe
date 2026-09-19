@@ -4,7 +4,7 @@
 - **Date:** 2026-09-19
 - **Release covered:** Release 1.0
 - **Source:** [SRS](../requirements/SRS.md) v0.8, [process flows](../flows/README.md), [ADR-0001](adr/0001-modular-monolith.md), [ADR-0002](adr/0002-toolchain-baseline.md)
-- **Next documents:** ERD and data dictionary → ADRs for Better Auth, the AI provider abstraction, and PostgreSQL → API design
+- **Next documents:** API design → Prisma schema and first migration
 
 ## 1. Purpose
 
@@ -132,7 +132,7 @@ Business logic depends on three LanguZe-owned interfaces in the `ai` module, nev
 | Vocabulary extractor | A prepared photo                         | Items matching the extraction output schema, before the item rules |
 | Tutor model          | Instructions, messages, tool definitions | A stream of text and tool requests                                 |
 
-Each provider has an adapter implementing these interfaces. Unit tests use fakes; evaluation cases run separately against real providers (AIR-008). The first provider and the model choices are recorded in the planned ADR for the AI provider abstraction.
+Each provider has an adapter implementing these interfaces. Unit tests use fakes; evaluation cases run separately against real providers (AIR-008). The first provider, Google Gemini, and how its models are chosen are recorded in [ADR-0004](adr/0004-ai-provider.md).
 
 ## 6. Cross-cutting rules
 
@@ -186,20 +186,20 @@ flowchart LR
 
 ## 9. Decisions and where they are recorded
 
-| Decision                                         | Status                       | Recorded in                                                 |
-| ------------------------------------------------ | ---------------------------- | ----------------------------------------------------------- |
-| Modular monolith                                 | Accepted                     | [ADR-0001](adr/0001-modular-monolith.md)                    |
-| Toolchain and version pins                       | Accepted                     | [ADR-0002](adr/0002-toolchain-baseline.md)                  |
-| Better Auth inside the API (P1)                  | Decided 2026-09-19           | This document; planned ADR-0003 (Better Auth)               |
-| AI interface and first provider                  | Interface decided (AIR-001)  | Section 5.1; planned ADR-0004 (AI provider abstraction)     |
-| PostgreSQL as the only database, pgvector later  | Decided in ADR-0002 baseline | Planned ADR-0005 (PostgreSQL and pgvector)                  |
-| Background analysis in the API process (P2)      | Decided 2026-09-19           | This document, sections 4 and 7                             |
-| Status polling every 3 seconds (P3)              | Decided 2026-09-19           | [Image to vocabulary flow](../flows/image-to-vocabulary.md) |
-| Photos through the API, signed links (P4)        | Decided 2026-09-19           | This document, section 4                                    |
-| Tutor streaming with server-sent events (P6)     | Decided 2026-09-19           | [AI tutor flow](../flows/ai-tutor.md)                       |
-| Web and API on one domain (A1)                   | Decided 2026-09-19           | This document, section 4; Appendix A                        |
-| One API instance in Release 1.0 (A2)             | Decided 2026-09-19           | This document, section 7; Appendix A                        |
-| Cloudflare R2 for photos, SeaweedFS locally (A3) | Decided 2026-09-19           | This document, section 7; Appendix A                        |
+| Decision                                             | Status             | Recorded in                                                 |
+| ---------------------------------------------------- | ------------------ | ----------------------------------------------------------- |
+| Modular monolith                                     | Accepted           | [ADR-0001](adr/0001-modular-monolith.md)                    |
+| Toolchain and version pins                           | Accepted           | [ADR-0002](adr/0002-toolchain-baseline.md)                  |
+| Better Auth inside the API (P1)                      | Accepted           | [ADR-0003](adr/0003-better-auth-in-api.md)                  |
+| AI interface and Google Gemini as the first provider | Accepted           | Section 5.1; [ADR-0004](adr/0004-ai-provider.md)            |
+| PostgreSQL as the only database, pgvector later      | Accepted           | [ADR-0005](adr/0005-postgresql-and-pgvector.md)             |
+| Background analysis in the API process (P2)          | Decided 2026-09-19 | This document, sections 4 and 7                             |
+| Status polling every 3 seconds (P3)                  | Decided 2026-09-19 | [Image to vocabulary flow](../flows/image-to-vocabulary.md) |
+| Photos through the API, signed links (P4)            | Decided 2026-09-19 | This document, section 4                                    |
+| Tutor streaming with server-sent events (P6)         | Decided 2026-09-19 | [AI tutor flow](../flows/ai-tutor.md)                       |
+| Web and API on one domain (A1)                       | Decided 2026-09-19 | This document, section 4; Appendix A                        |
+| One API instance in Release 1.0 (A2)                 | Decided 2026-09-19 | This document, section 7; Appendix A                        |
+| Cloudflare R2 for photos, SeaweedFS locally (A3)     | Decided 2026-09-19 | This document, section 7; Appendix A                        |
 
 ## Appendix A. Questions raised while writing the overview
 

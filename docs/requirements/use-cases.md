@@ -1,9 +1,9 @@
 # LanguZe — Use Cases
 
-- **Document status:** Draft v0.3 — questions raised while writing, and their decisions, are in [Appendix A](#appendix-a-questions-raised-while-writing-the-use-cases)
+- **Document status:** Draft v0.4 — questions raised while writing, and their decisions, are in [Appendix A](#appendix-a-questions-raised-while-writing-the-use-cases)
 - **Date:** 2026-09-19
 - **Release covered:** Release 1.0
-- **Source:** [User stories](user-stories.md) v0.4 and [SRS](SRS.md) v0.8
+- **Source:** [User stories](user-stories.md) v0.5 and [SRS](SRS.md) v0.10
 - **Next documents:** process flows (authentication, image to vocabulary, game session, AI tutor)
 
 ## 1. Introduction
@@ -100,8 +100,8 @@ flowchart LR
 
 **Main success scenario**
 
-1. The visitor enters an email address, a display name, and a password, and accepts the Terms of Use and Privacy Policy.
-2. The system checks the input: a valid email address, a display name, a password of at least 8 characters, and acceptance.
+1. The visitor enters an email address, a display name, a password, and their year of birth, and accepts the Terms of Use and Privacy Policy.
+2. The system checks the input: a valid email address, a display name, a password of at least 8 characters, a year of birth, and acceptance.
 3. The system creates the account with the email address not yet verified, records the acceptance time, and signs the learner in.
 4. The system sends a verification email with a single-use link through the email service.
 5. The learner uses LanguZe; every feature except photo analysis and the AI tutor is available.
@@ -111,6 +111,7 @@ flowchart LR
 **Extensions**
 
 - **2a.** Input is invalid or the Terms of Use are not accepted: the system shows what to fix, and nothing is created. Resume at step 1.
+- **2b.** The year of birth means the visitor does not turn 18 this year: the system explains that LanguZe is for adults and creates nothing. The same browser cannot try again for 24 hours (V20). The use case ends.
 - **3a.** The email address already has an account: the system says so and offers sign-in and password reset. Nothing is created.
 - **4a.** The email service fails: the account is kept, and the learner can request a new verification email (6b).
 - **6a.** The link has expired or was already used: the system says so and offers a new verification email.
@@ -140,7 +141,7 @@ _Brief._ The learner enters an email address and password. If they match an acco
 3. The visitor signs in at the provider and allows LanguZe to use their basic profile, and their email address where the provider offers it.
 4. The provider returns the visitor to LanguZe with the result.
 5. The system finds no account with this provider sign-in and no account whose verified email matches a verified email from the provider.
-6. The system asks the visitor to accept the Terms of Use and Privacy Policy and to confirm a display name, prefilled from the provider profile.
+6. The system asks the visitor to accept the Terms of Use and Privacy Policy to confirm a display name, prefilled from the provider profile, and to give their year of birth.
 7. The visitor accepts.
 8. The system creates the account, links the provider sign-in, treats the account as verified, records the acceptance time, and signs the learner in. The account keeps the provider's email address only if the provider marks it as verified and no other account uses it; otherwise the account has no email address (FR-009).
 
@@ -152,6 +153,7 @@ _Brief._ The learner enters an email address and password. If they match an acco
 - **5b.** The provider supplies a verified email address that matches an account's verified email: the system links this provider sign-in to that account and signs the learner in (FR-009).
 - **5c.** The provider supplies a verified email address that matches an account whose email is not verified: the system links the provider sign-in to that account, marks the email as verified, and removes the account's password, so only the person who proved ownership of the email can sign in.
 - **7a.** The visitor declines: nothing is created, and the system returns to the sign-in page.
+- **7b.** The year of birth means the visitor does not turn 18 this year: as UC-001 extension 2b. The pending sign-up is removed.
 
 #### UC-004 Reset a forgotten password
 
@@ -238,7 +240,7 @@ _Brief._ The learner's world list shows each world's name, thumbnail, analysis s
 - **7b.** The world was deleted while the analysis ran: the result is discarded.
 - **\*a.** The analysis has not finished 5 minutes after it started, for example because the server restarted: the world becomes `FAILED` as in 4a.
 
-Whether the safety check and the extraction are one AI call or two is decided in the AI design (planned ADR for the AI provider abstraction).
+The safety check and the extraction are two separate AI calls, safety first ([ADR-0004](../architecture/adr/0004-ai-provider.md)).
 
 #### UC-021 Retry a failed analysis
 

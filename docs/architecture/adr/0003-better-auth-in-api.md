@@ -1,0 +1,52 @@
+# ADR-0003: Authentication with Better Auth inside the API
+
+- **Status:** Accepted
+- **Date:** 2026-09-19
+- **Related:** SRS 3.1 (FR-001–FR-009), FR-090, FR-105, NFR-005, NFR-018, NFR-019; [architecture overview](../overview.md) (P1, A1, A2); [data model](../data-model.md) (D1, D3, D5); [authentication flow](../../flows/authentication.md)
+
+## Context
+
+Release 1.0 needs sign-up and sign-in with email and password, Google, LINE, and Facebook (FR-001–FR-003); email verification and password reset (FR-004, FR-005); accounts without an email address and strict linking rules (FR-009, U6); a Terms of Use step for every sign-up method (FR-090, U5); and roles and account suspension that take effect on the next request (FR-105, NFR-019). Sign-in must work in the LINE and Facebook in-app browsers (NFR-018).
+
+The API is the only component that talks to the database (SRS 2.1). LanguZe is built by one developer with a budget of about USD 10 per month, and learner data falls under Thailand's PDPA.
+
+## Options considered
+
+| Option                                                 | For                                                                                                                                        | Against                                                                                                                                 |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Better Auth inside the NestJS API**                  | One authentication system, in the application that owns the data; open source; LINE, Google, and Facebook built in; hooks for custom rules | A young library that changes quickly; LanguZe's special rules need hooks                                                                |
+| Better Auth inside Next.js                             | Common setup in examples                                                                                                                   | Gives the web app database access, against SRS 2.1, and splits the schema between two applications                                      |
+| Auth.js in Next.js with tokens to the API (as BidNest) | A pattern the developer already knows                                                                                                      | Sessions live in the web app while the API trusts tokens, which needs a refresh flow and two places that understand identity            |
+| Hosted authentication (Clerk, Auth0, Supabase Auth)    | Least code to write                                                                                                                        | Monthly cost beyond free tiers, learner data held by another company, uneven LINE support, less control over linking and the Terms step |
+| Hand-written Passport and JWT in NestJS                | Full control                                                                                                                               | Security-critical code to write and maintain: password hashing, tokens, OAuth, linking                                                  |
+
+## Decision
+
+Use **Better Auth inside the NestJS API**, with the Prisma adapter and the four tables defined in the [data model](../data-model.md) (`users`, `sessions`, `auth_accounts`, `verifications`).
+
+The Better Auth request handler is mounted directly on the API's HTTP server under `/api/auth/*`, before Nest's body parsing, because Better Auth reads the raw request body. LanguZe's own NestJS guards read the session through Better Auth's API. The community NestJS integration package is not used, since LanguZe needs its own guards for status, role, verification, and the Terms step anyway.
+
+| Area               | Setting                                                                                                                                                                                                                           | Reason                     |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| Email and password | Enabled; minimum length 8; sign-in allowed before verification; **all sessions revoked on password reset** (Better Auth's default is off)                                                                                         | FR-001, FR-006, FR-005, S7 |
+| Emails             | Verification and reset emails go through the `notifications` module and are never sent to `.invalid` addresses                                                                                                                    | FR-004, FR-005, D1         |
+| Providers          | Google, LINE (one LINE Login channel for Thailand), Facebook. The profile mapping creates the placeholder email when none can be used, and leaves the picture empty                                                               | FR-003, FR-009, D1         |
+| Account linking    | Enabled only on a provider-verified email; no "trusted providers" and no linking of different emails. A hook links unverified accounts safely                                                                                     | FR-009, U6                 |
+| Provider tokens    | Cleared by a database hook before saving; Better Auth's token encryption as the fallback                                                                                                                                          | D3                         |
+| Sessions           | Stored in the database; 7 days, renewed daily while used (Better Auth defaults); **cookie caching off**                                                                                                                           | NFR-019                    |
+| Cookies            | `HttpOnly`, `Secure`, `SameSite=Lax`; shared across the LanguZe subdomains in production; only the web app's origin is trusted                                                                                                    | A1                         |
+| IDs                | ID generation left to Prisma (UUID version 7)                                                                                                                                                                                     | D5                         |
+| Extra user fields  | `role` and `status`, which sign-up can never set, `terms_accepted_at`, and `birth_year`                                                                                                                                           | FR-100, FR-105, FR-090     |
+| Rate limits        | Better Auth's limiter, switched on in every environment (its default is off in development), with stricter limits for sign-in, sign-up, reset, and verification emails; kept in memory                                            | NFR-005, A2                |
+| Terms step         | Provider sign-ups start with an empty `terms_accepted_at`; the step also asks for the year of birth (V20); a guard allows only accepting or declining until it is set; a scheduled task removes pending sign-ups after 15 minutes | FR-090, U5, V20            |
+| Suspension         | A hook refuses new sessions for suspended accounts; suspending an account deletes its sessions in the same transaction                                                                                                            | FR-105                     |
+| Admin role         | Not managed by Better Auth; set only by the promotion script                                                                                                                                                                      | FR-101                     |
+
+## Consequences
+
+- One authentication system, inside the application that owns the data, with no per-user cost and learner data kept in LanguZe's own database.
+- Because the web app and the API share one domain (A1), the session cookie is first-party and works in Safari and in the LINE and Facebook in-app browsers.
+- LanguZe's special rules (placeholder emails, safe linking, the Terms step, suspension) live in Better Auth hooks and guards. Each one gets an API end-to-end test, because a Better Auth upgrade could change how hooks are called.
+- Better Auth is pinned to an exact version like the other dependencies (ADR-0002), and its changelog is read before every upgrade.
+- LINE Login needs a LINE Developers channel for Thailand, and sharing the email address needs LINE's approval of the email permission. Until it is approved, LINE sign-ins have no email, which FR-009 already handles.
+- Facebook Login needs a published Privacy Policy and data deletion instructions before the app can go live; FR-090 and FR-007 provide both.

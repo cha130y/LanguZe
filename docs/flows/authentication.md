@@ -14,9 +14,9 @@ sequenceDiagram
   participant A as API
   participant D as Database
   participant E as Email service
-  V->>W: Enter email, display name, password, accept Terms
+  V->>W: Enter email, display name, password, year of birth, accept Terms
   W->>A: Sign up
-  A->>A: Check input and rate limit
+  A->>A: Check input, age, and rate limit
   A->>D: Look up the email address
   alt Address already has an account
     A-->>W: Refused, address already registered
@@ -35,6 +35,7 @@ sequenceDiagram
 ```
 
 - The email address is unique in the database, so two sign-ups with the same address at the same moment cannot both succeed; the second gets the "already registered" answer (FR-001).
+- Sign-up with any method needs a year of birth by which the visitor turns 18 this year or earlier (FR-090, V20). Otherwise nothing is created, and a cookie stops the same browser from trying another year for 24 hours.
 - The verification email is sent after the account is saved (step 9 follows step 7). If sending fails, the account stays and the learner can ask for a new email (UC-001 extension 4a).
 
 ## 2. Sign-in with Google, LINE, or Facebook (UC-003)
@@ -64,7 +65,7 @@ sequenceDiagram
   else New account needed
     A->>D: Keep the provider identity as a pending sign-up for 15 minutes
     A-->>W: Show Terms step with display name prefilled
-    V->>W: Accept Terms, confirm display name
+    V->>W: Accept Terms, confirm display name, give year of birth
     W->>A: Complete sign-up
     A->>D: Create account, link provider sign-in, record acceptance, create session
     A-->>W: Signed in

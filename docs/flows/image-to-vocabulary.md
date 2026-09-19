@@ -71,7 +71,7 @@ sequenceDiagram
 
 - The request to the AI provider contains the photo and fixed instructions only, never learner data (AIR-002, AIR-006). Text in the photo is image content, not instructions.
 - A blocked photo is deleted from storage right after the transaction commits (step 4 after step 3). If deletion fails, the cleanup record keeps it on the retry list.
-- Whether the safety check and the extraction are one AI call or two is decided in the AI design; the order of the checks stays the same.
+- The safety check and the extraction are two separate AI calls, safety first ([ADR-0004](../architecture/adr/0004-ai-provider.md)).
 - If the world was deleted while the analysis ran, the result is discarded at the save step.
 - **5-minute rule (V16):** when the API starts, and every minute afterwards, it marks analyses that have been `IN_PROGRESS` for more than 5 minutes as `FAILED` (released) and their worlds as `FAILED`. This catches analyses lost when the API restarts **(P2)**.
 

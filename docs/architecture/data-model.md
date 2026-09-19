@@ -3,8 +3,8 @@
 - **Document status:** Draft v0.1 — questions raised while writing, and their decisions, are in [Appendix A](#appendix-a-questions-raised-while-writing-the-data-model)
 - **Date:** 2026-09-19
 - **Release covered:** Release 1.0
-- **Source:** [SRS](../requirements/SRS.md) v0.9, [process flows](../flows/README.md), [architecture overview](overview.md)
-- **Next documents:** ADRs for Better Auth, the AI provider abstraction, and PostgreSQL → API design → Prisma schema and first migration
+- **Source:** [SRS](../requirements/SRS.md) v0.10, [process flows](../flows/README.md), [architecture overview](overview.md)
+- **Next documents:** API design → Prisma schema and first migration
 
 ## 1. Purpose
 
@@ -92,6 +92,7 @@ The four Better Auth tables keep Better Auth's model and field names in Prisma (
 | ------------------- | --------------- | ---- | ------------------------------------------------------------------------------------------ |
 | `id`                | uuid            | no   | Primary key; also the account ID shown to learners (FR-108).                               |
 | `name`              | varchar(50)     | no   | Display name, 1–50 characters (V12, V19).                                                  |
+| `birth_year`        | smallint        | yes  | Year of birth given at sign-up (FR-090, V20). Empty only for a pending provider sign-up.   |
 | `email`             | varchar(254)    | no   | Unique. A placeholder ending in `.invalid` for accounts without an email address (D1).     |
 | `email_verified`    | boolean         | no   | Default `false`. Set by email verification or a verified provider email (FR-004, FR-009).  |
 | `image`             | text            | yes  | Better Auth field; left empty, since LanguZe shows no profile pictures.                    |
@@ -428,16 +429,16 @@ Index also on `learner_id`. A database trigger rejects every update and delete (
 
 For the Privacy Policy and PDPA requests, this is where personal data lives and how it is removed.
 
-| Data                                  | Where                                        | Removed                                                    |
-| ------------------------------------- | -------------------------------------------- | ---------------------------------------------------------- |
-| Email address, display name           | `users`                                      | With the account.                                          |
-| Sign-in identities at providers       | `auth_accounts.account_id`                   | With the account.                                          |
-| IP address and browser of sessions    | `sessions`                                   | With the session or the account.                           |
-| Photos of the learner's surroundings  | Photo storage, referenced by `stored_photos` | Within 24 hours of the world or account deletion (V10).    |
-| World names, words, answers, mistakes | `worlds`, `vocabulary_words`, `attempts`     | With the world, the word, or the account.                  |
-| Tutor conversation                    | `tutor_messages`                             | When cleared, or with the account.                         |
-| Moderation history                    | `photo_blocks`, `ai_suspensions`             | With the account (U8).                                     |
-| Account identifiers in the audit log  | `admin_actions`                              | Kept by design (FR-106); IDs only, no other personal data. |
+| Data                                       | Where                                        | Removed                                                    |
+| ------------------------------------------ | -------------------------------------------- | ---------------------------------------------------------- |
+| Email address, display name, year of birth | `users`                                      | With the account.                                          |
+| Sign-in identities at providers            | `auth_accounts.account_id`                   | With the account.                                          |
+| IP address and browser of sessions         | `sessions`                                   | With the session or the account.                           |
+| Photos of the learner's surroundings       | Photo storage, referenced by `stored_photos` | Within 24 hours of the world or account deletion (V10).    |
+| World names, words, answers, mistakes      | `worlds`, `vocabulary_words`, `attempts`     | With the world, the word, or the account.                  |
+| Tutor conversation                         | `tutor_messages`                             | When cleared, or with the account.                         |
+| Moderation history                         | `photo_blocks`, `ai_suspensions`             | With the account (U8).                                     |
+| Account identifiers in the audit log       | `admin_actions`                              | Kept by design (FR-106); IDs only, no other personal data. |
 
 `ai_calls` and `photo_deletions` contain no personal data.
 
