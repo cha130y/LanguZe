@@ -12,6 +12,7 @@ Documentation grows with the product: a document is added when the decision or f
 | [Use cases](requirements/use-cases.md) (draft)                              | Step-by-step interactions, including failures (`UC-xxx`)                 |
 | [Process flows](flows/README.md) (draft)                                    | How web, API, database, and external services carry out each use case    |
 | [Architecture overview](architecture/overview.md) (draft)                   | Systems, applications, API modules, cross-cutting rules, deployment view |
+| [Data model](architecture/data-model.md) (draft)                            | ERD, data dictionary, deletion rules, and personal data map              |
 | [ADR-0001: Modular monolith](architecture/adr/0001-modular-monolith.md)     | Why LanguZe starts as one deployable API                                 |
 | [ADR-0002: Toolchain baseline](architecture/adr/0002-toolchain-baseline.md) | Framework/tool versions, pins, and the reasons                           |
 | [Local development](deployment/local-development.md)                        | Setup, environment variables, commands, troubleshooting                  |
