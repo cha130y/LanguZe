@@ -1,7 +1,7 @@
 # LanguZe — Product Requirements Document (PRD)
 
-- **Document status:** Draft v0.2 — open questions in section 12 must be resolved before the SRS is finalized
-- **Date:** 2026-09-17
+- **Document status:** Draft v0.7 — decisions recorded (section 12); detailed rules in the [SRS](SRS.md)
+- **Date:** 2026-09-19
 - **Product release covered:** Release 1.0 (first public release)
 - **Next documents:** SRS (`FR-xxx`) → user stories (`US-xxx`) → use cases (`UC-xxx`) → process flows
 
@@ -48,9 +48,9 @@ Positioning compared with traditional vocabulary apps:
 ### Primary persona: Thai-speaking English learner
 
 - Native Thai speaker who wants practical English vocabulary for everyday surroundings.
-- Uses a smartphone or laptop browser and can take or upload photos.
+- English level from CEFR A1 to B1.
+- Uses a smartphone or laptop browser and can take or upload photos; commonly uses LINE and often opens links inside the LINE app.
 - Prefers explanations in Thai with English examples.
-- Proficiency range to target is an open question (section 12).
 
 ### Future users (later releases)
 
@@ -59,29 +59,32 @@ Positioning compared with traditional vocabulary apps:
 
 ## 5. Release 1.0 features
 
-| #   | Feature                  | Description                                                                                                                                                                                                                                         |
-| --- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F1  | Account                  | Sign up and sign in with email and password or Google; email verification; password reset.                                                                                                                                                          |
-| F2  | My World                 | Create a named world (for example "My Room") by uploading a photo; list and open the learner's worlds.                                                                                                                                              |
-| F3  | AI vocabulary extraction | AI identifies objects in the photo and produces English words, Thai meanings, and an example sentence per word. Output is validated before it is saved; failures are shown clearly.                                                                 |
-| F4  | Identify game            | For a world's vocabulary, the learner is shown an object from their photo and types the English word. Answers are checked against accepted variants; feedback shows the correct word, its Thai meaning, and the example sentence.                   |
-| F5  | Mistakes and mastery     | Every answer updates the word's mastery state: `NEW` → `LEARNING` → `FAMILIAR` → `MASTERED`. Incorrect answers are recorded as mistakes.                                                                                                            |
-| F6  | Personalized review      | A review session that prioritizes the learner's weakest words across all worlds.                                                                                                                                                                    |
-| F7  | Progress and XP          | Correct answers earn XP; the learner sees total XP and word counts per mastery state.                                                                                                                                                               |
-| F8  | AI tutor                 | A chat where the learner asks about their vocabulary (for example "Why do I keep getting this word wrong?"). The tutor retrieves the learner's weak words and recent mistakes through application tools and explains in Thai with English examples. |
+| #   | Feature                  | Description                                                                                                                                                                                                                                                                       |
+| --- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1  | Account                  | Sign up and sign in with email and password, Google, LINE, or Facebook; email verification; password reset; account deletion. AI features require a verified account.                                                                                                             |
+| F2  | My World                 | Create a named world (for example "My Room") by uploading a photo; list, open, rename, and delete the learner's worlds.                                                                                                                                                           |
+| F3  | AI vocabulary extraction | AI identifies 3–12 objects in the photo and produces, per object, an English word with its location in the photo, a Thai meaning, an example sentence, and a CEFR level. Output is validated before it is saved; learners can remove wrong words.                                 |
+| F4  | Identify game            | The learner sees their own photo with one object highlighted and types the English word, or chooses "I don't know" to see the answer. Answers are checked against accepted variants; feedback shows the correct word, its Thai meaning, and the example sentence.                 |
+| F5  | Mistakes and mastery     | Every answer updates the learner's mastery of that word: `NEW` → `LEARNING` → `FAMILIAR` → `MASTERED`. Mastery is shared across all worlds that contain the word. Incorrect answers are recorded as mistakes.                                                                     |
+| F6  | Personalized review      | A review session that prioritizes the learner's most recent mistakes and least recently practised words across all worlds.                                                                                                                                                        |
+| F7  | Progress and XP          | Correct answers earn XP; the learner sees total XP and word counts per mastery state.                                                                                                                                                                                             |
+| F8  | AI tutor                 | A chat where the learner asks about their vocabulary (for example "Why do I keep getting this word wrong?"). The tutor retrieves the learner's weak words and recent mistakes through application tools and explains in Thai with English examples.                               |
+| F9  | Safety and policies      | Terms of Use and Privacy Policy accepted at sign-up; an automatic safety check of every photo; vocabulary covers objects and places only, never people; repeated rule-breaking suspends AI features; a moderation admin area where admins review suspensions and act on accounts. |
 
-Exact rules (accepted answer variants, mastery transitions, XP amounts, review ordering, limits) are defined in the SRS.
+Exact rules (accepted answer variants, mastery transitions, XP amounts, session composition, limits) are defined in the [SRS](SRS.md).
 
 ## 6. User journey
 
 ```text
-Sign up / sign in
+Sign up (accept Terms of Use) / sign in → verify account
       ↓
 Create a world: name it and upload a photo      (e.g., "My Room")
       ↓
-AI analyses the photo → English words + Thai meanings + example sentences
+AI analyses the photo → 3–12 words with location, Thai meaning, example sentence, CEFR level
       ↓
-Play Identify: see an object from the photo → type the English word
+Review the word list and remove any wrong words
+      ↓
+Play Identify: see an object highlighted in the photo → type the English word
       ↓
 Feedback → correct: XP · incorrect: correct word + meaning + example
       ↓
@@ -94,7 +97,7 @@ Ask the AI tutor about words and mistakes
 
 ## 7. Release 1.0 scope
 
-**In scope:** features F1–F8 as a responsive web application for mobile and desktop browsers, deployed to production.
+**In scope:** features F1–F9 as a responsive web application for mobile and desktop browsers, deployed to production.
 
 **Release criteria:**
 
@@ -112,9 +115,10 @@ Candidates, in no fixed order; each needs its own requirement and, where archite
 - Daily Challenge built from weak and almost-mastered words.
 - Real-time multiplayer challenges and leaderboards.
 - Achievements and notifications, including weekly learning reports by email.
-- Facebook and LINE sign-in, passkeys, and multi-factor authentication.
+- Passkeys and multi-factor authentication.
 - English → Thai direction and other language pairs.
 - Teacher role and community features.
+- Exam vocabulary tracks (for example TOEIC, TOEFL, and IELTS): curated word lists that link to the same vocabulary words and mastery, practised with text-based game types. Words from the learner's photos can be marked when they appear on an exam list. Test names are trademarks of their owners; official test questions and copyrighted official word lists are not reproduced.
 
 ## 9. Success metrics
 
@@ -139,7 +143,7 @@ Targets marked _proposed_ are starting values to confirm or adjust.
 - RAG and long-term learning-history search.
 - Speech, pronunciation, and listening practice.
 - Languages or directions other than Thai speakers learning English.
-- Teacher, organization, or admin dashboards beyond what operating the service requires.
+- Teacher, organization, or admin dashboards beyond the moderation admin area in F9.
 - Offline use.
 
 ## 11. Constraints, assumptions, and risks
@@ -152,32 +156,35 @@ Targets marked _proposed_ are starting values to confirm or adjust.
 **Assumptions**
 
 - Learners are comfortable uploading photos of their surroundings.
-- A vision-capable AI model on a free or low-cost tier is accurate enough for everyday objects.
+- A vision-capable AI model on a free or low-cost tier is accurate enough to name and locate everyday objects.
 
 **Risks**
 
-| Risk                                                              | Mitigation direction                                                                                 |
-| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| AI misidentifies objects or invents words                         | Treat AI output as untrusted: schema validation, deterministic post-processing, evaluation set.      |
-| Photos contain personal information (faces, documents, addresses) | Send only what the feature needs to AI providers; define retention and deletion (section 12).        |
-| Text inside a photo tries to instruct the AI (prompt injection)   | Constrain prompts and structured outputs; never let model output trigger actions without validation. |
-| Inappropriate or unsafe uploads                                   | Validate file type and size; define a content policy.                                                |
-| AI free-tier quotas, rate limits, or cost spikes                  | Rate-limit AI features per learner; provider abstraction so providers can be switched.               |
-| Abuse of public sign-up and uploads                               | Rate limiting and per-learner usage limits; decide the registration model (section 12).              |
+| Risk                                                              | Mitigation direction                                                                                                                   |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| AI misidentifies objects or invents words                         | Treat AI output as untrusted: schema validation, deterministic post-processing, evaluation set; learners can remove wrong words.       |
+| Photos contain personal information (faces, documents, addresses) | Send only what the feature needs to AI providers; learners can delete worlds and their account.                                        |
+| Text inside a photo tries to instruct the AI (prompt injection)   | Constrain prompts and structured outputs; never let model output trigger actions without validation.                                   |
+| Inappropriate or unsafe uploads                                   | Automatic safety check before analysis, content rules in the Terms of Use, and suspension of AI features for repeated violations (F9). |
+| AI free-tier quotas, rate limits, or cost spikes                  | Daily per-learner limits; AI features require a verified email; provider abstraction.                                                  |
+| Abuse of public sign-up and uploads                               | Rate limiting, verified email for AI features, and per-learner usage limits.                                                           |
 
-## 12. Open questions
+## 12. Decisions on former open questions
 
-| #   | Question                                                                                                        | Affects         |
-| --- | --------------------------------------------------------------------------------------------------------------- | --------------- |
-| Q1  | Which English proficiency range should Release 1.0 target (for example CEFR A1–B1)?                             | F3, F8          |
-| Q2  | How does the Identify game point to an object: highlighted region on the photo, cropped image, or another hint? | F3, F4          |
-| Q3  | Can learners remove or correct AI-extracted words before playing?                                               | F3, F4          |
-| Q4  | How long are photos kept, and can learners delete a world and its photo?                                        | F2, privacy     |
-| Q5  | What per-learner limits apply to worlds, photos, and tutor messages?                                            | F2, F3, F8      |
-| Q6  | Is registration open to the public at launch, or invite-only?                                                   | F1, cost, abuse |
+| #   | Question                            | Decision                                                                                                                                                                                                                                                                                 |
+| --- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1  | Target English proficiency          | CEFR A1–B1. Each extracted word is tagged with a CEFR level; word choice and explanations target A1–B1.                                                                                                                                                                                  |
+| Q2  | How Identify points to an object    | The learner's photo is shown with the object highlighted by a box returned by the AI.                                                                                                                                                                                                    |
+| Q3  | Can learners fix AI-extracted words | Learners can remove wrong or unwanted words; editing word text is not supported in Release 1.0.                                                                                                                                                                                          |
+| Q4  | Photo retention and deletion        | Photos are kept until the learner deletes the world. Deleting a world removes its photo, words, and progress; deleting the account removes all learner data.                                                                                                                             |
+| Q5  | Per-learner usage limits            | Up to 20 worlds; 10 photo analyses per day; 30 tutor messages per day; photos up to 10 MB (JPEG, PNG, WebP).                                                                                                                                                                             |
+| Q6  | Registration model                  | Open sign-up. Photo analysis and the AI tutor require a verified email; Google sign-in counts as verified.                                                                                                                                                                               |
+| Q7  | Additional sign-in methods          | LINE and Facebook added to Release 1.0 (2026-09-19). Rules for these accounts, including those without an email address, are in the SRS (FR-003, FR-009, V13, V14).                                                                                                                      |
+| Q8  | Content policy                      | Blocked photos count toward the daily analysis limit. Vocabulary covers objects and places only, never people or body parts. 3 blocked photos within 7 days pause AI features for 7 days; reaching it again keeps them off until an admin reviews the case in the moderation admin area. |
 
 ## 13. References
 
 - Product planning notes (Thai): product concept, differentiation, stack, and roadmap decisions summarized in this document.
+- [SRS](SRS.md)
 - [ADR-0001: Modular monolith](../architecture/adr/0001-modular-monolith.md)
 - [ADR-0002: Toolchain baseline](../architecture/adr/0002-toolchain-baseline.md)
