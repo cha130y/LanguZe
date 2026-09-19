@@ -13,6 +13,7 @@ Documentation grows with the product: a document is added when the decision or f
 | [Process flows](flows/README.md) (draft)                                                 | How web, API, database, and external services carry out each use case    |
 | [Architecture overview](architecture/overview.md) (draft)                                | Systems, applications, API modules, cross-cutting rules, deployment view |
 | [Data model](architecture/data-model.md) (draft)                                         | ERD, data dictionary, deletion rules, and personal data map              |
+| [API design](architecture/api-design.md) (draft)                                         | Endpoints, conventions, error codes, and rate limits                     |
 | [ADR-0001: Modular monolith](architecture/adr/0001-modular-monolith.md)                  | Why LanguZe starts as one deployable API                                 |
 | [ADR-0002: Toolchain baseline](architecture/adr/0002-toolchain-baseline.md)              | Framework/tool versions, pins, and the reasons                           |
 | [ADR-0003: Better Auth inside the API](architecture/adr/0003-better-auth-in-api.md)      | Authentication choice and its configuration                              |
