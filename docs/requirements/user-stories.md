@@ -1,9 +1,9 @@
 # LanguZe — User Stories
 
-- **Document status:** Draft v0.3 — questions raised while writing, and their decisions, are in [Appendix A](#appendix-a-questions-raised-while-writing-the-stories)
+- **Document status:** Draft v0.4 — questions raised while writing, and their decisions, are in [Appendix A](#appendix-a-questions-raised-while-writing-the-stories)
 - **Date:** 2026-09-19
 - **Release covered:** Release 1.0
-- **Source:** [SRS](SRS.md) v0.7 and [PRD](PRD.md) v0.7
+- **Source:** [SRS](SRS.md) v0.8 and [PRD](PRD.md) v0.7
 - **Next documents:** use cases (`UC-xxx`) → process flows
 
 ## 1. Introduction
@@ -178,8 +178,9 @@ As a **verified learner**, I want to name a place and upload a photo of it, so t
 5. **Given** I already have 20 worlds, **when** I try to create another, **then** I see the limit and that deleting a world frees a place.
 6. **Given** I have no analyses left today, counting analyses still in progress as used, **when** I try to create a world, **then** I see that the limit is reached and when it resets.
 7. **Given** my AI features are suspended, **when** I try to create a world, **then** I see why and until when (US-092).
+8. **Given** my photo contains metadata such as the location where it was taken, **when** it is stored, **then** the metadata is removed, the photo is upright, and its longer side is at most 2,048 pixels.
 
-**Requirements:** FR-010, FR-011, FR-012, FR-020, FR-080, FR-096, NFR-005, NFR-007, NFR-014
+**Requirements:** FR-010, FR-011, FR-012, FR-017, FR-020, FR-080, FR-096, NFR-005, NFR-007, NFR-014
 
 #### US-011 See my worlds
 
@@ -598,7 +599,7 @@ As an **admin**, I want to find a learner by email address or account ID, so tha
 | SRS section                    | Requirements    | Stories                                               |
 | ------------------------------ | --------------- | ----------------------------------------------------- |
 | 3.1 Accounts and access        | FR-001–FR-009   | US-001–US-009, US-011, US-012                         |
-| 3.2 Worlds and photos          | FR-010–FR-016   | US-010–US-014                                         |
+| 3.2 Worlds and photos          | FR-010–FR-017   | US-010–US-014                                         |
 | 3.3 AI vocabulary extraction   | FR-020–FR-027   | US-010, US-020–US-022, US-080                         |
 | 3.4 Identify game              | FR-030–FR-036   | US-030–US-034                                         |
 | 3.5 Mistakes and mastery       | FR-040–FR-043   | US-020, US-031, US-032, US-040–US-042                 |

@@ -1,6 +1,6 @@
 # LanguZe — Software Requirements Specification (SRS)
 
-- **Document status:** Draft v0.7 — values marked `(Vn)` were chosen while writing this SRS; their status is in [Appendix B](#appendix-b-values-chosen-while-writing-the-srs)
+- **Document status:** Draft v0.8 — values marked `(Vn)` were chosen while writing this SRS; their status is in [Appendix B](#appendix-b-values-chosen-while-writing-the-srs)
 - **Date:** 2026-09-19
 - **Release covered:** Release 1.0
 - **Source:** [PRD](PRD.md) v0.7 (features F1–F9, decisions Q1–Q8)
@@ -95,15 +95,16 @@ Configuration and monitoring are done through deployment tooling. Moderation is 
 
 ### 3.2 Worlds and photos (PRD F2)
 
-| ID     | Requirement                                                                                                                                                                                                                                                                                                         |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FR-010 | A verified learner shall be able to create a world by entering a name of 1–50 characters (V3) and uploading one photo.                                                                                                                                                                                              |
-| FR-011 | The system shall accept only JPEG, PNG, or WebP photos up to 10 MB. The file type shall be checked from the file content, not only its name or declared type. Rejected files shall show why.                                                                                                                        |
-| FR-012 | A learner shall have at most 20 worlds. Creating another world beyond the limit shall be rejected with a message explaining the limit.                                                                                                                                                                              |
-| FR-013 | The system shall list the learner's worlds with name, photo thumbnail, analysis status, word count, and count of mastered words.                                                                                                                                                                                    |
-| FR-014 | Opening a world shall show its photo and its words with Thai meaning, CEFR level, and the learner's mastery level for each word.                                                                                                                                                                                    |
-| FR-015 | A learner shall be able to delete a world after confirmation. Deletion shall remove the photo from storage and all of that world's occurrences. Mastery and mistake history of a vocabulary word shall be removed only when no remaining world of the learner contains that word. Total XP shall not decrease (V4). |
-| FR-016 | A learner shall be able to rename a world. The new name follows the same rules as FR-010 (1–50 characters, V3).                                                                                                                                                                                                     |
+| ID     | Requirement                                                                                                                                                                                                                                                                                                                        |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FR-010 | A verified learner shall be able to create a world by entering a name of 1–50 characters (V3) and uploading one photo.                                                                                                                                                                                                             |
+| FR-011 | The system shall accept only JPEG, PNG, or WebP photos up to 10 MB. The file type shall be checked from the file content, not only its name or declared type. Rejected files shall show why.                                                                                                                                       |
+| FR-012 | A learner shall have at most 20 worlds. Creating another world beyond the limit shall be rejected with a message explaining the limit.                                                                                                                                                                                             |
+| FR-013 | The system shall list the learner's worlds with name, photo thumbnail, analysis status, word count, and count of mastered words.                                                                                                                                                                                                   |
+| FR-014 | Opening a world shall show its photo and its words with Thai meaning, CEFR level, and the learner's mastery level for each word.                                                                                                                                                                                                   |
+| FR-015 | A learner shall be able to delete a world after confirmation. Deletion shall remove the photo from storage and all of that world's occurrences. Mastery and mistake history of a vocabulary word shall be removed only when no remaining world of the learner contains that word. Total XP shall not decrease (V4).                |
+| FR-016 | A learner shall be able to rename a world. The new name follows the same rules as FR-010 (1–50 characters, V3).                                                                                                                                                                                                                    |
+| FR-017 | Before storing an uploaded photo, the system shall apply its orientation, remove all of its metadata (including the location where it was taken), and scale it down so that its longer side is at most 2,048 pixels (V18). Only this prepared photo shall be stored, sent to AI providers, and shown; highlight boxes refer to it. |
 
 ### 3.3 AI vocabulary extraction (PRD F3)
 
@@ -282,7 +283,7 @@ The extraction evaluation set shall contain at least 30 everyday-scene photos (V
 | PRD feature                 | Requirements                                                       |
 | --------------------------- | ------------------------------------------------------------------ |
 | F1 Account                  | FR-001–FR-009, NFR-004–NFR-006, NFR-009, NFR-018                   |
-| F2 My World                 | FR-010–FR-016, NFR-008, NFR-009                                    |
+| F2 My World                 | FR-010–FR-017, NFR-008, NFR-009                                    |
 | F3 AI vocabulary extraction | FR-020–FR-027, AIR-001–AIR-005, AIR-007, AIR-008, NFR-001, NFR-010 |
 | F4 Identify game            | FR-030–FR-036, section 4.2, NFR-011, NFR-012                       |
 | F5 Mistakes and mastery     | FR-040–FR-043, section 4.1                                         |
@@ -319,3 +320,4 @@ These values were chosen while writing the SRS because the PRD does not decide t
 | V15 | 3 blocked photos within 7 days suspend AI features for 7 days automatically (level 1); reaching the threshold again after an earlier suspension keeps AI features off until an admin reviews (level 2) | FR-096, FR-103                   | Confirmed 2026-09-19 |
 | V16 | An analysis that has not finished 5 minutes after it started becomes `FAILED`                                                                                                                          | FR-021                           | Confirmed 2026-09-19 |
 | V17 | An unfinished game or review session stays open for 24 hours                                                                                                                                           | FR-036                           | Confirmed 2026-09-19 |
+| V18 | Prepared photos are at most 2,048 pixels on their longer side                                                                                                                                          | FR-017                           | Confirmed 2026-09-19 |
