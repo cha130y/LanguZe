@@ -1,9 +1,9 @@
 # LanguZe — User Stories
 
-- **Document status:** Draft v0.2 — questions raised while writing, and their decisions, are in [Appendix A](#appendix-a-questions-raised-while-writing-the-stories)
+- **Document status:** Draft v0.3 — questions raised while writing, and their decisions, are in [Appendix A](#appendix-a-questions-raised-while-writing-the-stories)
 - **Date:** 2026-09-19
 - **Release covered:** Release 1.0
-- **Source:** [SRS](SRS.md) v0.6 and [PRD](PRD.md) v0.7
+- **Source:** [SRS](SRS.md) v0.7 and [PRD](PRD.md) v0.7
 - **Next documents:** use cases (`UC-xxx`) → process flows
 
 ## 1. Introduction
@@ -73,7 +73,8 @@ As a **visitor**, I want to create an account with my email address and a passwo
 1. **Given** I am on the sign-up page, **when** I enter an email address, a display name, and a password of at least 8 characters, accept the Terms of Use and Privacy Policy, and submit, **then** my account is created, I am signed in, and a verification email is sent to me.
 2. **Given** I have not accepted the Terms of Use and Privacy Policy, **when** I submit, **then** no account is created and I am asked to accept them.
 3. **Given** my password has fewer than 8 characters, **when** I submit, **then** no account is created and I see the password rule.
-4. **Given** I have not verified my email yet, **when** I use LanguZe, **then** I can use every feature except photo analysis and the AI tutor (US-008).
+4. **Given** the email address already has an account, **when** I submit, **then** no account is created, and I am told so and offered sign-in and password reset.
+5. **Given** I have not verified my email yet, **when** I use LanguZe, **then** I can use every feature except photo analysis and the AI tutor (US-008).
 
 **Requirements:** FR-001, FR-004, FR-006, FR-090, NFR-005
 
@@ -102,11 +103,13 @@ As a **learner**, I want to sign in with my email and password and sign out when
 
 As a **visitor**, I want to sign in with my Google, LINE, or Facebook account, so that I do not need another password.
 
-1. **Given** I use a provider for the first time, **when** I finish the provider's sign-in and accept the Terms of Use and Privacy Policy, **then** a LanguZe account is created and treated as verified.
-2. **Given** I have signed in with this provider before, **when** I sign in with it again, **then** I am signed in to the same account.
-3. **Given** the provider supplies a verified email address that matches the verified email of an existing account, **when** I sign in, **then** the sign-in is linked to that account.
-4. **Given** I cancel at the provider or the provider refuses the sign-in, **when** I return to LanguZe, **then** no account is created and I can choose another method.
-5. **Given** an admin has suspended my account, **when** I sign in with a provider, **then** I am treated as in US-003 criterion 4.
+1. **Given** I use a provider for the first time, **when** I finish the provider's sign-in, accept the Terms of Use and Privacy Policy, and confirm my display name (prefilled from the provider profile), **then** a LanguZe account is created and treated as verified.
+2. **Given** I use a provider for the first time, **when** I decline the Terms of Use, **then** no account is created.
+3. **Given** I have signed in with this provider before, **when** I sign in with it again, **then** I am signed in to the same account.
+4. **Given** the provider supplies a verified email address that matches the verified email of an existing account, **when** I sign in, **then** the sign-in is linked to that account.
+5. **Given** the provider supplies a verified email address that matches an account whose email is not verified, **when** I sign in, **then** the sign-in is linked to that account, the email becomes verified, and the account's password is removed.
+6. **Given** I cancel at the provider or the provider refuses the sign-in, **when** I return to LanguZe, **then** no account is created and I can choose another method.
+7. **Given** an admin has suspended my account, **when** I sign in with a provider, **then** I am treated as in US-003 criterion 4.
 
 **Requirements:** FR-003, FR-009, FR-090, FR-105
 
@@ -116,7 +119,7 @@ As a **learner who signs in with LINE or Facebook**, I want LanguZe to work even
 
 1. **Given** LINE or Facebook supplies no email address, **when** I sign in, **then** my account works and is treated as verified (V13, V14).
 2. **Given** my account has no email address, **when** I use LanguZe, **then** I am not offered password reset and I receive no email.
-3. **Given** the provider supplies no email address, or one that does not match an existing account's verified email, **when** I sign in, **then** a separate account is used; it is not linked to my other accounts.
+3. **Given** the provider supplies no verified email address, or one that matches no existing account, **when** I sign in, **then** a separate account is used; it is not linked to my other accounts.
 
 **Requirements:** FR-003, FR-009
 
@@ -154,7 +157,7 @@ As an **unverified learner**, I want to know why I cannot create a world or use 
 
 As a **learner**, I want to delete my account and all my data, so that LanguZe no longer keeps anything about me.
 
-1. **Given** I am signed in, **when** I choose to delete my account and confirm explicitly, **then** my account and all my data (worlds, photos, vocabulary, attempts, mastery, XP, and tutor conversation) are deleted, my Google, LINE, and Facebook sign-ins are removed, and I am signed out.
+1. **Given** I am signed in, **when** I choose to delete my account and confirm explicitly, **then** my account and all my data (worlds, photos, vocabulary, attempts, mastery, XP, tutor conversation, block records, and AI suspensions) are deleted, my Google, LINE, and Facebook sign-ins are removed, and I am signed out.
 2. **Given** my account was deleted, **then** my photos are removed from storage within 24 hours.
 3. **Given** I start deleting my account, **when** I cancel instead of confirming, **then** nothing is deleted.
 4. **Given** my account was deleted, **when** I sign in again with the same Google, LINE, or Facebook account, **then** a new, empty account is created.
@@ -173,7 +176,7 @@ As a **verified learner**, I want to name a place and upload a photo of it, so t
 3. **Given** the file is not really a JPEG, PNG, or WebP image (checked from its content) or is larger than 10 MB, **when** I upload it, **then** it is rejected with the reason and no world is created.
 4. **Given** the name is empty or longer than 50 characters, **when** I submit, **then** I see the rule and no world is created.
 5. **Given** I already have 20 worlds, **when** I try to create another, **then** I see the limit and that deleting a world frees a place.
-6. **Given** I have no analyses left today, **when** I try to create a world, **then** I see that the limit is reached and when it resets.
+6. **Given** I have no analyses left today, counting analyses still in progress as used, **when** I try to create a world, **then** I see that the limit is reached and when it resets.
 7. **Given** my AI features are suspended, **when** I try to create a world, **then** I see why and until when (US-092).
 
 **Requirements:** FR-010, FR-011, FR-012, FR-020, FR-080, FR-096, NFR-005, NFR-007, NFR-014
@@ -245,10 +248,11 @@ As a **verified learner**, I want to know why an analysis failed and what to do 
 
 1. **Given** fewer than 3 valid words are found, **when** the analysis ends, **then** the world is `FAILED` with advice to take a clearer photo of a place with more objects.
 2. **Given** the AI provider fails, times out, or returns invalid output, **when** the analysis ends, **then** the world is `FAILED` and no vocabulary from it is saved.
-3. **Given** an analysis failed for either reason above, **then** it does not count toward my daily analysis limit.
-4. **Given** a `FAILED` world that still has its photo, **when** I choose retry, **then** the same photo is analysed again, after the daily limit check.
-5. **Given** a `FAILED` world, **when** I delete it, **then** it is deleted as in US-014.
-6. **Given** I want to use a different photo, **then** I create a new world; a world's photo cannot be replaced.
+3. **Given** an analysis has not finished 5 minutes after it started, **then** the world is `FAILED` as for a provider error.
+4. **Given** an analysis failed for any reason above, **then** it does not count toward my daily analysis limit.
+5. **Given** a `FAILED` world that still has its photo, **when** I choose retry, **then** the same photo is analysed again, after the daily limit check.
+6. **Given** a `FAILED` world, **when** I delete it, **then** it is deleted as in US-014.
+7. **Given** I want to use a different photo, **then** I create a new world; a world's photo cannot be replaced.
 
 Photos that fail the safety check are covered in US-091.
 
@@ -309,13 +313,17 @@ As a **learner**, I want a summary at the end of a session, so that I can see wh
 
 **Requirements:** FR-035
 
-#### US-034 Leave a session early
+#### US-034 Leave a session and continue later
 
-As a **learner**, I want to stop a session whenever I need to, so that practice fits my time.
+As a **learner**, I want to stop a session whenever I need to and pick it up again later, so that practice fits my time and an interruption does not waste my progress.
 
-1. **Given** I am in the middle of a session, **when** I leave, **then** the answers I submitted stay recorded and the unanswered questions have no effect.
+1. **Given** I am in the middle of a game or review session, **when** I leave, **then** the answers I submitted stay recorded and the unanswered questions have no effect.
+2. **Given** the page reloads during a session, for example when the LINE or Facebook app reloads it after I switch apps, **then** I continue at the next unanswered question.
+3. **Given** I left a session unfinished less than 24 hours ago, **when** I open that world's game (or review) again, **then** I can continue at the next unanswered question or start a new session.
+4. **Given** I finish a session I continued, **then** the summary covers all of its answers.
+5. **Given** 24 hours have passed, or I started a new session for the same world (or a new review), **then** the unfinished session is closed without a summary.
 
-**Requirements:** FR-036
+**Requirements:** FR-035, FR-036
 
 ### 4.5 Mistakes and mastery (PRD F5, SRS 3.5)
 
@@ -537,6 +545,7 @@ As an **admin**, I want a list of learners whose AI suspension needs review, old
 1. **Given** learners with a level 2 suspension or a suspected illegal material suspension, **when** I open the review queue, **then** I see them oldest first, with their block counts and categories.
 2. **Given** a new case needs review, **then** admins receive an email.
 3. **Given** no case needs review, **when** I open the review queue, **then** I see that it is empty.
+4. **Given** a case's AI suspension is lifted or given an end date, or the account is suspended or deleted, **then** the case leaves the queue; if a suspended account is reactivated while its AI suspension still awaits review, the case returns.
 
 **Requirements:** FR-097, FR-103, FR-107
 
