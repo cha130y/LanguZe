@@ -5,7 +5,7 @@
 
 ## Context
 
-LanguZe is developed by a solo developer as a production-grade learning and portfolio project. The product spans several domains (auth, users, worlds/images, vocabulary, learning/mastery, games, progress/achievements, notifications, AI/tutor, realtime), and the long-term roadmap includes realtime play, event-driven processing, RAG, and possibly separate services.
+LanguZe is a production product built by a solo developer. The product spans several domains (auth, users, worlds/images, vocabulary, learning/mastery, games, progress/achievements, notifications, AI/tutor, realtime), and the long-term roadmap includes realtime play, event-driven processing, RAG, and possibly separate services.
 
 Splitting into microservices early would add deployment, networking, observability, and data-consistency work before any domain has a scaling or ownership reason to be separate.
 
