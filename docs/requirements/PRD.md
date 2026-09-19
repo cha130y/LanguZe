@@ -1,6 +1,6 @@
 # LanguZe — Product Requirements Document (PRD)
 
-- **Document status:** Draft v0.7 — decisions recorded (section 12); detailed rules in the [SRS](SRS.md)
+- **Document status:** Draft v0.8 — decisions recorded (section 12); detailed rules in the [SRS](SRS.md)
 - **Date:** 2026-09-19
 - **Product release covered:** Release 1.0 (first public release)
 - **Next documents:** SRS (`FR-xxx`) → user stories (`US-xxx`) → use cases (`UC-xxx`) → process flows
@@ -48,6 +48,7 @@ Positioning compared with traditional vocabulary apps:
 ### Primary persona: Thai-speaking English learner
 
 - Native Thai speaker who wants practical English vocabulary for everyday surroundings.
+- An adult aged 18 or older, such as a university student or a working adult. Release 1.0 is for adults only (Q9).
 - English level from CEFR A1 to B1.
 - Uses a smartphone or laptop browser and can take or upload photos; commonly uses LINE and often opens links inside the LINE app.
 - Prefers explanations in Thai with English examples.
@@ -56,6 +57,7 @@ Positioning compared with traditional vocabulary apps:
 
 - English speakers learning Thai, and learners of other language pairs.
 - Teachers who prepare worlds or track learners.
+- Teenage learners aged 13–17, with parental consent (see roadmap).
 
 ## 5. Release 1.0 features
 
@@ -118,6 +120,7 @@ Candidates, in no fixed order; each needs its own requirement and, where archite
 - Passkeys and multi-factor authentication.
 - English → Thai direction and other language pairs.
 - Teacher role and community features.
+- Teenage learners (13–17): parental consent, tutor rules suited to minors, and an AI provider whose terms allow minors.
 - Exam vocabulary tracks (for example TOEIC, TOEFL, and IELTS): curated word lists that link to the same vocabulary words and mastery, practised with text-based game types. Words from the learner's photos can be marked when they appear on an exam list. Test names are trademarks of their owners; official test questions and copyrighted official word lists are not reproduced.
 
 ## 9. Success metrics
@@ -160,27 +163,29 @@ Targets marked _proposed_ are starting values to confirm or adjust.
 
 **Risks**
 
-| Risk                                                              | Mitigation direction                                                                                                                   |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| AI misidentifies objects or invents words                         | Treat AI output as untrusted: schema validation, deterministic post-processing, evaluation set; learners can remove wrong words.       |
-| Photos contain personal information (faces, documents, addresses) | Send only what the feature needs to AI providers; learners can delete worlds and their account.                                        |
-| Text inside a photo tries to instruct the AI (prompt injection)   | Constrain prompts and structured outputs; never let model output trigger actions without validation.                                   |
-| Inappropriate or unsafe uploads                                   | Automatic safety check before analysis, content rules in the Terms of Use, and suspension of AI features for repeated violations (F9). |
-| AI free-tier quotas, rate limits, or cost spikes                  | Daily per-learner limits; AI features require a verified email; provider abstraction.                                                  |
-| Abuse of public sign-up and uploads                               | Rate limiting, verified email for AI features, and per-learner usage limits.                                                           |
+| Risk                                                              | Mitigation direction                                                                                                                                                            |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AI misidentifies objects or invents words                         | Treat AI output as untrusted: schema validation, deterministic post-processing, evaluation set; learners can remove wrong words.                                                |
+| Photos contain personal information (faces, documents, addresses) | Send only what the feature needs to AI providers; learners can delete worlds and their account.                                                                                 |
+| Text inside a photo tries to instruct the AI (prompt injection)   | Constrain prompts and structured outputs; never let model output trigger actions without validation.                                                                            |
+| Inappropriate or unsafe uploads                                   | Automatic safety check before analysis, content rules in the Terms of Use, and suspension of AI features for repeated violations (F9).                                          |
+| AI free-tier quotas, rate limits, or cost spikes                  | Daily per-learner limits; AI features require a verified email; provider abstraction.                                                                                           |
+| Abuse of public sign-up and uploads                               | Rate limiting, verified email for AI features, and per-learner usage limits.                                                                                                    |
+| People under 18 sign up despite the age limit                     | A neutral year-of-birth question at sign-up, the age limit in the Terms of Use, promotion aimed at adults, and admins who suspend or delete accounts shown to belong to minors. |
 
 ## 12. Decisions on former open questions
 
-| #   | Question                            | Decision                                                                                                                                                                                                                                                                                 |
-| --- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q1  | Target English proficiency          | CEFR A1–B1. Each extracted word is tagged with a CEFR level; word choice and explanations target A1–B1.                                                                                                                                                                                  |
-| Q2  | How Identify points to an object    | The learner's photo is shown with the object highlighted by a box returned by the AI.                                                                                                                                                                                                    |
-| Q3  | Can learners fix AI-extracted words | Learners can remove wrong or unwanted words; editing word text is not supported in Release 1.0.                                                                                                                                                                                          |
-| Q4  | Photo retention and deletion        | Photos are kept until the learner deletes the world. Deleting a world removes its photo, words, and progress; deleting the account removes all learner data.                                                                                                                             |
-| Q5  | Per-learner usage limits            | Up to 20 worlds; 10 photo analyses per day; 30 tutor messages per day; photos up to 10 MB (JPEG, PNG, WebP).                                                                                                                                                                             |
-| Q6  | Registration model                  | Open sign-up. Photo analysis and the AI tutor require a verified email; Google sign-in counts as verified.                                                                                                                                                                               |
-| Q7  | Additional sign-in methods          | LINE and Facebook added to Release 1.0 (2026-09-19). Rules for these accounts, including those without an email address, are in the SRS (FR-003, FR-009, V13, V14).                                                                                                                      |
-| Q8  | Content policy                      | Blocked photos count toward the daily analysis limit. Vocabulary covers objects and places only, never people or body parts. 3 blocked photos within 7 days pause AI features for 7 days; reaching it again keeps them off until an admin reviews the case in the moderation admin area. |
+| #   | Question                            | Decision                                                                                                                                                                                                                                                                                                                                                                                 |
+| --- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1  | Target English proficiency          | CEFR A1–B1. Each extracted word is tagged with a CEFR level; word choice and explanations target A1–B1.                                                                                                                                                                                                                                                                                  |
+| Q2  | How Identify points to an object    | The learner's photo is shown with the object highlighted by a box returned by the AI.                                                                                                                                                                                                                                                                                                    |
+| Q3  | Can learners fix AI-extracted words | Learners can remove wrong or unwanted words; editing word text is not supported in Release 1.0.                                                                                                                                                                                                                                                                                          |
+| Q4  | Photo retention and deletion        | Photos are kept until the learner deletes the world. Deleting a world removes its photo, words, and progress; deleting the account removes all learner data.                                                                                                                                                                                                                             |
+| Q5  | Per-learner usage limits            | Up to 20 worlds; 10 photo analyses per day; 30 tutor messages per day; photos up to 10 MB (JPEG, PNG, WebP).                                                                                                                                                                                                                                                                             |
+| Q6  | Registration model                  | Open sign-up. Photo analysis and the AI tutor require a verified email; Google sign-in counts as verified.                                                                                                                                                                                                                                                                               |
+| Q7  | Additional sign-in methods          | LINE and Facebook added to Release 1.0 (2026-09-19). Rules for these accounts, including those without an email address, are in the SRS (FR-003, FR-009, V13, V14).                                                                                                                                                                                                                      |
+| Q8  | Content policy                      | Blocked photos count toward the daily analysis limit. Vocabulary covers objects and places only, never people or body parts. 3 blocked photos within 7 days pause AI features for 7 days; reaching it again keeps them off until an admin reviews the case in the moderation admin area.                                                                                                 |
+| Q9  | Minimum age                         | Release 1.0 is for adults aged 18 or older (2026-09-19). Sign-up asks for the year of birth, the Terms of Use state the age limit, and LanguZe is described and promoted for adults. The chosen AI provider does not allow apps directed at or likely to be used by people under 18, and serving minors would need parental consent under Thailand's PDPA. Teenagers are on the roadmap. |
 
 ## 13. References
 
