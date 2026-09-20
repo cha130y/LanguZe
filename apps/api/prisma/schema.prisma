@@ -1,4 +1,6 @@
 // LanguZe database schema. Prisma schema + migrations are the database source of truth.
+// Tables and columns follow docs/architecture/data-model.md: singular PascalCase models,
+// plural snake_case tables, snake_case columns, UUID version 7 keys, UTC timestamps.
 // Docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -8,4 +10,100 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum UserRole {
+  LEARNER
+  ADMIN
+
+  @@map("user_role")
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+
+  @@map("account_status")
+}
+
+/// One row per account, learner or admin. Managed by Better Auth (ADR-0003).
+model User {
+  id              String        @id @default(uuid(7)) @db.Uuid
+  /// Display name, 1-50 characters (V12, V19).
+  name            String        @db.VarChar(50)
+  /// A placeholder ending in .invalid for accounts without an email address (D1).
+  email           String        @unique @db.VarChar(254)
+  emailVerified   Boolean       @default(false) @map("email_verified")
+  /// Better Auth field; left empty, since LanguZe shows no profile pictures.
+  image           String?
+  role            UserRole      @default(LEARNER)
+  status          AccountStatus @default(ACTIVE)
+  /// Empty only for a pending provider sign-up, removed after 15 minutes (FR-090, U5).
+  termsAcceptedAt DateTime?     @map("terms_accepted_at") @db.Timestamptz(3)
+  /// Year of birth given at sign-up; learners must turn 18 this year (FR-090, V20).
+  birthYear       Int?          @map("birth_year") @db.SmallInt
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  accounts Account[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+/// A signed-in browser. Deleted on sign-out, password reset, suspension, and account deletion.
+model Session {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+/// A way to sign in: the email password, or a Google, LINE, or Facebook identity.
+/// Provider tokens are left empty on purpose (D3).
+model Account {
+  id                    String    @id @default(uuid(7)) @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+  /// `credential`, `google`, `line`, or `facebook`.
+  providerId            String    @map("provider_id")
+  /// The provider's user ID; for `credential`, the user's own ID.
+  accountId             String    @map("account_id")
+  /// Password hash, for `credential` only.
+  password              String?
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at") @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamptz(3)
+  scope                 String?
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("auth_accounts")
+}
+
+/// Single-use tokens for email verification and password reset (FR-004, FR-005).
+model Verification {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([identifier])
+  @@map("verifications")
 }

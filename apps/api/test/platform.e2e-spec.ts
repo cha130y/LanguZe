@@ -7,6 +7,7 @@ import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { configureApp } from '../src/app.setup.js';
 import { AppModule } from '../src/app.module.js';
+import { Public } from '../src/auth/session.decorators.js';
 import type {
   ErrorBodyDto,
   ErrorResponseDto,
@@ -23,6 +24,7 @@ class ProbeBody {
 }
 
 /** Test-only endpoints that exercise the shared HTTP behavior before feature endpoints exist. */
+@Public()
 @Controller('probe')
 class ProbeController {
   @Post('echo')

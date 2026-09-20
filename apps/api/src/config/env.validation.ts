@@ -1,6 +1,16 @@
 import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsInt, IsUrl, Max, Min, validateSync } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsString,
+  IsUrl,
+  Max,
+  Min,
+  MinLength,
+  validateSync,
+} from 'class-validator';
 
 export enum NodeEnv {
   Development = 'development',
@@ -48,6 +58,29 @@ export class EnvironmentVariables {
   @Min(1)
   @Max(100000)
   RATE_LIMIT_PER_MINUTE: number = 120;
+
+  // Signs session cookies and tokens (ADR-0003). At least 32 characters, different per environment.
+  @IsString()
+  @MinLength(32)
+  AUTH_SECRET: string;
+
+  // The API's own address, used to build the links in emails.
+  @IsUrl({ require_protocol: true, require_tld: false })
+  AUTH_URL: string = 'http://localhost:4001';
+
+  // Outgoing email (Maildev locally, an email provider in production).
+  @IsString()
+  @IsNotEmpty()
+  MAIL_HOST: string = 'localhost';
+
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  MAIL_PORT: number = 1026;
+
+  @IsString()
+  @IsNotEmpty()
+  MAIL_FROM: string = 'LanguZe <no-reply@languze.local>';
 }
 
 /**
