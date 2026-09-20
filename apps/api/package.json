@@ -19,7 +19,8 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "openapi:generate": "nest build && node dist/generate-openapi.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.3",

@@ -1,0 +1,603 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/auth/sign-up": {
+      "post": {
+        "operationId": "AuthController_signUp",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "TERMS_NOT_ACCEPTED, VALIDATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AGE_BELOW_MINIMUM",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "EMAIL_ALREADY_REGISTERED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/sign-in": {
+      "post": {
+        "operationId": "AuthController_signIn",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "INVALID_CREDENTIALS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ACCOUNT_SUSPENDED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/sign-out": {
+      "post": {
+        "operationId": "AuthController_signOut",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/send-verification-email": {
+      "post": {
+        "operationId": "AuthController_sendVerificationEmail",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailOnlyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Always the same answer (FR-005).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgementDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/verify-email": {
+      "post": {
+        "operationId": "AuthController_verifyEmail",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgementDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_TOKEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/request-password-reset": {
+      "post": {
+        "operationId": "AuthController_requestPasswordReset",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailOnlyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Always the same answer (FR-005).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgementDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/reset-password": {
+      "post": {
+        "operationId": "AuthController_resetPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgementDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_TOKEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "operationId": "MeController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "NOT_SIGNED_IN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponseDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "LanguZe API",
+    "description": "Endpoints used by the LanguZe web app.",
+    "version": "0.0.1",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "SignUpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "description": "At least 8 characters (V2)."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "Display name (V12, V19)."
+          },
+          "birthYear": {
+            "type": "number",
+            "description": "Year of birth; the learner must turn 18 this year (V20)."
+          },
+          "acceptTerms": {
+            "type": "boolean",
+            "description": "Must be true: accepting the Terms of Use and Privacy Policy (FR-090). False is answered with TERMS_NOT_ACCEPTED."
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "name",
+          "birthYear",
+          "acceptTerms"
+        ]
+      },
+      "ErrorBodyDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "BAD_REQUEST",
+              "VALIDATION_FAILED",
+              "NOT_SIGNED_IN",
+              "FORBIDDEN",
+              "ORIGIN_NOT_ALLOWED",
+              "NOT_FOUND",
+              "CONFLICT",
+              "PAYLOAD_TOO_LARGE",
+              "UNSUPPORTED_MEDIA_TYPE",
+              "RATE_LIMITED",
+              "INTERNAL_ERROR",
+              "SERVICE_UNAVAILABLE",
+              "TERMS_NOT_ACCEPTED",
+              "MESSAGE_TOO_LONG",
+              "ACCOUNT_SUSPENDED",
+              "TERMS_PENDING",
+              "AGE_BELOW_MINIMUM",
+              "NOT_VERIFIED",
+              "AI_SUSPENDED",
+              "OWN_ACCOUNT",
+              "INVALID_CREDENTIALS",
+              "INVALID_TOKEN",
+              "EMAIL_ALREADY_REGISTERED",
+              "WORLD_LIMIT_REACHED",
+              "WORLD_NOT_READY",
+              "RETRY_NOT_AVAILABLE",
+              "LAST_WORD",
+              "NOTHING_TO_REVIEW",
+              "SESSION_CLOSED",
+              "QUESTION_UNAVAILABLE",
+              "ACTION_NOT_APPLICABLE",
+              "PHOTO_TOO_LARGE",
+              "PHOTO_TYPE_NOT_ALLOWED",
+              "DAILY_ANALYSIS_LIMIT",
+              "DAILY_TUTOR_LIMIT",
+              "AI_PROVIDER_UNAVAILABLE"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "English, for developers; never shown to learners as is."
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "ErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBodyDto"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "SignInDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "AiAccessDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "NOT_VERIFIED",
+              "AI_SUSPENDED"
+            ],
+            "nullable": true,
+            "description": "Why AI features are unavailable, if they are."
+          }
+        },
+        "required": [
+          "available"
+        ]
+      },
+      "MeResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The account ID a learner can quote to LanguZe (FR-108)."
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "description": "Empty for accounts without an email address (D1)."
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "verifiedForAi": {
+            "type": "boolean",
+            "description": "Whether photo analysis and the tutor are unlocked (SRS 1.3)."
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "LEARNER",
+              "ADMIN"
+            ]
+          },
+          "termsAccepted": {
+            "type": "boolean",
+            "description": "False while a provider sign-up has not accepted the Terms (FR-090)."
+          },
+          "aiAccess": {
+            "$ref": "#/components/schemas/AiAccessDto"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "emailVerified",
+          "verifiedForAi",
+          "role",
+          "termsAccepted",
+          "aiAccess"
+        ]
+      },
+      "EmailOnlyDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "AcknowledgementDto": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "VerifyEmailDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The token from the verification link."
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The token from the reset link."
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "token",
+          "newPassword"
+        ]
+      },
+      "HealthResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ]
+          },
+          "database": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "database"
+        ]
+      }
+    }
+  }
+}

@@ -120,6 +120,7 @@ export class MeResponseDto {
   name: string;
 
   @ApiProperty({
+    type: String,
     nullable: true,
     description: 'Empty for accounts without an email address (D1).',
   })
