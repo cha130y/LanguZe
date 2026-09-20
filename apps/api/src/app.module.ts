@@ -6,7 +6,10 @@ import {
   type EnvironmentVariables,
   validateEnv,
 } from './config/env.validation.js';
+import { AuthModule } from './auth/auth.module.js';
+import { SessionGuard } from './auth/session.guard.js';
 import { HealthModule } from './health/health.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 import { OriginGuard } from './platform/http/origin.guard.js';
 import { RateLimitGuard } from './platform/http/rate-limit.guard.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -32,11 +35,15 @@ import { PrismaModule } from './prisma/prisma.module.js';
       }),
     }),
     PrismaModule,
+    NotificationsModule,
+    AuthModule,
     HealthModule,
   ],
   providers: [
-    // Guards run in this order: refuse foreign origins first, then count the request.
+    // Guards run in this order: refuse foreign origins, resolve the session, then count
+    // the request, so rate limits can be counted per account.
     { provide: APP_GUARD, useClass: OriginGuard },
+    { provide: APP_GUARD, useClass: SessionGuard },
     { provide: APP_GUARD, useClass: RateLimitGuard },
   ],
 })

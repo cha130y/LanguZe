@@ -51,6 +51,8 @@ jobs:
     env:
       NODE_ENV: test
       DATABASE_URL: postgresql://languze:languze@localhost:5432/languze
+      # Not a secret: a throwaway value so the API starts in CI. Production uses a real one.
+      AUTH_SECRET: ci-only-value-ci-only-value-ci-ok
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6

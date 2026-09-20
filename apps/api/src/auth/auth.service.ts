@@ -1,0 +1,288 @@
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { APIError } from 'better-auth/api';
+import { fromNodeHeaders } from 'better-auth/node';
+import type { Request, Response } from 'express';
+import {
+  NodeEnv,
+  type EnvironmentVariables,
+} from '../config/env.validation.js';
+import { AppError } from '../platform/errors/app-error.js';
+import { ErrorCode } from '../platform/errors/error-codes.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import {
+  AGE_BLOCK_COOKIE,
+  AGE_BLOCK_DURATION_MS,
+  hasAgeBlockCookie,
+  isOldEnough,
+} from './age-gate.js';
+import { AUTH } from './auth.tokens.js';
+import type { Auth } from './create-auth.js';
+import type { MeResponseDto, SignInDto, SignUpDto } from './dto/auth.dto.js';
+
+/** Better Auth error codes that LanguZe answers with a code of its own. */
+const ERROR_CODE_MAP: Record<
+  string,
+  { code: ErrorCode; status: HttpStatus; message: string }
+> = {
+  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: {
+    code: ErrorCode.EMAIL_ALREADY_REGISTERED,
+    status: HttpStatus.CONFLICT,
+    message: 'This email address already has an account.',
+  },
+  USER_ALREADY_EXISTS: {
+    code: ErrorCode.EMAIL_ALREADY_REGISTERED,
+    status: HttpStatus.CONFLICT,
+    message: 'This email address already has an account.',
+  },
+  INVALID_EMAIL_OR_PASSWORD: {
+    code: ErrorCode.INVALID_CREDENTIALS,
+    status: HttpStatus.UNAUTHORIZED,
+    message: 'The email address or password is incorrect.',
+  },
+  INVALID_PASSWORD: {
+    code: ErrorCode.INVALID_CREDENTIALS,
+    status: HttpStatus.UNAUTHORIZED,
+    message: 'The email address or password is incorrect.',
+  },
+  INVALID_TOKEN: {
+    code: ErrorCode.INVALID_TOKEN,
+    status: HttpStatus.BAD_REQUEST,
+    message: 'The link is no longer valid.',
+  },
+  TOKEN_EXPIRED: {
+    code: ErrorCode.INVALID_TOKEN,
+    status: HttpStatus.BAD_REQUEST,
+    message: 'The link is no longer valid.',
+  },
+};
+
+export interface SessionContext {
+  user: { id: string; role: string; status: string };
+}
+
+@Injectable()
+export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+  private readonly isProduction: boolean;
+
+  constructor(
+    @Inject(AUTH) private readonly auth: Auth,
+    private readonly prisma: PrismaService,
+    config: ConfigService<EnvironmentVariables, true>,
+  ) {
+    this.isProduction =
+      config.get('NODE_ENV', { infer: true }) === NodeEnv.Production;
+  }
+
+  /** Signs up with email (US-001): age gate, Terms, then Better Auth. */
+  async signUp(
+    dto: SignUpDto,
+    req: Request,
+    res: Response,
+  ): Promise<MeResponseDto> {
+    if (!dto.acceptTerms) {
+      throw new AppError(
+        ErrorCode.TERMS_NOT_ACCEPTED,
+        HttpStatus.BAD_REQUEST,
+        'The Terms of Use and Privacy Policy must be accepted.',
+      );
+    }
+    this.checkAge(dto.birthYear, req, res);
+
+    const { headers, response } = await this.call(() =>
+      this.auth.api.signUpEmail({
+        body: {
+          email: dto.email,
+          password: dto.password,
+          name: dto.name,
+          birthYear: dto.birthYear,
+        },
+        returnHeaders: true,
+      }),
+    );
+
+    this.forwardCookies(headers, res);
+    return this.me(response.user.id);
+  }
+
+  /** Signs in with email (US-003). A suspended account is refused after the password check. */
+  async signIn(dto: SignInDto, res: Response): Promise<MeResponseDto> {
+    const { headers, response } = await this.call(() =>
+      this.auth.api.signInEmail({
+        body: { email: dto.email, password: dto.password },
+        returnHeaders: true,
+      }),
+    );
+
+    const account = await this.prisma.user.findUniqueOrThrow({
+      where: { id: response.user.id },
+      select: { status: true },
+    });
+    if (account.status === 'SUSPENDED') {
+      // The password was right, so the person may be told; end every session of the account.
+      await this.prisma.session.deleteMany({
+        where: { userId: response.user.id },
+      });
+      throw new AppError(
+        ErrorCode.ACCOUNT_SUSPENDED,
+        HttpStatus.FORBIDDEN,
+        'This account is suspended.',
+      );
+    }
+
+    this.forwardCookies(headers, res);
+    return this.me(response.user.id);
+  }
+
+  /** Ends the session of this browser (US-003). */
+  async signOut(req: Request, res: Response): Promise<void> {
+    const { headers } = await this.call(() =>
+      this.auth.api.signOut({
+        headers: fromNodeHeaders(req.headers),
+        returnHeaders: true,
+      }),
+    );
+    this.forwardCookies(headers, res);
+  }
+
+  /** Sends a new verification email (US-002). Unknown addresses are answered the same way. */
+  async sendVerificationEmail(email: string): Promise<void> {
+    try {
+      await this.auth.api.sendVerificationEmail({ body: { email } });
+    } catch (error) {
+      // Never reveal whether an address has an account, or is already verified.
+      this.logger.log(`Verification email not sent: ${this.reasonOf(error)}`);
+    }
+  }
+
+  /** Marks the email address as verified (US-002). */
+  async verifyEmail(token: string): Promise<void> {
+    await this.call(() => this.auth.api.verifyEmail({ query: { token } }));
+  }
+
+  /** Starts a password reset (US-007). The answer never reveals whether the address is known. */
+  async requestPasswordReset(email: string): Promise<void> {
+    try {
+      await this.auth.api.requestPasswordReset({ body: { email } });
+    } catch (error) {
+      this.logger.log(`Password reset not started: ${this.reasonOf(error)}`);
+    }
+  }
+
+  /** Sets a new password and signs every device out (US-007, S7). */
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    await this.call(() =>
+      this.auth.api.resetPassword({ body: { token, newPassword } }),
+    );
+  }
+
+  /** The session behind a request, or undefined when there is none. */
+  async sessionFor(req: Request): Promise<SessionContext | undefined> {
+    const session = await this.auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+    if (!session) return undefined;
+
+    const user = session.user as { id: string; role?: string; status?: string };
+    return {
+      user: {
+        id: user.id,
+        role: user.role ?? 'LEARNER',
+        status: user.status ?? 'ACTIVE',
+      },
+    };
+  }
+
+  /** The account and what it may do (API design, section 3.2). */
+  async me(userId: string): Promise<MeResponseDto> {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        emailVerified: true,
+        role: true,
+        termsAcceptedAt: true,
+        accounts: {
+          where: { providerId: { not: 'credential' } },
+          select: { id: true },
+          take: 1,
+        },
+      },
+    });
+
+    // Signing in with Google, LINE, or Facebook counts as verified (V13, V14).
+    const verifiedForAi = user.emailVerified || user.accounts.length > 0;
+    return {
+      id: user.id,
+      name: user.name,
+      // A placeholder address is not a contact address, so it is never shown (D1).
+      email: user.email.endsWith('.invalid') ? null : user.email,
+      emailVerified: user.emailVerified,
+      verifiedForAi,
+      role: user.role,
+      termsAccepted: user.termsAcceptedAt !== null,
+      aiAccess: {
+        available: verifiedForAi,
+        reason: verifiedForAi ? null : 'NOT_VERIFIED',
+      },
+    };
+  }
+
+  private checkAge(birthYear: number, req: Request, res: Response): void {
+    const tooYoung = !isOldEnough(birthYear);
+    if (!tooYoung && !hasAgeBlockCookie(req.headers.cookie)) return;
+
+    if (tooYoung) {
+      // Stop the same browser from trying another year straight away (V20).
+      res.cookie(AGE_BLOCK_COOKIE, '1', {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: this.isProduction,
+        maxAge: AGE_BLOCK_DURATION_MS,
+      });
+    }
+
+    throw new AppError(
+      ErrorCode.AGE_BELOW_MINIMUM,
+      HttpStatus.FORBIDDEN,
+      'LanguZe is for people aged 18 or older.',
+    );
+  }
+
+  /** Runs a Better Auth call and turns its errors into LanguZe errors. */
+  private async call<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation();
+    } catch (error) {
+      if (!(error instanceof APIError)) throw error;
+
+      const known = ERROR_CODE_MAP[this.codeOf(error)];
+      if (known) throw new AppError(known.code, known.status, known.message);
+
+      this.logger.warn(`Unmapped authentication error: ${this.codeOf(error)}`);
+      throw new AppError(
+        ErrorCode.BAD_REQUEST,
+        HttpStatus.BAD_REQUEST,
+        'The request could not be completed.',
+      );
+    }
+  }
+
+  private codeOf(error: APIError): string {
+    const body = error.body as { code?: unknown } | undefined;
+    return typeof body?.code === 'string' ? body.code : error.message;
+  }
+
+  private reasonOf(error: unknown): string {
+    return error instanceof APIError ? this.codeOf(error) : 'unexpected error';
+  }
+
+  private forwardCookies(headers: Headers, res: Response): void {
+    for (const cookie of headers.getSetCookie()) {
+      res.append('Set-Cookie', cookie);
+    }
+  }
+}
