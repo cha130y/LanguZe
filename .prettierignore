@@ -1,6 +1,10 @@
 pnpm-lock.yaml
 apps/api/src/generated/
 
+# Written by `openapi:generate` and `api:types`, not by hand
+apps/api/openapi.json
+apps/web/src/lib/api/schema.d.ts
+
 # Next.js regenerates these agent files on `next dev`
 apps/web/AGENTS.md
 apps/web/CLAUDE.md

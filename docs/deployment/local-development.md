@@ -44,6 +44,8 @@ MAIL_FROM="LanguZe <no-reply@languze.local>"
 
 Only `DATABASE_URL` and `AUTH_SECRET` are required; the other values above are the defaults. The API validates these variables at startup and refuses to start if any are invalid.
 
+The web app needs no environment file locally: it calls `http://localhost:4001` unless `NEXT_PUBLIC_API_URL` says otherwise in `apps/web/.env.local`.
+
 Then start both apps:
 
 ```bash
@@ -67,17 +69,21 @@ Host ports can be changed with `POSTGRES_PORT`, `MAILDEV_SMTP_PORT`, and `MAILDE
 
 Run from the repository root.
 
-| Command                                         | Purpose                                             |
-| ----------------------------------------------- | --------------------------------------------------- |
-| `pnpm dev`                                      | Web + API in watch mode                             |
-| `pnpm lint` / `pnpm typecheck`                  | ESLint / TypeScript in every app                    |
-| `pnpm test`                                     | Unit and component tests (no database needed)       |
-| `pnpm test:e2e`                                 | API e2e tests (needs PostgreSQL and `DATABASE_URL`) |
-| `pnpm build`                                    | Production builds                                   |
-| `pnpm format` / `pnpm format:check`             | Prettier                                            |
-| `pnpm infra:up` / `pnpm infra:down`             | Start / stop local infrastructure                   |
-| `pnpm --filter @languze/api prisma:migrate`     | Create and apply a migration (`prisma migrate dev`) |
-| `pnpm --filter @languze/api exec prisma studio` | Browse data                                         |
+| Command                                         | Purpose                                              |
+| ----------------------------------------------- | ---------------------------------------------------- |
+| `pnpm dev`                                      | Web + API in watch mode                              |
+| `pnpm lint` / `pnpm typecheck`                  | ESLint / TypeScript in every app                     |
+| `pnpm test`                                     | Unit and component tests (no database needed)        |
+| `pnpm test:e2e`                                 | API e2e tests (needs PostgreSQL and `DATABASE_URL`)  |
+| `pnpm build`                                    | Production builds                                    |
+| `pnpm format` / `pnpm format:check`             | Prettier                                             |
+| `pnpm infra:up` / `pnpm infra:down`             | Start / stop local infrastructure                    |
+| `pnpm --filter @languze/api prisma:migrate`     | Create and apply a migration (`prisma migrate dev`)  |
+| `pnpm --filter @languze/api exec prisma studio` | Browse data                                          |
+| `pnpm --filter @languze/api openapi:generate`   | Rewrite `apps/api/openapi.json` from the controllers |
+| `pnpm --filter @languze/web api:types`          | Rewrite the web app's types from that document (E4)  |
+
+Both generated files are committed, so the web app type-checks without a running API. Run the two commands, in that order, whenever a request or response shape changes; the web app then reports the change as a type error instead of a bug at runtime.
 
 Commits run Husky's pre-commit hook: ESLint (per app) and Prettier on staged files only.
 
