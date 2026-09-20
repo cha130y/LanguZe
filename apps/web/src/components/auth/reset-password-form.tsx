@@ -85,7 +85,13 @@ export function ResetPasswordForm({ token }: { token: string | null }) {
           error={errors.confirmPassword?.message}
           {...register('confirmPassword')}
         />
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          variant="cta"
+          size="xl"
+          className="mt-1 w-full"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'กำลังบันทึก…' : 'ตั้งรหัสผ่านใหม่'}
         </Button>
       </div>

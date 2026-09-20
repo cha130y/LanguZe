@@ -54,7 +54,13 @@ export function ForgotPasswordForm() {
           error={errors.email?.message}
           {...register('email')}
         />
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          variant="cta"
+          size="xl"
+          className="mt-1 w-full"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'กำลังส่ง…' : 'ส่งลิงก์ตั้งรหัสผ่านใหม่'}
         </Button>
       </div>

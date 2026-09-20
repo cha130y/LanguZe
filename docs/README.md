@@ -14,6 +14,7 @@ Documentation grows with the product: a document is added when the decision or f
 | [Architecture overview](architecture/overview.md) (draft)                                | Systems, applications, API modules, cross-cutting rules, deployment view |
 | [Data model](architecture/data-model.md) (draft)                                         | ERD, data dictionary, deletion rules, and personal data map              |
 | [API design](architecture/api-design.md) (draft)                                         | Endpoints, conventions, error codes, and rate limits                     |
+| [Design system](architecture/design-system.md) (draft)                                   | Colour, typography, surfaces, motion, breakpoints, accessibility rules   |
 | [ADR-0001: Modular monolith](architecture/adr/0001-modular-monolith.md)                  | Why LanguZe starts as one deployable API                                 |
 | [ADR-0002: Toolchain baseline](architecture/adr/0002-toolchain-baseline.md)              | Framework/tool versions, pins, and the reasons                           |
 | [ADR-0003: Better Auth inside the API](architecture/adr/0003-better-auth-in-api.md)      | Authentication choice and its configuration                              |
@@ -25,15 +26,15 @@ Documentation grows with the product: a document is added when the decision or f
 
 ## Planned structure
 
-| Folder          | Contents                                                                 |
-| --------------- | ------------------------------------------------------------------------ |
-| `requirements/` | PRD, SRS (`FR-xxx`), user stories (`US-xxx`), use cases (`UC-xxx`)       |
-| `architecture/` | Overview, ERD + data dictionary, API design, ADRs in `architecture/adr/` |
-| `flows/`        | Authentication, image-to-vocabulary, game session, AI tutor, moderation  |
-| `ai/`           | Provider abstraction, vision pipeline, vocabulary generation, tutor, RAG |
-| `testing/`      | Testing strategy                                                         |
-| `deployment/`   | Local development, Docker, CI/CD                                         |
-| `planning/`     | Build plan for each release                                              |
+| Folder          | Contents                                                                                |
+| --------------- | --------------------------------------------------------------------------------------- |
+| `requirements/` | PRD, SRS (`FR-xxx`), user stories (`US-xxx`), use cases (`UC-xxx`)                      |
+| `architecture/` | Overview, ERD + data dictionary, API design, design system, ADRs in `architecture/adr/` |
+| `flows/`        | Authentication, image-to-vocabulary, game session, AI tutor, moderation                 |
+| `ai/`           | Provider abstraction, vision pipeline, vocabulary generation, tutor, RAG                |
+| `testing/`      | Testing strategy                                                                        |
+| `deployment/`   | Local development, Docker, CI/CD                                                        |
+| `planning/`     | Build plan for each release                                                             |
 
 Design documents were written in this order before feature development: PRD → SRS → user stories → use cases → process flows → architecture overview → data model → ADRs (Better Auth, AI provider, PostgreSQL and pgvector) → API design. Feature development follows the [build plan](planning/build-plan.md).
 

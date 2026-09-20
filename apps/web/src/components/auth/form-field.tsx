@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from 'cn';
 import type { ComponentProps, ReactNode } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +14,7 @@ export function FormField({
   label,
   error,
   hint,
+  className,
   ...inputProps
 }: ComponentProps<typeof Input> & {
   id: string;
@@ -28,11 +30,15 @@ export function FormField({
 
   return (
     <div className="grid gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id} className="font-semibold">
+        {label}
+      </Label>
       <Input
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
+        // 44px tall, so the field is comfortable to hit on a phone.
+        className={cn('h-11 rounded-xl px-3.5', className)}
         {...inputProps}
       />
       {hint ? (

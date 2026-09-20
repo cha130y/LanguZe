@@ -21,7 +21,13 @@ export function SignOutButton() {
   };
 
   return (
-    <Button variant="outline" onClick={() => void signOut()} disabled={busy}>
+    <Button
+      variant="outline"
+      size="xl"
+      className="w-full"
+      onClick={() => void signOut()}
+      disabled={busy}
+    >
       {busy ? 'กำลังออกจากระบบ…' : 'ออกจากระบบ'}
     </Button>
   );
@@ -58,7 +64,8 @@ export function ResendVerificationButton({ email }: { email: string }) {
     <div className="grid gap-1">
       <Button
         variant="outline"
-        size="sm"
+        size="lg"
+        className="justify-self-start"
         onClick={() => void resend()}
         disabled={state === 'sending'}
       >

@@ -13,8 +13,8 @@ export function AuthCard({
   footer?: ReactNode;
 }) {
   return (
-    <section className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-sm">
-      <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+    <section className="glass-panel w-full max-w-sm rounded-3xl p-6 sm:p-7">
+      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
       {description ? (
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       ) : null}

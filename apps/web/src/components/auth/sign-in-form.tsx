@@ -52,7 +52,13 @@ export function SignInForm() {
           error={errors.password?.message}
           {...register('password')}
         />
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          variant="cta"
+          size="xl"
+          className="mt-1 w-full"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ'}
         </Button>
       </div>
