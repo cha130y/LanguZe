@@ -69,13 +69,25 @@ Every error has the same shape (E2):
 
 ## 3. Endpoints
 
-### 3.1 Authentication (Better Auth, `/auth`)
+### 3.1 Authentication (`/v1/auth`)
 
-Better Auth provides sign-up and sign-in with email and password, sign-in with Google, LINE, and Facebook with their callbacks, sign-out, the current session, email verification, and password reset. The exact paths are those of the pinned Better Auth version. LanguZe adds rules through hooks (ADR-0003):
+Better Auth runs inside the API (ADR-0003), but learners reach it through LanguZe endpoints, so every answer uses the error format of section 2.4 and the rate limits of section 5. The provider callbacks under `/auth` are added with provider sign-in.
 
-- **Email sign-up** also takes `birthYear` and `acceptTerms`. It is refused with `AGE_BELOW_MINIMUM` (`403`) when the year of birth is under the limit (V20), with `TERMS_NOT_ACCEPTED` (`400`) without acceptance, and with `EMAIL_ALREADY_REGISTERED` (`409`) for a known address (FR-001).
-- An under-age answer sets a short `HttpOnly` cookie that blocks further sign-up attempts from that browser for 24 hours (V20).
-- Sign-in of a suspended account is refused with `ACCOUNT_SUSPENDED` (`403`), and only after the password or the provider has confirmed the person (FR-105).
+| Method | Path                               | Purpose                                                                                                                             | Requirements                |
+| ------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `POST` | `/v1/auth/sign-up`                 | Email, password, display name, year of birth, and accepting the Terms; signs the learner in and sends the verification email; `201` | FR-001, FR-004, FR-090, V20 |
+| `POST` | `/v1/auth/sign-in`                 | Email and password                                                                                                                  | FR-002, FR-105              |
+| `POST` | `/v1/auth/sign-out`                | Ends this browser's session; `204`                                                                                                  | FR-002                      |
+| `POST` | `/v1/auth/send-verification-email` | Sends a new verification email                                                                                                      | FR-004                      |
+| `POST` | `/v1/auth/verify-email`            | Verifies the address with the token from the email                                                                                  | FR-004                      |
+| `POST` | `/v1/auth/request-password-reset`  | Sends a reset link                                                                                                                  | FR-005                      |
+| `POST` | `/v1/auth/reset-password`          | Sets a new password and ends every session                                                                                          | FR-005, S7                  |
+
+- Sign-up and sign-in answer with the account, in the same shape as `GET /v1/me`, and set the session cookie.
+- Sign-up is refused with `TERMS_NOT_ACCEPTED` (`400`), `AGE_BELOW_MINIMUM` (`403`, V20), or `EMAIL_ALREADY_REGISTERED` (`409`, U7). An under-age answer also sets a short `HttpOnly` cookie that blocks further attempts from that browser for 24 hours.
+- Sign-in is refused with `INVALID_CREDENTIALS` (`401`), which never says whether the address is known, or `ACCOUNT_SUSPENDED` (`403`) once the password has confirmed the person (FR-105).
+- The two email endpoints always answer `{ "ok": true }`, whether or not the address has an account (FR-005).
+- Verification and reset links point at the web app, which sends the token to the API. A used or expired token is answered with `INVALID_TOKEN` (`400`).
 
 ### 3.2 Account (`auth` module)
 
@@ -246,6 +258,8 @@ The generic codes (`BAD_REQUEST`, `FORBIDDEN`, `CONFLICT`, `PAYLOAD_TOO_LARGE`, 
 | `TERMS_NOT_ACCEPTED`       | 400    | Sign-up without accepting the Terms of Use.                                            |
 | `MESSAGE_TOO_LONG`         | 400    | A tutor message over 1,000 characters (V7).                                            |
 | `NOT_SIGNED_IN`            | 401    | No valid session.                                                                      |
+| `INVALID_CREDENTIALS`      | 401    | The email address or password is incorrect (FR-002).                                   |
+| `INVALID_TOKEN`            | 400    | A verification or reset link is used or expired (FR-004, FR-005).                      |
 | `ACCOUNT_SUSPENDED`        | 403    | The account is suspended (FR-105).                                                     |
 | `TERMS_PENDING`            | 403    | A pending provider sign-up must accept the Terms first (FR-090).                       |
 | `AGE_BELOW_MINIMUM`        | 403    | The year of birth is under the limit (V20).                                            |

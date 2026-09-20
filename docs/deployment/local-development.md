@@ -30,9 +30,19 @@ WORLD_LIMIT=20
 DAILY_ANALYSIS_LIMIT=10
 DAILY_TUTOR_MESSAGE_LIMIT=30
 RATE_LIMIT_PER_MINUTE=120
+
+# Sign-in (ADR-0003). Generate the secret yourself, for example:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+AUTH_SECRET=<32 characters or more>
+AUTH_URL=http://localhost:4001
+
+# Outgoing email; these defaults match Maildev in docker-compose.yml
+MAIL_HOST=localhost
+MAIL_PORT=1026
+MAIL_FROM="LanguZe <no-reply@languze.local>"
 ```
 
-Only `DATABASE_URL` is required; the other values above are the defaults. The API validates these variables at startup and refuses to start if any are invalid.
+Only `DATABASE_URL` and `AUTH_SECRET` are required; the other values above are the defaults. The API validates these variables at startup and refuses to start if any are invalid.
 
 Then start both apps:
 
