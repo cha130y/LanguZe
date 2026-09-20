@@ -8,7 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -39,6 +39,10 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-highlight: var(--highlight);
+  --color-streak: var(--streak);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -46,75 +50,61 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/*
+ * LanguZe is a dark-only interface, so the palette lives on `:root` with no light
+ * counterpart. `<html>` still carries `class="dark"` so the `dark:` rules inside the
+ * shadcn primitives resolve. Every colour below clears 6.6:1 against the background.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
+  color-scheme: dark;
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /*
+   * Latin first, Thai second: the browser takes each character from the first face
+   * that has it, so Latin renders in Plus Jakarta Sans and Thai in IBM Plex Sans Thai.
+   */
+  --font-sans: var(--font-latin), var(--font-thai), sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
+
+  --background: oklch(0.147 0.013 277);
+  --foreground: oklch(0.914 0.011 298);
+  --card: oklch(0.184 0.028 268);
+  --card-foreground: oklch(0.914 0.011 298);
+  --popover: oklch(0.184 0.028 268);
+  --popover-foreground: oklch(0.914 0.011 298);
+  --primary: oklch(0.817 0.124 216);
+  --primary-foreground: oklch(0.136 0.028 265);
+  --secondary: oklch(1 0 0 / 8%);
+  --secondary-foreground: oklch(0.914 0.011 298);
+  --muted: oklch(1 0 0 / 6%);
+  --muted-foreground: oklch(0.72 0.021 251);
+  --accent: oklch(1 0 0 / 10%);
+  --accent-foreground: oklch(0.914 0.011 298);
+  --destructive: oklch(0.719 0.169 13);
+  --success: oklch(0.809 0.15 162);
+  --success-foreground: oklch(0.136 0.028 265);
+  --highlight: oklch(0.835 0.095 298);
+  --streak: oklch(0.705 0.187 48);
+  --border: oklch(1 0 0 / 12%);
+  /* Stronger than --border: an input edge has to reach 3:1 to be seen (WCAG 1.4.11). */
+  --input: oklch(1 0 0 / 28%);
+  --ring: oklch(0.817 0.124 216);
+  --chart-1: oklch(0.817 0.124 216);
+  --chart-2: oklch(0.809 0.15 162);
+  --chart-3: oklch(0.835 0.095 298);
+  --chart-4: oklch(0.68 0.158 277);
+  --chart-5: oklch(0.705 0.187 48);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.184 0.028 268);
+  --sidebar-foreground: oklch(0.914 0.011 298);
+  --sidebar-primary: oklch(0.817 0.124 216);
+  --sidebar-primary-foreground: oklch(0.136 0.028 265);
+  --sidebar-accent: oklch(1 0 0 / 10%);
+  --sidebar-accent-foreground: oklch(0.914 0.011 298);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.817 0.124 216);
 }
 
 @layer base {
@@ -123,8 +113,101 @@
   }
   body {
     @apply bg-background text-foreground;
+    /*
+     * Two soft lights behind everything. Glass needs an uneven backdrop to refract;
+     * over a flat black the panels would read as plain grey rectangles.
+     */
+    background-image:
+      radial-gradient(
+        60rem 40rem at 15% -10%,
+        oklch(0.817 0.124 216 / 12%),
+        transparent 60%
+      ),
+      radial-gradient(
+        50rem 35rem at 100% 0%,
+        oklch(0.835 0.095 298 / 10%),
+        transparent 55%
+      );
+    background-attachment: fixed;
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer components {
+  /* A translucent panel: cards, dialogs, anything that floats above the background. */
+  .glass-panel {
+    background-image: linear-gradient(
+      135deg,
+      oklch(1 0 0 / 7%) 0%,
+      oklch(1 0 0 / 2%) 45%,
+      oklch(0.184 0.028 268 / 65%) 100%
+    );
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--border);
+    box-shadow:
+      0 16px 36px -8px oklch(0 0 0 / 65%),
+      inset 0 1px 1px 0 oklch(1 0 0 / 25%);
+  }
+
+  /* The same material at chip size, for status badges and small counters. */
+  .glass-pill {
+    background-color: oklch(1 0 0 / 6%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid oklch(1 0 0 / 14%);
+    box-shadow:
+      inset 0 1px 1px oklch(1 0 0 / 20%),
+      0 4px 12px oklch(0 0 0 / 30%);
+  }
+
+  /* The one loud control on a page: the action that moves a learner forward. */
+  .cta-gradient {
+    background-image: linear-gradient(
+      135deg,
+      oklch(0.817 0.124 216) 0%,
+      oklch(0.754 0.139 233) 30%,
+      oklch(0.68 0.158 277) 70%,
+      oklch(0.722 0.177 306) 100%
+    );
+    color: var(--primary-foreground);
+    border: 1px solid oklch(1 0 0 / 50%);
+    box-shadow:
+      0 10px 25px -4px oklch(0.817 0.124 216 / 50%),
+      inset 0 1px 2px oklch(1 0 0 / 80%);
+  }
+
+  .cta-gradient:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+
+  /* Cards that respond to a press, so a tap feels like it landed. */
+  .interactive-card {
+    transition:
+      transform 0.25s var(--ease-spring),
+      border-color 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  .interactive-card:hover {
+    transform: translateY(-3px) scale(1.015);
+    border-color: oklch(0.817 0.124 216 / 40%);
+  }
+
+  .interactive-card:active {
+    transform: scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interactive-card {
+    transition: border-color 0.25s ease;
+  }
+
+  .interactive-card:hover,
+  .interactive-card:active {
+    transform: none;
   }
 }

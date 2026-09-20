@@ -112,7 +112,13 @@ export function SignUpForm() {
             </p>
           ) : null}
         </div>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          variant="cta"
+          size="xl"
+          className="mt-1 w-full"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? 'กำลังสมัคร…' : 'สมัครใช้งาน'}
         </Button>
       </div>

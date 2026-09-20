@@ -11,10 +11,12 @@ export default async function Home() {
   const account = await getAccount();
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center">
-      <div className="grid gap-2">
-        <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-          LanguZe
+    <main className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-10 text-center">
+      <div className="grid gap-3">
+        <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl">
+          <span className="bg-linear-to-r from-primary via-primary to-highlight bg-clip-text text-transparent">
+            LanguZe
+          </span>
         </h1>
         <p className="text-lg text-muted-foreground">
           เรียนภาษาอังกฤษจากสิ่งรอบตัวคุณ
@@ -23,12 +25,16 @@ export default async function Home() {
 
       {account ? (
         <div className="grid w-full max-w-sm gap-4">
-          <p className="text-base">สวัสดี {account.name}</p>
+          <p className="glass-pill justify-self-center rounded-full px-4 py-1.5 text-sm font-semibold">
+            สวัสดี {account.name}
+          </p>
 
           {!account.verifiedForAi && account.email ? (
-            <Alert className="text-left">
-              <AlertTitle>ยืนยันอีเมลเพื่อปลดล็อกฟีเจอร์ AI</AlertTitle>
-              <AlertDescription className="grid gap-2">
+            <Alert className="glass-panel rounded-2xl text-left">
+              <AlertTitle className="font-bold">
+                ยืนยันอีเมลเพื่อปลดล็อกฟีเจอร์ AI
+              </AlertTitle>
+              <AlertDescription className="grid gap-3">
                 <span>
                   เราส่งลิงก์ยืนยันไปที่ {account.email} แล้ว
                   การวิเคราะห์รูปภาพและติวเตอร์ AI จะใช้ได้หลังยืนยันอีเมล
@@ -41,13 +47,17 @@ export default async function Home() {
           <SignOutButton />
         </div>
       ) : (
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <Link href="/sign-up" className={buttonVariants()}>
+        // Stacked and full width on a phone, side by side once there is room.
+        <div className="grid w-full max-w-xs gap-3 sm:flex sm:max-w-none sm:justify-center">
+          <Link
+            href="/sign-up"
+            className={buttonVariants({ variant: 'cta', size: 'xl' })}
+          >
             สมัครใช้งาน
           </Link>
           <Link
             href="/sign-in"
-            className={buttonVariants({ variant: 'outline' })}
+            className={buttonVariants({ variant: 'outline', size: 'xl' })}
           >
             เข้าสู่ระบบ
           </Link>

@@ -34,3 +34,5 @@ Thumbs.db
 # Claude Code local/project-only settings
 .claude/settings.local.json
 CLAUDE.local.md
+
+output
