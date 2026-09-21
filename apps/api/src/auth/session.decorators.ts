@@ -11,6 +11,16 @@ export const IS_PUBLIC_KEY = 'languze:isPublic';
 /** Marks an endpoint as reachable without signing in; everything else needs a session. */
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 
+export const ALLOWS_PENDING_SIGN_UP_KEY = 'languze:allowsPendingSignUp';
+
+/**
+ * Marks an endpoint a provider sign-up may reach before accepting the Terms of Use.
+ * Only the Terms step itself and the account endpoint that drives it qualify: until
+ * the Terms are accepted the account is not usable (FR-090, U5).
+ */
+export const AllowsPendingSignUp = () =>
+  SetMetadata(ALLOWS_PENDING_SIGN_UP_KEY, true);
+
 export interface AuthenticatedRequest extends Request {
   session?: SessionContext;
 }

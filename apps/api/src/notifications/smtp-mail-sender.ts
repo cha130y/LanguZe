@@ -31,7 +31,7 @@ export class SmtpMailSender extends MailSender {
     });
   }
 
-  async send(message: MailMessage): Promise<void> {
+  protected async deliver(message: MailMessage): Promise<void> {
     await this.transporter.sendMail({ ...message, from: this.from });
     this.logger.log(`Sent "${message.subject}"`);
   }

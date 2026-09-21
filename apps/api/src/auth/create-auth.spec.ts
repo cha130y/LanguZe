@@ -19,6 +19,7 @@ const deps = (
   baseURL,
   webOrigin: 'https://languze.com',
   cookieDomain,
+  google: { clientId: '', clientSecret: '' },
   sendVerificationEmail: async () => {},
   sendPasswordResetEmail: async () => {},
 });

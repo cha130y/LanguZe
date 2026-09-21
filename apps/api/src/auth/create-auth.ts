@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import type { PrismaService } from '../prisma/prisma.service.js';
+import { secureLinkedAccount } from './secure-linked-account.js';
 
 export interface AuthDependencies {
   prisma: PrismaService;
@@ -16,6 +17,8 @@ export interface AuthDependencies {
    * share a host and a parent domain would be wrong.
    */
   cookieDomain: string;
+  /** Google OAuth credentials; the provider is not offered while either is empty. */
+  google: { clientId: string; clientSecret: string };
   sendVerificationEmail: (to: string, url: string) => Promise<void>;
   sendPasswordResetEmail: (to: string, url: string) => Promise<void>;
 }
@@ -90,6 +93,39 @@ export function createAuth(deps: AuthDependencies) {
         );
       },
     },
+    /*
+     * Offered only once both credentials exist, so a developer without an OAuth
+     * client still gets a working API — the provider button simply is not there.
+     */
+    socialProviders:
+      deps.google.clientId && deps.google.clientSecret
+        ? {
+            google: {
+              clientId: deps.google.clientId,
+              clientSecret: deps.google.clientSecret,
+            },
+          }
+        : {},
+    account: {
+      accountLinking: {
+        enabled: true,
+        /*
+         * No provider is trusted, so Better Auth links only when the provider
+         * says the email is verified (FR-009, U6).
+         *
+         * `requireLocalEmailVerified` defaults to true, which would refuse the
+         * case US-004 criterion 6 describes: a provider-verified email matching
+         * a LanguZe account whose own email was never verified. Turning it off
+         * allows that link, and it is safe only because the provider's
+         * verification is still required, no provider is trusted, and the
+         * `account.create.after` hook below removes the password such an account
+         * may have been given by someone else (see secure-linked-account.ts).
+         * Better Auth marks the email verified itself.
+         */
+        requireLocalEmailVerified: false,
+        trustedProviders: [],
+      },
+    },
     session: {
       // Role and status are read from the database on every request (NFR-019).
       cookieCache: { enabled: false },
@@ -105,6 +141,37 @@ export function createAuth(deps: AuthDependencies) {
       },
     },
     databaseHooks: {
+      account: {
+        /*
+         * LanguZe never calls a provider's API on a learner's behalf, so it keeps
+         * no provider tokens (D3). Clearing them before the row is written means a
+         * database copy cannot leak access to someone's Google account.
+         */
+        create: {
+          before: (account) =>
+            Promise.resolve({
+              data: {
+                ...account,
+                accessToken: null,
+                refreshToken: null,
+                idToken: null,
+              },
+            }),
+          // Closes account pre-hijacking when a provider links to an unverified account (U6).
+          after: (account) => secureLinkedAccount(deps.prisma, account),
+        },
+        update: {
+          before: (account) =>
+            Promise.resolve({
+              data: {
+                ...account,
+                accessToken: null,
+                refreshToken: null,
+                idToken: null,
+              },
+            }),
+        },
+      },
       user: {
         create: {
           before: (user, context) => {

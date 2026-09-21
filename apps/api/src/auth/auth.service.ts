@@ -18,7 +18,12 @@ import {
 } from './age-gate.js';
 import { AUTH } from './auth.tokens.js';
 import type { Auth } from './create-auth.js';
-import type { MeResponseDto, SignInDto, SignUpDto } from './dto/auth.dto.js';
+import type {
+  AcceptTermsDto,
+  MeResponseDto,
+  SignInDto,
+  SignUpDto,
+} from './dto/auth.dto.js';
 
 /** Better Auth error codes that LanguZe answers with a code of its own. */
 const ERROR_CODE_MAP: Record<
@@ -58,7 +63,13 @@ const ERROR_CODE_MAP: Record<
 };
 
 export interface SessionContext {
-  user: { id: string; role: string; status: string };
+  user: {
+    id: string;
+    role: string;
+    status: string;
+    /** False while a provider sign-up has not accepted the Terms yet (FR-090, U5). */
+    termsAccepted: boolean;
+  };
 }
 
 @Injectable()
@@ -184,12 +195,19 @@ export class AuthService {
     });
     if (!session) return undefined;
 
-    const user = session.user as { id: string; role?: string; status?: string };
+    const user = session.user as {
+      id: string;
+      role?: string;
+      status?: string;
+      termsAcceptedAt?: Date | string | null;
+    };
     return {
       user: {
         id: user.id,
         role: user.role ?? 'LEARNER',
         status: user.status ?? 'ACTIVE',
+        // Null for a provider sign-up that has not finished the Terms step (FR-090).
+        termsAccepted: user.termsAcceptedAt != null,
       },
     };
   }
@@ -229,6 +247,59 @@ export class AuthService {
         reason: verifiedForAi ? null : 'NOT_VERIFIED',
       },
     };
+  }
+
+  /**
+   * Finishes a provider sign-up: the Terms, the display name, and the year of birth
+   * (FR-090, V20). Until this runs the account exists but cannot be used.
+   */
+  async acceptTerms(
+    userId: string,
+    dto: AcceptTermsDto,
+    req: Request,
+    res: Response,
+  ): Promise<MeResponseDto> {
+    this.checkAge(dto.birthYear, req, res);
+
+    /*
+     * Only a pending sign-up is touched. The endpoint is reachable by any signed-in
+     * account, so without this condition an established learner could rewrite their
+     * own name and year of birth through it.
+     */
+    const { count } = await this.prisma.user.updateMany({
+      where: { id: userId, termsAcceptedAt: null },
+      data: {
+        name: dto.name,
+        birthYear: dto.birthYear,
+        termsAcceptedAt: new Date(),
+      },
+    });
+
+    if (count === 0) {
+      throw new AppError(
+        ErrorCode.TERMS_NOT_ACCEPTED,
+        HttpStatus.CONFLICT,
+        'This account has already accepted the Terms of Use.',
+      );
+    }
+
+    return this.me(userId);
+  }
+
+  /**
+   * Declining leaves nothing behind (FR-090, U5): the pending account is removed,
+   * taking its session and provider link with it through the cascade.
+   */
+  async declineTerms(
+    userId: string,
+    req: Request,
+    res: Response,
+  ): Promise<void> {
+    // Again only a pending sign-up, so this can never delete an established account.
+    await this.prisma.user.deleteMany({
+      where: { id: userId, termsAcceptedAt: null },
+    });
+    await this.signOut(req, res);
   }
 
   private checkAge(birthYear: number, req: Request, res: Response): void {

@@ -58,6 +58,32 @@ export class SignUpDto {
   acceptTerms: boolean;
 }
 
+/**
+ * Finishing a provider sign-up (FR-090, V20). The same display name and year of
+ * birth rules as email sign-up; the Terms are accepted by calling the endpoint at
+ * all, so there is no flag to send.
+ */
+export class AcceptTermsDto {
+  @ApiProperty({
+    minLength: 1,
+    maxLength: 50,
+    description:
+      'Display name, prefilled from the provider profile (V12, V19).',
+  })
+  @IsString()
+  @Length(1, 50)
+  name: string;
+
+  @ApiProperty({
+    description: 'Year of birth; the learner must turn 18 this year (V20).',
+  })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1900)
+  @Max(new Date().getFullYear())
+  birthYear: number;
+}
+
 export class SignInDto {
   @ApiProperty()
   @IsEmail()

@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   // Tracing starts at the workspace root, or pnpm's linked packages are missed.
   outputFileTracingRoot: join(here, '..', '..'),
+  /*
+   * The development server only serves its scripts and live-reload channel to
+   * localhost unless told otherwise. Through the tunnel the browser arrives as
+   * languze.com, so without this the page renders but its JavaScript never runs:
+   * buttons appear and do nothing. Development only — production has no dev server.
+   */
+  allowedDevOrigins: ['languze.com'],
 };
 
 export default nextConfig;

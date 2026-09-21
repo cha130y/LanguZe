@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AuthCard } from '@/components/auth/auth-card';
+import { ProviderButtons } from '@/components/auth/provider-buttons';
 import { SignInForm } from '@/components/auth/sign-in-form';
 
 export const metadata: Metadata = { title: 'เข้าสู่ระบบ · LanguZe' };
@@ -19,6 +20,9 @@ export default function SignInPage() {
       }
     >
       <SignInForm />
+      <div className="mt-5">
+        <ProviderButtons providers={['google']} />
+      </div>
     </AuthCard>
   );
 }

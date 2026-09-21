@@ -292,6 +292,61 @@
         ]
       }
     },
+    "/v1/me/terms": {
+      "post": {
+        "operationId": "MeController_acceptTerms",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptTermsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AGE_BELOW_MINIMUM",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/v1/me/terms/decline": {
+      "post": {
+        "operationId": "MeController_declineTerms",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "account"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -573,6 +628,25 @@
         "required": [
           "token",
           "newPassword"
+        ]
+      },
+      "AcceptTermsDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "Display name, prefilled from the provider profile (V12, V19)."
+          },
+          "birthYear": {
+            "type": "number",
+            "description": "Year of birth; the learner must turn 18 this year (V20)."
+          }
+        },
+        "required": [
+          "name",
+          "birthYear"
         ]
       },
       "HealthResponseDto": {

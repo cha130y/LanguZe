@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AuthCard } from '@/components/auth/auth-card';
+import { ProviderButtons } from '@/components/auth/provider-buttons';
 import { SignUpForm } from '@/components/auth/sign-up-form';
 
 export const metadata: Metadata = { title: 'สมัครใช้งาน · LanguZe' };
@@ -20,6 +21,9 @@ export default function SignUpPage() {
       }
     >
       <SignUpForm />
+      <div className="mt-5">
+        <ProviderButtons providers={['google']} />
+      </div>
     </AuthCard>
   );
 }

@@ -1,10 +1,10 @@
-import { Body, Controller, Get, INestApplication, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { Throttle } from '@nestjs/throttler';
 import { IsString, MaxLength } from 'class-validator';
 import request from 'supertest';
-import type { App } from 'supertest/types.js';
 import { configureApp } from '../src/app.setup.js';
 import { AppModule } from '../src/app.module.js';
 import { Public } from '../src/auth/session.decorators.js';
@@ -51,7 +51,7 @@ class ProbeController {
 
 // Requires a reachable PostgreSQL database via DATABASE_URL (see docs/deployment/local-development.md).
 describe('API foundations (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: NestExpressApplication;
   let webOrigin: string;
 
   beforeAll(async () => {
@@ -60,7 +60,10 @@ describe('API foundations (e2e)', () => {
       controllers: [ProbeController],
     }).compile();
 
-    app = moduleRef.createNestApplication({ logger: false });
+    app = moduleRef.createNestApplication<NestExpressApplication>({
+      logger: false,
+      bodyParser: false,
+    });
     configureApp(app);
     await app.init();
     webOrigin = new URL(app.get(ConfigService).getOrThrow<string>('WEB_ORIGIN'))
@@ -194,6 +197,25 @@ describe('API foundations (e2e)', () => {
         .options('/v1/probe/echo')
         .set('Origin', webOrigin)
         .set('Access-Control-Request-Method', 'POST')
+        .expect(204);
+
+      expect(response.headers['access-control-allow-origin']).toBe(webOrigin);
+      expect(response.headers['access-control-allow-credentials']).toBe('true');
+    });
+
+    /*
+     * Better Auth's own handler sits outside the /v1 routes, and was once mounted
+     * ahead of CORS, so it answered the browser's preflight itself with a bare 404.
+     * The browser then refused to send the request, and "Continue with Google" did
+     * nothing when clicked — while the same call from curl, which ignores CORS,
+     * worked perfectly. This pins the order.
+     */
+    it('answers the preflight for provider sign-in, which Better Auth serves', async () => {
+      const response = await request(app.getHttpServer())
+        .options('/auth/sign-in/social')
+        .set('Origin', webOrigin)
+        .set('Access-Control-Request-Method', 'POST')
+        .set('Access-Control-Request-Headers', 'content-type')
         .expect(204);
 
       expect(response.headers['access-control-allow-origin']).toBe(webOrigin);

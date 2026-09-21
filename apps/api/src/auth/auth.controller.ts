@@ -12,6 +12,7 @@ import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiForbiddenResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -21,6 +22,7 @@ import type { Request, Response } from 'express';
 import { ErrorResponseDto } from '../platform/errors/error-response.dto.js';
 import { AuthService } from './auth.service.js';
 import {
+  AcceptTermsDto,
   AcknowledgementDto,
   EmailOnlyDto,
   MeResponseDto,
@@ -29,7 +31,11 @@ import {
   SignUpDto,
   VerifyEmailDto,
 } from './dto/auth.dto.js';
-import { CurrentUser, Public } from './session.decorators.js';
+import {
+  AllowsPendingSignUp,
+  CurrentUser,
+  Public,
+} from './session.decorators.js';
 import type { SessionContext } from './auth.service.js';
 
 /** Rate limits from the API design, section 5. */
@@ -163,6 +169,9 @@ export class MeController {
   constructor(private readonly authService: AuthService) {}
 
   @Get()
+  // A provider sign-up reads this before accepting the Terms: it is how the web app
+  // learns to show the Terms step rather than the home page (FR-090, U5).
+  @AllowsPendingSignUp()
   @ApiOkResponse({ type: MeResponseDto })
   @ApiUnauthorizedResponse({
     type: ErrorResponseDto,
@@ -170,5 +179,37 @@ export class MeController {
   })
   me(@CurrentUser() user: SessionContext['user']): Promise<MeResponseDto> {
     return this.authService.me(user.id);
+  }
+
+  /** Completes a pending provider sign-up (FR-090, V20). */
+  @Post('terms')
+  @AllowsPendingSignUp()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiOkResponse({ type: MeResponseDto })
+  @ApiForbiddenResponse({
+    type: ErrorResponseDto,
+    description: 'AGE_BELOW_MINIMUM',
+  })
+  acceptTerms(
+    @CurrentUser() user: SessionContext['user'],
+    @Body() dto: AcceptTermsDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<MeResponseDto> {
+    return this.authService.acceptTerms(user.id, dto, req, res);
+  }
+
+  /** Declines the Terms: the pending sign-up is removed and the session ends (FR-090). */
+  @Post('terms/decline')
+  @AllowsPendingSignUp()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @ApiNoContentResponse()
+  declineTerms(
+    @CurrentUser() user: SessionContext['user'],
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    return this.authService.declineTerms(user.id, req, res);
   }
 }

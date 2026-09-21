@@ -4,536 +4,587 @@
  */
 
 export interface paths {
-  '/v1/auth/sign-up': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/v1/auth/sign-up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AuthController_signUp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    post: operations['AuthController_signUp'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/v1/auth/sign-in': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/v1/auth/sign-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AuthController_signIn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    post: operations['AuthController_signIn'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/v1/auth/sign-out': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/v1/auth/sign-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AuthController_signOut"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    post: operations['AuthController_signOut'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/v1/auth/send-verification-email': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/v1/auth/send-verification-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AuthController_sendVerificationEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    post: operations['AuthController_sendVerificationEmail'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/v1/auth/verify-email': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/v1/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AuthController_verifyEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    post: operations['AuthController_verifyEmail'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/v1/auth/request-password-reset': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/v1/auth/request-password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AuthController_requestPasswordReset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    post: operations['AuthController_requestPasswordReset'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/v1/auth/reset-password': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/v1/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AuthController_resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    post: operations['AuthController_resetPassword'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/v1/me': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["MeController_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get: operations['MeController_me'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/health': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/v1/me/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["MeController_acceptTerms"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get: operations['HealthController_check'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
+    "/v1/me/terms/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["MeController_declineTerms"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["HealthController_check"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    SignUpDto: {
-      email: string;
-      /** @description At least 8 characters (V2). */
-      password: string;
-      /** @description Display name (V12, V19). */
-      name: string;
-      /** @description Year of birth; the learner must turn 18 this year (V20). */
-      birthYear: number;
-      /** @description Must be true: accepting the Terms of Use and Privacy Policy (FR-090). False is answered with TERMS_NOT_ACCEPTED. */
-      acceptTerms: boolean;
+    schemas: {
+        SignUpDto: {
+            email: string;
+            /** @description At least 8 characters (V2). */
+            password: string;
+            /** @description Display name (V12, V19). */
+            name: string;
+            /** @description Year of birth; the learner must turn 18 this year (V20). */
+            birthYear: number;
+            /** @description Must be true: accepting the Terms of Use and Privacy Policy (FR-090). False is answered with TERMS_NOT_ACCEPTED. */
+            acceptTerms: boolean;
+        };
+        ErrorBodyDto: {
+            /** @enum {string} */
+            code: "BAD_REQUEST" | "VALIDATION_FAILED" | "NOT_SIGNED_IN" | "FORBIDDEN" | "ORIGIN_NOT_ALLOWED" | "NOT_FOUND" | "CONFLICT" | "PAYLOAD_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "RATE_LIMITED" | "INTERNAL_ERROR" | "SERVICE_UNAVAILABLE" | "TERMS_NOT_ACCEPTED" | "MESSAGE_TOO_LONG" | "ACCOUNT_SUSPENDED" | "TERMS_PENDING" | "AGE_BELOW_MINIMUM" | "NOT_VERIFIED" | "AI_SUSPENDED" | "OWN_ACCOUNT" | "INVALID_CREDENTIALS" | "INVALID_TOKEN" | "EMAIL_ALREADY_REGISTERED" | "WORLD_LIMIT_REACHED" | "WORLD_NOT_READY" | "RETRY_NOT_AVAILABLE" | "LAST_WORD" | "NOTHING_TO_REVIEW" | "SESSION_CLOSED" | "QUESTION_UNAVAILABLE" | "ACTION_NOT_APPLICABLE" | "PHOTO_TOO_LARGE" | "PHOTO_TYPE_NOT_ALLOWED" | "DAILY_ANALYSIS_LIMIT" | "DAILY_TUTOR_LIMIT" | "AI_PROVIDER_UNAVAILABLE";
+            /** @description English, for developers; never shown to learners as is. */
+            message: string;
+            details?: {
+                [key: string]: unknown;
+            };
+        };
+        ErrorResponseDto: {
+            error: components["schemas"]["ErrorBodyDto"];
+        };
+        SignInDto: {
+            email: string;
+            password: string;
+        };
+        AiAccessDto: {
+            available: boolean;
+            /**
+             * @description Why AI features are unavailable, if they are.
+             * @enum {string|null}
+             */
+            reason?: "NOT_VERIFIED" | "AI_SUSPENDED" | null;
+        };
+        MeResponseDto: {
+            /** @description The account ID a learner can quote to LanguZe (FR-108). */
+            id: string;
+            name: string;
+            /** @description Empty for accounts without an email address (D1). */
+            email: string | null;
+            emailVerified: boolean;
+            /** @description Whether photo analysis and the tutor are unlocked (SRS 1.3). */
+            verifiedForAi: boolean;
+            /** @enum {string} */
+            role: "LEARNER" | "ADMIN";
+            /** @description False while a provider sign-up has not accepted the Terms (FR-090). */
+            termsAccepted: boolean;
+            aiAccess: components["schemas"]["AiAccessDto"];
+        };
+        EmailOnlyDto: {
+            email: string;
+        };
+        AcknowledgementDto: {
+            /** @example true */
+            ok: boolean;
+        };
+        VerifyEmailDto: {
+            /** @description The token from the verification link. */
+            token: string;
+        };
+        ResetPasswordDto: {
+            /** @description The token from the reset link. */
+            token: string;
+            newPassword: string;
+        };
+        AcceptTermsDto: {
+            /** @description Display name, prefilled from the provider profile (V12, V19). */
+            name: string;
+            /** @description Year of birth; the learner must turn 18 this year (V20). */
+            birthYear: number;
+        };
+        HealthResponseDto: {
+            /** @enum {string} */
+            status: "ok" | "error";
+            /** @enum {string} */
+            database: "up" | "down";
+        };
     };
-    ErrorBodyDto: {
-      /** @enum {string} */
-      code:
-        | 'BAD_REQUEST'
-        | 'VALIDATION_FAILED'
-        | 'NOT_SIGNED_IN'
-        | 'FORBIDDEN'
-        | 'ORIGIN_NOT_ALLOWED'
-        | 'NOT_FOUND'
-        | 'CONFLICT'
-        | 'PAYLOAD_TOO_LARGE'
-        | 'UNSUPPORTED_MEDIA_TYPE'
-        | 'RATE_LIMITED'
-        | 'INTERNAL_ERROR'
-        | 'SERVICE_UNAVAILABLE'
-        | 'TERMS_NOT_ACCEPTED'
-        | 'MESSAGE_TOO_LONG'
-        | 'ACCOUNT_SUSPENDED'
-        | 'TERMS_PENDING'
-        | 'AGE_BELOW_MINIMUM'
-        | 'NOT_VERIFIED'
-        | 'AI_SUSPENDED'
-        | 'OWN_ACCOUNT'
-        | 'INVALID_CREDENTIALS'
-        | 'INVALID_TOKEN'
-        | 'EMAIL_ALREADY_REGISTERED'
-        | 'WORLD_LIMIT_REACHED'
-        | 'WORLD_NOT_READY'
-        | 'RETRY_NOT_AVAILABLE'
-        | 'LAST_WORD'
-        | 'NOTHING_TO_REVIEW'
-        | 'SESSION_CLOSED'
-        | 'QUESTION_UNAVAILABLE'
-        | 'ACTION_NOT_APPLICABLE'
-        | 'PHOTO_TOO_LARGE'
-        | 'PHOTO_TYPE_NOT_ALLOWED'
-        | 'DAILY_ANALYSIS_LIMIT'
-        | 'DAILY_TUTOR_LIMIT'
-        | 'AI_PROVIDER_UNAVAILABLE';
-      /** @description English, for developers; never shown to learners as is. */
-      message: string;
-      details?: {
-        [key: string]: unknown;
-      };
-    };
-    ErrorResponseDto: {
-      error: components['schemas']['ErrorBodyDto'];
-    };
-    SignInDto: {
-      email: string;
-      password: string;
-    };
-    AiAccessDto: {
-      available: boolean;
-      /**
-       * @description Why AI features are unavailable, if they are.
-       * @enum {string|null}
-       */
-      reason?: 'NOT_VERIFIED' | 'AI_SUSPENDED' | null;
-    };
-    MeResponseDto: {
-      /** @description The account ID a learner can quote to LanguZe (FR-108). */
-      id: string;
-      name: string;
-      /** @description Empty for accounts without an email address (D1). */
-      email: string | null;
-      emailVerified: boolean;
-      /** @description Whether photo analysis and the tutor are unlocked (SRS 1.3). */
-      verifiedForAi: boolean;
-      /** @enum {string} */
-      role: 'LEARNER' | 'ADMIN';
-      /** @description False while a provider sign-up has not accepted the Terms (FR-090). */
-      termsAccepted: boolean;
-      aiAccess: components['schemas']['AiAccessDto'];
-    };
-    EmailOnlyDto: {
-      email: string;
-    };
-    AcknowledgementDto: {
-      /** @example true */
-      ok: boolean;
-    };
-    VerifyEmailDto: {
-      /** @description The token from the verification link. */
-      token: string;
-    };
-    ResetPasswordDto: {
-      /** @description The token from the reset link. */
-      token: string;
-      newPassword: string;
-    };
-    HealthResponseDto: {
-      /** @enum {string} */
-      status: 'ok' | 'error';
-      /** @enum {string} */
-      database: 'up' | 'down';
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  AuthController_signUp: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    AuthController_signUp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignUpDto"];
+            };
+        };
+        responses: {
+            /** @description TERMS_NOT_ACCEPTED, VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description AGE_BELOW_MINIMUM */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description EMAIL_ALREADY_REGISTERED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SignUpDto'];
-      };
+    AuthController_signIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignInDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponseDto"];
+                };
+            };
+            /** @description INVALID_CREDENTIALS */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description ACCOUNT_SUSPENDED */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description TERMS_NOT_ACCEPTED, VALIDATION_FAILED */
-      400: {
-        headers: {
-          [name: string]: unknown;
+    AuthController_signOut: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
-      };
-      /** @description AGE_BELOW_MINIMUM */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-      /** @description EMAIL_ALREADY_REGISTERED */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
     };
-  };
-  AuthController_signIn: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    AuthController_sendVerificationEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailOnlyDto"];
+            };
+        };
+        responses: {
+            /** @description Always the same answer (FR-005). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcknowledgementDto"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SignInDto'];
-      };
+    AuthController_verifyEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyEmailDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcknowledgementDto"];
+                };
+            };
+            /** @description INVALID_TOKEN */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
     };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
+    AuthController_requestPasswordReset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['MeResponseDto'];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailOnlyDto"];
+            };
         };
-      };
-      /** @description INVALID_CREDENTIALS */
-      401: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Always the same answer (FR-005). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcknowledgementDto"];
+                };
+            };
         };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-      /** @description ACCOUNT_SUSPENDED */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
     };
-  };
-  AuthController_signOut: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    AuthController_resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcknowledgementDto"];
+                };
+            };
+            /** @description INVALID_TOKEN */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      204: {
-        headers: {
-          [name: string]: unknown;
+    MeController_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content?: never;
-      };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponseDto"];
+                };
+            };
+            /** @description NOT_SIGNED_IN */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
     };
-  };
-  AuthController_sendVerificationEmail: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    MeController_acceptTerms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptTermsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponseDto"];
+                };
+            };
+            /** @description AGE_BELOW_MINIMUM */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['EmailOnlyDto'];
-      };
+    MeController_declineTerms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
     };
-    responses: {
-      /** @description Always the same answer (FR-005). */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    HealthController_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['AcknowledgementDto'];
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthResponseDto"];
+                };
+            };
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
         };
-      };
     };
-  };
-  AuthController_verifyEmail: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['VerifyEmailDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['AcknowledgementDto'];
-        };
-      };
-      /** @description INVALID_TOKEN */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-    };
-  };
-  AuthController_requestPasswordReset: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['EmailOnlyDto'];
-      };
-    };
-    responses: {
-      /** @description Always the same answer (FR-005). */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['AcknowledgementDto'];
-        };
-      };
-    };
-  };
-  AuthController_resetPassword: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ResetPasswordDto'];
-      };
-    };
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['AcknowledgementDto'];
-        };
-      };
-      /** @description INVALID_TOKEN */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-    };
-  };
-  MeController_me: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['MeResponseDto'];
-        };
-      };
-      /** @description NOT_SIGNED_IN */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-    };
-  };
-  HealthController_check: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HealthResponseDto'];
-        };
-      };
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ErrorResponseDto'];
-        };
-      };
-    };
-  };
 }

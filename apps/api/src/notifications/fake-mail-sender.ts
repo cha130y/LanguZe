@@ -9,7 +9,7 @@ import { MailSender, type MailMessage } from './mail-sender.js';
 export class FakeMailSender extends MailSender {
   readonly sent: MailMessage[] = [];
 
-  send(message: MailMessage): Promise<void> {
+  protected deliver(message: MailMessage): Promise<void> {
     this.sent.push(message);
     return Promise.resolve();
   }

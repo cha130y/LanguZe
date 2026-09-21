@@ -1,5 +1,6 @@
 import { writeFileSync } from 'node:fs';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import { API_PREFIX } from './app.setup.js';
@@ -17,7 +18,10 @@ process.env.DATABASE_URL ??=
 process.env.AUTH_SECRET ??= 'placeholder-placeholder-placeholder';
 
 async function generate(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { logger: false });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: false,
+    bodyParser: false,
+  });
   app.setGlobalPrefix(API_PREFIX, { exclude: ['health'] });
   await app.init();
 

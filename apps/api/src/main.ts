@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { configureApp } from './app.setup.js';
 import { AppModule } from './app.module.js';
@@ -8,7 +9,9 @@ import { NodeEnv, type EnvironmentVariables } from './config/env.validation.js';
 import { AppLogger } from './platform/logging/app-logger.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    // Better Auth reads the raw body; configureApp turns JSON parsing back on.
+    bodyParser: false,
     // JSON lines in production for log collection; readable output while developing.
     logger: new AppLogger({
       json: process.env.NODE_ENV === NodeEnv.Production,

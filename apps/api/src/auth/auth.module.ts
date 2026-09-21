@@ -13,6 +13,7 @@ import { AuthController, MeController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { AUTH } from './auth.tokens.js';
 import { createAuth } from './create-auth.js';
+import { PendingSignUpCleanupService } from './pending-sign-up-cleanup.service.js';
 import { SessionGuard } from './session.guard.js';
 
 const mailLogger = new Logger('AccountEmails');
@@ -25,6 +26,7 @@ const mailLogger = new Logger('AccountEmails');
   imports: [PrismaModule, NotificationsModule],
   controllers: [AuthController, MeController],
   providers: [
+    PendingSignUpCleanupService,
     {
       provide: AUTH,
       inject: [ConfigService, PrismaService, MailSender],
@@ -50,6 +52,10 @@ const mailLogger = new Logger('AccountEmails');
           baseURL: config.get('AUTH_URL', { infer: true }),
           webOrigin: config.get('WEB_ORIGIN', { infer: true }),
           cookieDomain: config.get('COOKIE_DOMAIN', { infer: true }),
+          google: {
+            clientId: config.get('GOOGLE_CLIENT_ID', { infer: true }),
+            clientSecret: config.get('GOOGLE_CLIENT_SECRET', { infer: true }),
+          },
           sendVerificationEmail: (to, url) => send(verificationEmail(to, url)),
           sendPasswordResetEmail: (to, url) =>
             send(passwordResetEmail(to, url)),
