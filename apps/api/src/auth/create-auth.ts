@@ -39,6 +39,13 @@ export function createAuth(deps: AuthDependencies) {
     // Reserved for the provider callbacks mounted in a later increment (API design, E1).
     basePath: '/auth',
     trustedOrigins: [deps.webOrigin],
+    /*
+     * Where a provider callback sends the browser when it fails before the
+     * sign-in's own error address is known — a missing or expired state, say.
+     * Better Auth's default is its own error page at /auth/error, which the API
+     * does not serve (provider-routes.ts). Better Auth appends `?error=<code>`.
+     */
+    onAPIError: { errorURL: `${deps.webOrigin}/sign-in` },
     database: prismaAdapter(deps.prisma, { provider: 'postgresql' }),
     advanced: {
       // Prisma generates UUID version 7 keys (D5).
