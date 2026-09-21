@@ -1,9 +1,6 @@
 import { Logger, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  NodeEnv,
-  type EnvironmentVariables,
-} from '../config/env.validation.js';
+import type { EnvironmentVariables } from '../config/env.validation.js';
 import { MailSender } from '../notifications/mail-sender.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import {
@@ -52,8 +49,6 @@ const mailLogger = new Logger('AccountEmails');
           secret: config.get('AUTH_SECRET', { infer: true }),
           baseURL: config.get('AUTH_URL', { infer: true }),
           webOrigin: config.get('WEB_ORIGIN', { infer: true }),
-          isProduction:
-            config.get('NODE_ENV', { infer: true }) === NodeEnv.Production,
           cookieDomain: config.get('COOKIE_DOMAIN', { infer: true }),
           sendVerificationEmail: (to, url) => send(verificationEmail(to, url)),
           sendPasswordResetEmail: (to, url) =>
