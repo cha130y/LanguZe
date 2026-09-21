@@ -81,6 +81,21 @@ export class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   MAIL_FROM: string = 'LanguZe <no-reply@languze.local>';
+
+  // Credentials for the email provider. Empty locally: Maildev accepts anonymous mail.
+  @IsString()
+  MAIL_USER: string = '';
+
+  @IsString()
+  MAIL_PASSWORD: string = '';
+
+  /**
+   * The domain the session cookie is set on, so the web app and the API can both
+   * read it across subdomains in production (H5). Empty locally, where both run on
+   * `localhost` and cookies are already shared.
+   */
+  @IsString()
+  COOKIE_DOMAIN: string = '';
 }
 
 /**

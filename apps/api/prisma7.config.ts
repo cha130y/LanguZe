@@ -13,6 +13,12 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    url: process.env.DATABASE_URL,
+    /*
+     * Migrations need a direct connection. Neon's pooled endpoint cannot run the
+     * schema statements `prisma migrate` issues, so production sets the unpooled
+     * URL here while the application keeps using the pooled one. Locally the two
+     * are the same database and only DATABASE_URL is set.
+     */
+    url: process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL,
   },
 });

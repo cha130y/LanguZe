@@ -21,6 +21,7 @@ Documentation grows with the product: a document is added when the decision or f
 | [ADR-0004: Google Gemini as the first AI provider](architecture/adr/0004-ai-provider.md) | AI provider, paid tier, models, safety check, and tutor settings         |
 | [ADR-0005: PostgreSQL and pgvector](architecture/adr/0005-postgresql-and-pgvector.md)    | PostgreSQL as the only database; pgvector when RAG arrives               |
 | [Local development](deployment/local-development.md)                                     | Setup, environment variables, commands, troubleshooting                  |
+| [Production deployment](deployment/production.md) (draft)                                | Name and domain check, hosting providers, configuration, release checks  |
 | [Build plan](planning/build-plan.md) (draft)                                             | Release 1.0 increments, dependencies, and milestones                     |
 | [Testing strategy](testing/strategy.md) (draft)                                          | Test levels, conventions, what must be covered, and CI                   |
 
@@ -33,7 +34,7 @@ Documentation grows with the product: a document is added when the decision or f
 | `flows/`        | Authentication, image-to-vocabulary, game session, AI tutor, moderation                 |
 | `ai/`           | Provider abstraction, vision pipeline, vocabulary generation, tutor, RAG                |
 | `testing/`      | Testing strategy                                                                        |
-| `deployment/`   | Local development, Docker, CI/CD                                                        |
+| `deployment/`   | Local development, production deployment, Docker, CI/CD                                 |
 | `planning/`     | Build plan for each release                                                             |
 
 Design documents were written in this order before feature development: PRD → SRS → user stories → use cases → process flows → architecture overview → data model → ADRs (Better Auth, AI provider, PostgreSQL and pgvector) → API design. Feature development follows the [build plan](planning/build-plan.md).
