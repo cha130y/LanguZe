@@ -44,9 +44,52 @@ MAIL_FROM="LanguZe <no-reply@languze.local>"
 
 Only `DATABASE_URL` and `AUTH_SECRET` are required; the other values above are the defaults. The API validates these variables at startup and refuses to start if any are invalid.
 
-Three more variables exist for production and stay empty locally: `MAIL_USER` and `MAIL_PASSWORD`, because Maildev accepts anonymous mail, and `COOKIE_DOMAIN`, because the web app and the API already share `localhost`. See [production deployment](production.md).
+Three more variables exist for production and stay empty locally: `MAIL_USER` and `MAIL_PASSWORD`, because Maildev accepts anonymous mail, and `COOKIE_DOMAIN`, because the web app and the API already share `localhost`. See [production deployment](production.md). `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are covered under Google sign-in below.
 
 The web app needs no environment file locally: it calls `http://localhost:4001` unless `NEXT_PUBLIC_API_URL` says otherwise in `apps/web/.env.local`.
+
+**Environment files are read once, at startup.** Watch mode restarts the API when source code changes, not when `.env` changes, so after editing either file stop `pnpm dev` and start it again. A setting that seems to be ignored almost always means this.
+
+## Google sign-in
+
+Optional: without credentials the API still starts, and simply does not offer Google.
+
+1. In [Google Cloud Console](https://console.cloud.google.com), create a project named **LanguZe** — its own project, because the consent screen belongs to the project and learners would otherwise see another app's name
+2. **APIs & Services → OAuth consent screen → Get started**: app name LanguZe, audience **External**, then under **Branding** add `languze.com` as an authorised domain
+3. **Audience**: leave it in **Testing** and add your own Google account as a test user. Only listed test users can sign in, which is what development needs, and nothing has to be verified
+4. **Data Access**: only `openid`, `userinfo.email`, and `userinfo.profile`
+5. **Clients → Create client**, type **Web application**, with both redirect URIs:
+   - `https://api.languze.com/auth/callback/google`
+   - `http://localhost:4001/auth/callback/google`
+6. Copy the secret straight away — it may not be shown again — and put both values in `apps/api/.env` as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+
+A `redirect_uri_mismatch` from Google means the URI above differs from the one registered, even by a trailing slash.
+
+## Testing through the tunnel
+
+Sign-in has to be tried in real browsers on real subdomains — Safari, and the LINE and Facebook in-app browsers (NFR-018) — because the problems it guards against cannot appear on `localhost`. A Cloudflare Tunnel serves the local applications at `languze.com` and `api.languze.com` over HTTPS, reachable from a phone on any network.
+
+The tunnel `languze-dev` is configured in `~/.cloudflared/config.yml`. Start it alongside the applications:
+
+```bash
+cloudflared tunnel run languze-dev
+pnpm dev
+```
+
+While it runs, `languze.com` is public and anyone who finds it can sign up, so stop it when you are done. The `.env` files have to match how you are testing — mixing the two sends the provider callback somewhere the browser is not:
+
+| Variable                        | Local only              | Through the tunnel        |
+| ------------------------------- | ----------------------- | ------------------------- |
+| `WEB_ORIGIN`                    | `http://localhost:3003` | `https://languze.com`     |
+| `AUTH_URL`                      | `http://localhost:4001` | `https://api.languze.com` |
+| `COOKIE_DOMAIN`                 | _(empty)_               | `.languze.com`            |
+| `NEXT_PUBLIC_API_URL` (web app) | `http://localhost:4001` | `https://api.languze.com` |
+
+In tunnel mode, open `https://languze.com` rather than `localhost:3003`: the API only accepts requests from the origin it is configured for, and the browser blocks the rest without saying why.
+
+`next.config.ts` allows `languze.com` as a development origin. Without it the Next.js development server refuses to serve its scripts to that origin, so pages render but no button does anything, and the only clue is a failed `/_next/hmr` WebSocket in the browser console.
+
+**When something does nothing in the browser, open the console first** (F12). `curl` skips exactly the checks a browser enforces — CORS and the origin headers — so a request can succeed from the terminal and be blocked in the page.
 
 Then start both apps:
 
@@ -86,6 +129,8 @@ Run from the repository root.
 | `pnpm --filter @languze/web api:types`          | Rewrite the web app's types from that document (E4)  |
 
 Both generated files are committed, so the web app type-checks without a running API. Run the two commands, in that order, whenever a request or response shape changes; the web app then reports the change as a type error instead of a bug at runtime.
+
+`pnpm test:e2e` runs against the development database and removes only the accounts it created, so accounts you sign in with by hand survive it. It sets its own `WEB_ORIGIN`, `AUTH_URL` and `COOKIE_DOMAIN`, so it passes whether your `.env` is in local or tunnel mode.
 
 Commits run Husky's pre-commit hook: ESLint (per app) and Prettier on staged files only.
 
