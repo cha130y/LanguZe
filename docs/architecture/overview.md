@@ -172,7 +172,7 @@ flowchart LR
 
 - **One API instance** keeps background analysis, scheduled tasks, and rate limits in one process, with no Redis or queue. Scaling out later needs shared rate limits, a job queue, and a single runner for scheduled tasks (section 8).
 - **Local development** uses Docker Compose for PostgreSQL and Maildev, plus SeaweedFS as local S3-compatible storage, added together with the `storage` module (A3). The applications run on the host with `pnpm dev` ([local development](../deployment/local-development.md)).
-- Hosting providers, the email provider, domains, and environment variables are chosen in the deployment document.
+- Hosting providers, the email provider, domains, and environment variables are chosen in [production deployment](../deployment/production.md): both applications on Railway in Singapore, Neon for PostgreSQL, Resend for email, all under `languze.com` with the API on `api.languze.com`.
 
 ## 8. How the architecture grows
 
