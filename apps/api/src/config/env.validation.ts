@@ -96,6 +96,17 @@ export class EnvironmentVariables {
    */
   @IsString()
   COOKIE_DOMAIN: string = '';
+
+  /**
+   * Google sign-in (FR-003). Empty until a developer registers an OAuth client,
+   * and the provider is simply not offered while either value is missing, so the
+   * API still starts for anyone working on something else.
+   */
+  @IsString()
+  GOOGLE_CLIENT_ID: string = '';
+
+  @IsString()
+  GOOGLE_CLIENT_SECRET: string = '';
 }
 
 /**

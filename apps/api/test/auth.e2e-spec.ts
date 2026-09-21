@@ -1,8 +1,7 @@
-import type { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
-import type { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
 import { configureApp } from '../src/app.setup.js';
 import { FakeMailSender } from '../src/notifications/fake-mail-sender.js';
@@ -36,7 +35,7 @@ const freshEmail = () => `learner${++nextAddress}.${Date.now()}@example.com`;
 
 // Requires a reachable PostgreSQL database via DATABASE_URL (see docs/deployment/local-development.md).
 describe('Email sign-up and sign-in (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: NestExpressApplication;
   let prisma: PrismaService;
   const mail = new FakeMailSender();
   // Rate limiting stays switched on, but its counters are cleared between tests, so a
@@ -53,7 +52,10 @@ describe('Email sign-up and sign-in (e2e)', () => {
       .useValue(mail)
       .compile();
 
-    app = moduleRef.createNestApplication({ logger: false });
+    app = moduleRef.createNestApplication<NestExpressApplication>({
+      logger: false,
+      bodyParser: false,
+    });
     configureApp(app);
     await app.init();
     prisma = app.get(PrismaService);
@@ -64,8 +66,14 @@ describe('Email sign-up and sign-in (e2e)', () => {
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany();
-    await prisma.verification.deleteMany();
+    // Only what this file created. The suite shares the development database, so an
+    // unscoped delete would wipe the accounts a developer signs in with by hand.
+    await prisma.user.deleteMany({
+      where: { email: { endsWith: '@example.com' } },
+    });
+    await prisma.verification.deleteMany({
+      where: { identifier: { contains: '@example.com' } },
+    });
     await app.close();
   });
 
