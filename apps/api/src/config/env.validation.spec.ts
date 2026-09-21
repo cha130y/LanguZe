@@ -67,6 +67,27 @@ describe('validateEnv', () => {
     ).toThrow(/^Invalid environment variables: DATABASE_URL$/);
   });
 
+  it('leaves the production-only variables empty by default', () => {
+    const env = validateEnv({ ...required });
+
+    // Maildev needs no credentials, and on localhost the cookie is already shared.
+    expect(env.MAIL_USER).toBe('');
+    expect(env.MAIL_PASSWORD).toBe('');
+    expect(env.COOKIE_DOMAIN).toBe('');
+  });
+
+  it('accepts the production mail credentials and cookie domain', () => {
+    const env = validateEnv({
+      ...required,
+      MAIL_USER: 'resend',
+      MAIL_PASSWORD: 'not-a-real-key',
+      COOKIE_DOMAIN: '.languze.com',
+    });
+
+    expect(env.MAIL_USER).toBe('resend');
+    expect(env.COOKIE_DOMAIN).toBe('.languze.com');
+  });
+
   it('requires a long AUTH_SECRET', () => {
     expect(() => validateEnv({ DATABASE_URL })).toThrow(/AUTH_SECRET/);
     expect(() =>

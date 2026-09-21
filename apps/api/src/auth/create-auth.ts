@@ -11,6 +11,12 @@ export interface AuthDependencies {
   /** The web app's origin, used for the links in emails and as the trusted origin. */
   webOrigin: string;
   isProduction: boolean;
+  /**
+   * The domain to set the session cookie on, so both `languze.com` and
+   * `api.languze.com` receive it (H5). Empty on localhost, where the two already
+   * share a host and a parent domain would be wrong.
+   */
+  cookieDomain: string;
   sendVerificationEmail: (to: string, url: string) => Promise<void>;
   sendPasswordResetEmail: (to: string, url: string) => Promise<void>;
 }
@@ -40,6 +46,20 @@ export function createAuth(deps: AuthDependencies) {
         sameSite: 'lax',
         secure: deps.isProduction,
       },
+      /*
+       * Without this the cookie is host-only for the API, and the web app's server
+       * never sees it, so every page renders signed out after a reload. The domain
+       * has to be given: Better Auth otherwise falls back to the hostname of
+       * `baseURL`, which is the API subdomain — the exact value that fails (H5).
+       */
+      ...(deps.cookieDomain
+        ? {
+            crossSubDomainCookies: {
+              enabled: true,
+              domain: deps.cookieDomain,
+            },
+          }
+        : {}),
     },
     emailAndPassword: {
       enabled: true,

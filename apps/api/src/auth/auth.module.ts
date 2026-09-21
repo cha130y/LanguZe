@@ -54,6 +54,7 @@ const mailLogger = new Logger('AccountEmails');
           webOrigin: config.get('WEB_ORIGIN', { infer: true }),
           isProduction:
             config.get('NODE_ENV', { infer: true }) === NodeEnv.Production,
+          cookieDomain: config.get('COOKIE_DOMAIN', { infer: true }),
           sendVerificationEmail: (to, url) => send(verificationEmail(to, url)),
           sendPasswordResetEmail: (to, url) =>
             send(passwordResetEmail(to, url)),

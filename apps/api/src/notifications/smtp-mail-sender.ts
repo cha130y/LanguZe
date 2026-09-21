@@ -17,11 +17,17 @@ export class SmtpMailSender extends MailSender {
   constructor(config: ConfigService<EnvironmentVariables, true>) {
     super();
     this.from = config.get('MAIL_FROM', { infer: true });
+
+    // Maildev accepts anonymous mail; every real provider needs credentials.
+    const user = config.get('MAIL_USER', { infer: true });
+    const pass = config.get('MAIL_PASSWORD', { infer: true });
+
     this.transporter = createTransport({
       host: config.get('MAIL_HOST', { infer: true }),
       port: config.get('MAIL_PORT', { infer: true }),
       // Maildev and most providers upgrade with STARTTLS on their submission port.
       secure: false,
+      ...(user && pass ? { auth: { user, pass } } : {}),
     });
   }
 
