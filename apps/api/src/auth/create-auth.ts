@@ -10,7 +10,6 @@ export interface AuthDependencies {
   baseURL: string;
   /** The web app's origin, used for the links in emails and as the trusted origin. */
   webOrigin: string;
-  isProduction: boolean;
   /**
    * The domain to set the session cookie on, so both `languze.com` and
    * `api.languze.com` receive it (H5). Empty on localhost, where the two already
@@ -41,10 +40,16 @@ export function createAuth(deps: AuthDependencies) {
     advanced: {
       // Prisma generates UUID version 7 keys (D5).
       database: { generateId: false },
+      /*
+       * `secure` is deliberately absent: Better Auth derives it from whether the base
+       * URL is HTTPS, and it names the cookie `__Secure-…` on the same condition.
+       * Setting it from NODE_ENV instead would produce a `__Secure-` cookie without the
+       * Secure attribute whenever the API is served over HTTPS outside production —
+       * over a tunnel, for instance — and browsers reject that combination outright.
+       */
       defaultCookieAttributes: {
         httpOnly: true,
         sameSite: 'lax',
-        secure: deps.isProduction,
       },
       /*
        * Without this the cookie is host-only for the API, and the web app's server
