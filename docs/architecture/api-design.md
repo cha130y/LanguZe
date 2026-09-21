@@ -15,7 +15,7 @@ This document defines the HTTP API between the web app and the API for Release 1
 ### 2.1 Paths and versions
 
 - LanguZe endpoints live under `/v1` (E1). Changes within `v1` are additive only: new endpoints, new optional request fields, new response fields. A breaking change would need `/v2`.
-- Better Auth's own endpoints live under `/auth` and follow the pinned Better Auth version (ADR-0003).
+- Better Auth's own endpoints live under `/auth`, and only the two that provider sign-in needs are served (section 3.1, ADR-0003); every other path there answers `NOT_FOUND`.
 - `GET /health` (already implemented) and `/docs` (OpenAPI, not in production) stay at the root.
 - Resource names are plural nouns; IDs in paths are UUIDs. A request for another learner's resource returns `404`, never `403`, so it reveals nothing about what exists (FR-008).
 
@@ -71,7 +71,7 @@ Every error has the same shape (E2):
 
 ### 3.1 Authentication (`/v1/auth`)
 
-Better Auth runs inside the API (ADR-0003), but learners reach it through LanguZe endpoints, so every answer uses the error format of section 2.4 and the rate limits of section 5. The provider callbacks under `/auth` are added with provider sign-in.
+Better Auth runs inside the API (ADR-0003), but learners reach it through LanguZe endpoints, so every answer uses the error format of section 2.4 and the rate limits of section 5.
 
 | Method | Path                               | Purpose                                                                                                                             | Requirements                |
 | ------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
@@ -88,6 +88,13 @@ Better Auth runs inside the API (ADR-0003), but learners reach it through LanguZ
 - Sign-in is refused with `INVALID_CREDENTIALS` (`401`), which never says whether the address is known, or `ACCOUNT_SUSPENDED` (`403`) once the password has confirmed the person (FR-105).
 - The two email endpoints always answer `{ "ok": true }`, whether or not the address has an account (FR-005).
 - Verification and reset links point at the web app, which sends the token to the API. A used or expired token is answered with `INVALID_TOKEN` (`400`).
+
+Provider sign-in is the exception: the provider sends the browser straight back to the API, so these two routes are Better Auth's own and answer in its format. Nothing else of Better Auth's is served — its own sign-up, for example, would skip the age check and the Terms.
+
+| Method | Path                        | Purpose                                                                                                                                      | Requirements           |
+| ------ | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `POST` | `/auth/sign-in/social`      | Starts a provider sign-in and answers the provider's address, which the web app opens                                                        | FR-003                 |
+| `GET`  | `/auth/callback/{provider}` | The provider's return. Signs the learner in and redirects to the web app: home, the Terms step for a new account, or `/sign-in?error=<code>` | FR-003, FR-009, FR-090 |
 
 ### 3.2 Account (`auth` module)
 
