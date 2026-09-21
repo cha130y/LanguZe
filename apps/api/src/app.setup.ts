@@ -1,9 +1,11 @@
-import { ValidationPipe } from '@nestjs/common';
+import { NotFoundException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { toNodeHandler } from 'better-auth/node';
+import type { NextFunction, Request, Response } from 'express';
 import { AUTH } from './auth/auth.tokens.js';
 import type { Auth } from './auth/create-auth.js';
+import { isProviderRoute } from './auth/provider-routes.js';
 import type { EnvironmentVariables } from './config/env.validation.js';
 import { AllExceptionsFilter } from './platform/errors/all-exceptions.filter.js';
 import { validationErrorFactory } from './platform/errors/validation-error.factory.js';
@@ -24,6 +26,7 @@ export const API_PREFIX = 'v1';
 export function configureApp(app: NestExpressApplication): void {
   const config =
     app.get<ConfigService<EnvironmentVariables, true>>(ConfigService);
+  const errors = new AllExceptionsFilter();
 
   // Registered first so every later step, including errors, knows the request ID.
   app.use(requestContextMiddleware);
@@ -49,8 +52,20 @@ export function configureApp(app: NestExpressApplication): void {
    * front of it. It needs the unparsed body, which is why it is mounted before
    * JSON parsing is switched back on, and why the application is created without
    * a body parser.
+   *
+   * Only the provider routes reach it; every other path under /auth answers
+   * NOT_FOUND in the API's error format (provider-routes.ts). Nest's own 404
+   * handler covers /v1 only, so it cannot be left to the router.
    */
-  app.use('/auth', toNodeHandler(app.get<Auth>(AUTH)));
+  const authHandler = toNodeHandler(app.get<Auth>(AUTH));
+  app.use('/auth', (req: Request, res: Response, next: NextFunction) => {
+    if (!isProviderRoute(req.method, req.path)) {
+      const { status, body } = errors.toErrorResponse(new NotFoundException());
+      res.status(status).json(body);
+      return;
+    }
+    authHandler(req, res).catch(next);
+  });
   app.useBodyParser('json');
 
   app.setGlobalPrefix(API_PREFIX, { exclude: ['health'] });
@@ -62,6 +77,6 @@ export function configureApp(app: NestExpressApplication): void {
       exceptionFactory: validationErrorFactory,
     }),
   );
-  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalFilters(errors);
   app.enableShutdownHooks();
 }
