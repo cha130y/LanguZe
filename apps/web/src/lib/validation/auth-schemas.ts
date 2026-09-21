@@ -34,6 +34,15 @@ export const signUpSchema = z.object({
   }),
 });
 
+/**
+ * Finishing a provider sign-up (FR-090, V20). The Terms are accepted by submitting,
+ * so unlike email sign-up there is no checkbox to validate.
+ */
+export const acceptTermsSchema = signUpSchema.pick({
+  name: true,
+  birthYear: true,
+});
+
 export const signInSchema = z.object({
   email,
   password: z.string().min(1, { error: 'กรุณากรอกรหัสผ่าน' }),
@@ -54,6 +63,8 @@ export const resetPasswordSchema = z
 /** What the form holds while typing: `birthYear` is still the text from the input. */
 export type SignUpInput = z.input<typeof signUpSchema>;
 export type SignUpValues = z.infer<typeof signUpSchema>;
+export type AcceptTermsInput = z.input<typeof acceptTermsSchema>;
+export type AcceptTermsValues = z.infer<typeof acceptTermsSchema>;
 export type SignInValues = z.infer<typeof signInSchema>;
 export type EmailOnlyValues = z.infer<typeof emailOnlySchema>;
 export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;

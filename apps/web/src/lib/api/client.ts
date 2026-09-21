@@ -10,6 +10,12 @@ type Json<T> = T extends { content: { 'application/json': infer B } }
 export type Account = Json<paths['/v1/me']['get']['responses'][200]>;
 export type SignUpBody = Json<paths['/v1/auth/sign-up']['post']['requestBody']>;
 export type SignInBody = Json<paths['/v1/auth/sign-in']['post']['requestBody']>;
+export type AcceptTermsBody = Json<
+  paths['/v1/me/terms']['post']['requestBody']
+>;
+
+/** The providers LanguZe offers (FR-003). */
+export type Provider = 'google';
 
 /** The error shape every endpoint uses (API design, section 2.4). */
 export interface ApiErrorBody {
@@ -111,4 +117,54 @@ export const api = {
       body: JSON.stringify({ token, newPassword }),
     }),
   me: () => call<Account>('/v1/me'),
+  acceptTerms: (body: AcceptTermsBody) =>
+    call<Account>('/v1/me/terms', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  declineTerms: () => call<void>('/v1/me/terms/decline', { method: 'POST' }),
+
+  /**
+   * Starts sign-in with a provider (FR-003). Better Auth serves this itself at
+   * `/auth`, outside the `/v1` endpoints, so it answers with its own shape rather
+   * than LanguZe's error contract and is called directly rather than through `call`.
+   *
+   * A first-time sign-up is sent to the Terms step and an existing account straight
+   * home, which is `newUserCallbackURL` doing the work — the web app never has to
+   * ask which case it is.
+   */
+  async startProviderSignIn(provider: Provider): Promise<string> {
+    const origin = window.location.origin;
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE_URL}/auth/sign-in/social`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider,
+          callbackURL: `${origin}/`,
+          newUserCallbackURL: `${origin}/terms`,
+          errorCallbackURL: `${origin}/sign-in?error=provider`,
+        }),
+      });
+    } catch {
+      throw new ApiError('NETWORK_ERROR', 0, 'The API could not be reached.');
+    }
+
+    const body: unknown = await response.json().catch(() => undefined);
+    const url =
+      typeof body === 'object' && body !== null && 'url' in body
+        ? (body as { url: unknown }).url
+        : undefined;
+
+    if (!response.ok || typeof url !== 'string') {
+      throw new ApiError(
+        'SERVICE_UNAVAILABLE',
+        response.status,
+        'Provider sign-in could not be started.',
+      );
+    }
+    return url;
+  },
 };
