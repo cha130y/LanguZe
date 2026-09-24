@@ -1,8 +1,11 @@
+import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { ThrottlerStorage } from '@nestjs/throttler';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { configureApp } from '../src/app.setup.js';
+import type { EnvironmentVariables } from '../src/config/env.validation.js';
 import { FakeMailSender } from '../src/notifications/fake-mail-sender.js';
 import { MailSender } from '../src/notifications/mail-sender.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
@@ -20,6 +23,7 @@ const DOMAIN = '@handler.example.com';
 describe('Better Auth handler at /auth (e2e)', () => {
   let app: NestExpressApplication;
   let prisma: PrismaService;
+  let rateLimits: Map<string, unknown>;
   const childYear = new Date().getFullYear() - 10;
 
   beforeAll(async () => {
@@ -35,12 +39,18 @@ describe('Better Auth handler at /auth (e2e)', () => {
     configureApp(app);
     await app.init();
     prisma = app.get(PrismaService);
+    rateLimits = app.get<{ storage: Map<string, unknown> }>(
+      ThrottlerStorage,
+    ).storage;
   });
 
   afterAll(async () => {
     await prisma.user.deleteMany({ where: { email: { endsWith: DOMAIN } } });
     await app.close();
   });
+
+  // One test fills the limit on purpose; the others must not inherit it.
+  beforeEach(() => rateLimits.clear());
 
   describe('closed routes', () => {
     it('does not create an account through Better Auth’s own sign-up', async () => {
@@ -84,6 +94,28 @@ describe('Better Auth handler at /auth (e2e)', () => {
   });
 
   describe('provider routes', () => {
+    /*
+     * The routes run before Nest's router, so the ThrottlerGuard never sees them
+     * and the limit has to be applied by the middleware itself (API design, 5).
+     */
+    it('rate limits them', async () => {
+      const limit = app
+        .get<ConfigService<EnvironmentVariables, true>>(ConfigService)
+        .get('RATE_LIMIT_PER_MINUTE', { infer: true });
+
+      // A callback without state is refused by Better Auth without touching the
+      // database, so the limit is all that this loop measures.
+      for (let sent = 0; sent < limit; sent++) {
+        await request(app.getHttpServer()).get('/auth/callback/google');
+      }
+      const response = await request(app.getHttpServer())
+        .get('/auth/callback/google')
+        .expect(429);
+
+      expect(response.body).toMatchObject({ error: { code: 'RATE_LIMITED' } });
+      expect(response.headers['retry-after']).toBe('60');
+    });
+
     it('starts a provider sign-in', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/sign-in/social')
