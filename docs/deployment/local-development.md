@@ -83,12 +83,13 @@ The **email permission** under **OIDC** is not needed and not requested. It take
 
 Sign-in has to be tried in real browsers on real subdomains — Safari, and the LINE and Facebook in-app browsers (NFR-018) — because the problems it guards against cannot appear on `localhost`. A Cloudflare Tunnel serves the local applications at `languze.com` and `api.languze.com` over HTTPS, reachable from a phone on any network.
 
-The tunnel `languze-dev` is configured in `~/.cloudflared/config.yml`. Start it alongside the applications:
+The tunnel `languze-dev` is configured in `~/.cloudflared/config.yml`, with a route for each host: the web app, the API, and photo storage. One command starts all three:
 
 ```bash
-cloudflared tunnel run languze-dev
-pnpm dev
+pnpm dev:tunnel
 ```
+
+It needs `cloudflared` on the PATH. Ctrl-C stops everything, and if one of the three exits the others follow, so nothing keeps a port or a public address after the terminal is closed. To start them apart, `pnpm tunnel` and `pnpm dev` do the same work in two terminals.
 
 While it runs, `languze.com` is public and anyone who finds it can sign up, so stop it when you are done. The `.env` files have to match how you are testing — mixing the two sends the provider callback somewhere the browser is not:
 
@@ -115,7 +116,11 @@ then add it to `~/.cloudflared/config.yml`, above the final `- service: http_sta
   service: http://localhost:8334
 ```
 
-Restart the tunnel afterwards. Production does not have this problem: the links point at Cloudflare R2 over HTTPS (A3).
+Restart the tunnel afterwards.
+
+**Turn Cloudflare's cache off for that hostname.** SeaweedFS sends no `Cache-Control`, so Cloudflare caches the photos by file extension: a deleted photo keeps being served from the edge to anyone holding that exact link, while the origin already refuses it. Add a cache rule once — **Caching → Cache Rules → Create rule**, when **Hostname equals `storage.languze.com`**, then **Bypass cache**. To check: fetch a photo twice and read `cf-cache-status`; it should never say `HIT`.
+
+Production does not have either problem: photo links point at Cloudflare R2's own S3 endpoint over HTTPS (A3), which is not served through this zone. Putting R2 behind a custom domain in the zone later would bring the caching question back with it.
 
 In tunnel mode, open `https://languze.com` rather than `localhost:3003`: the API only accepts requests from the origin it is configured for, and the browser blocks the rest without saying why.
 
@@ -158,6 +163,8 @@ Run from the repository root.
 | Command                                         | Purpose                                              |
 | ----------------------------------------------- | ---------------------------------------------------- |
 | `pnpm dev`                                      | Web + API in watch mode                              |
+| `pnpm dev:tunnel`                               | The tunnel, web and API together (tunnel mode)       |
+| `pnpm tunnel`                                   | The Cloudflare tunnel on its own                     |
 | `pnpm lint` / `pnpm typecheck`                  | ESLint / TypeScript in every app                     |
 | `pnpm test`                                     | Unit and component tests (no database needed)        |
 | `pnpm test:e2e`                                 | API e2e tests (needs PostgreSQL and `DATABASE_URL`)  |
