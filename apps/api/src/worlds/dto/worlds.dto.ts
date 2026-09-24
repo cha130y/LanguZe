@@ -61,7 +61,49 @@ export class WorldSummaryDto {
   createdAt: string;
 }
 
-/** One world with its photo (FR-014). Its words arrive with the analysis increment. */
+/** A highlight box on the prepared photo, in 0–1 coordinates (AIR-003). */
+export class HighlightBoxDto {
+  @ApiProperty()
+  x: number;
+
+  @ApiProperty()
+  y: number;
+
+  @ApiProperty()
+  width: number;
+
+  @ApiProperty()
+  height: number;
+}
+
+/** One word found in this world's photo (FR-014, FR-022). */
+export class WorldWordDto {
+  @ApiProperty({ description: 'Identifies this word in this world (FR-026).' })
+  id: string;
+
+  @ApiProperty()
+  english: string;
+
+  @ApiProperty()
+  thaiMeaning: string;
+
+  @ApiProperty()
+  exampleSentence: string;
+
+  @ApiProperty({ enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] })
+  cefrLevel: string;
+
+  @ApiProperty({ type: HighlightBoxDto })
+  box: HighlightBoxDto;
+
+  @ApiProperty({
+    description: 'What the learner has to do with this word to master it.',
+    enum: ['NEW', 'LEARNING', 'FAMILIAR', 'MASTERED'],
+  })
+  mastery: string;
+}
+
+/** One world with its photo and words (FR-014). */
 export class WorldDetailDto extends WorldSummaryDto {
   @ApiPropertyOptional({
     type: String,
@@ -69,6 +111,21 @@ export class WorldDetailDto extends WorldSummaryDto {
     description: 'A signed link to the prepared photo (P4).',
   })
   photoUrl: string | null;
+
+  @ApiProperty({ type: WorldWordDto, isArray: true })
+  words: WorldWordDto[];
+}
+
+/** What is left of today's limits (FR-080, US-080). */
+export class UsageResponseDto {
+  @ApiProperty({ description: 'Photo analyses left today.' })
+  analysesLeft: number;
+
+  @ApiProperty({ description: 'How many a learner gets each day.' })
+  analysesLimit: number;
+
+  @ApiProperty({ description: 'When the count starts again, in Bangkok time.' })
+  resetsAt: string;
 }
 
 /** Just the status, for the page that waits for an analysis (FR-021, P3). */
