@@ -92,14 +92,30 @@ pnpm dev
 
 While it runs, `languze.com` is public and anyone who finds it can sign up, so stop it when you are done. The `.env` files have to match how you are testing — mixing the two sends the provider callback somewhere the browser is not:
 
-| Variable                        | Local only              | Through the tunnel        |
-| ------------------------------- | ----------------------- | ------------------------- |
-| `WEB_ORIGIN`                    | `http://localhost:3003` | `https://languze.com`     |
-| `AUTH_URL`                      | `http://localhost:4001` | `https://api.languze.com` |
-| `COOKIE_DOMAIN`                 | _(empty)_               | `.languze.com`            |
-| `NEXT_PUBLIC_API_URL` (web app) | `http://localhost:4001` | `https://api.languze.com` |
+| Variable                        | Local only              | Through the tunnel            |
+| ------------------------------- | ----------------------- | ----------------------------- |
+| `WEB_ORIGIN`                    | `http://localhost:3003` | `https://languze.com`         |
+| `AUTH_URL`                      | `http://localhost:4001` | `https://api.languze.com`     |
+| `COOKIE_DOMAIN`                 | _(empty)_               | `.languze.com`                |
+| `NEXT_PUBLIC_API_URL` (web app) | `http://localhost:4001` | `https://api.languze.com`     |
+| `STORAGE_ENDPOINT`              | `http://localhost:8334` | `https://storage.languze.com` |
 
 Both provider callback URLs have to be registered for both addresses, which step 5 above and step 3 under LINE already do.
+
+**Photos need the tunnel too.** A signed photo link points at whatever `STORAGE_ENDPOINT` says, so leaving it on `localhost` while the page is served over HTTPS gives every photo an `http://` address on an `https://` page: the browser treats it as mixed content and asks whether to allow it, and a phone cannot reach the address at all. Give photo storage its own tunnel hostname once:
+
+```bash
+cloudflared tunnel route dns languze-dev storage.languze.com
+```
+
+then add it to `~/.cloudflared/config.yml`, above the final `- service: http_status:404`:
+
+```yaml
+- hostname: storage.languze.com
+  service: http://localhost:8334
+```
+
+Restart the tunnel afterwards. Production does not have this problem: the links point at Cloudflare R2 over HTTPS (A3).
 
 In tunnel mode, open `https://languze.com` rather than `localhost:3003`: the API only accepts requests from the origin it is configured for, and the browser blocks the rest without saying why.
 
