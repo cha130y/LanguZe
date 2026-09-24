@@ -88,6 +88,15 @@ export class S3PhotoStorage extends PhotoStorage implements OnModuleInit {
     );
   }
 
+  async read(key: string): Promise<Buffer> {
+    const answer = await this.client.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+    );
+    const bytes = await answer.Body?.transformToByteArray();
+    if (!bytes) throw new Error(`Photo storage returned nothing for ${key}`);
+    return Buffer.from(bytes);
+  }
+
   async remove(key: string): Promise<void> {
     await this.client.send(
       new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),

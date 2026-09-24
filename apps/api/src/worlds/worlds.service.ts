@@ -5,6 +5,8 @@ import type { EnvironmentVariables } from '../config/env.validation.js';
 import { PhotoDeletionReason } from '../generated/prisma/enums.js';
 import type {
   StoredPhotoModel,
+  VocabularyWordModel,
+  WordOccurrenceModel,
   WorldModel,
 } from '../generated/prisma/models.js';
 import { AppError } from '../platform/errors/app-error.js';
@@ -15,6 +17,7 @@ import {
   type PreparedImage,
 } from '../storage/photo-preparation.service.js';
 import { PhotoStorage, newStorageKey } from '../storage/photo-storage.js';
+import { AnalysisService } from './analysis.service.js';
 import type {
   WorldDetailDto,
   WorldStatusDto,
@@ -33,7 +36,20 @@ export interface UploadedPhoto {
 type WorldWithPhotos = WorldModel & {
   photo: StoredPhotoModel | null;
   thumbnail: StoredPhotoModel | null;
+  occurrences?: (WordOccurrenceModel & {
+    vocabularyWord: VocabularyWordModel;
+  })[];
 };
+
+/** A world with everything the detail and the list need, in one query. */
+const WITH_PHOTOS_AND_WORDS = {
+  photo: true,
+  thumbnail: true,
+  occurrences: {
+    include: { vocabularyWord: true },
+    orderBy: { createdAt: 'asc' },
+  },
+} as const;
 
 @Injectable()
 export class WorldsService {
@@ -44,6 +60,7 @@ export class WorldsService {
     private readonly storage: PhotoStorage,
     private readonly preparation: PhotoPreparationService,
     private readonly auth: AuthService,
+    private readonly analysis: AnalysisService,
     config: ConfigService<EnvironmentVariables, true>,
   ) {
     this.worldLimit = config.get('WORLD_LIMIT', { infer: true });
@@ -76,6 +93,12 @@ export class WorldsService {
     const { prepared, thumbnail } = await this.preparation.prepare(
       upload.buffer,
     );
+    /*
+     * The analysis is taken before anything is stored, so a learner who has used
+     * their ten for today is refused without a world or a photo being left behind
+     * (FR-020). It is given back below if the world cannot be created.
+     */
+    const analysisId = await this.analysis.take(learnerId);
     const photoKey = newStorageKey('PREPARED');
     const thumbnailKey = newStorageKey('THUMBNAIL');
     await this.storage.store({
@@ -103,19 +126,16 @@ export class WorldsService {
             name,
             photoId: photoRow.id,
             thumbnailId: thumbnailRow.id,
-            /*
-             * Increment 6 has no AI yet, so the world is ready as soon as it is
-             * created (B4). The analysis increment replaces this with a background
-             * run that leaves the world ANALYZING until the words arrive.
-             */
-            status: 'READY',
           },
-          include: { photo: true, thumbnail: true },
+          include: WITH_PHOTOS_AND_WORDS,
         });
       });
 
+      // The learner is answered now; the words arrive later (P2, FR-021).
+      await this.analysis.begin(analysisId, world.id, photoKey);
       return await this.detailOf(world);
     } catch (error) {
+      await this.analysis.release(analysisId);
       await this.prisma.photoDeletion.createMany({
         data: [photoKey, thumbnailKey].map((storageKey) => ({
           storageKey,
@@ -131,7 +151,7 @@ export class WorldsService {
     const worlds = await this.prisma.world.findMany({
       where: { learnerId },
       orderBy: { createdAt: 'desc' },
-      include: { photo: true, thumbnail: true },
+      include: WITH_PHOTOS_AND_WORDS,
     });
 
     return Promise.all(worlds.map((world) => this.summaryOf(world)));
@@ -158,7 +178,7 @@ export class WorldsService {
     const world = await this.prisma.world.update({
       where: { id: worldId },
       data: { name },
-      include: { photo: true, thumbnail: true },
+      include: WITH_PHOTOS_AND_WORDS,
     });
     return this.detailOf(world);
   }
@@ -199,7 +219,7 @@ export class WorldsService {
   ): Promise<WorldWithPhotos> {
     const world = await this.prisma.world.findFirst({
       where: { id: worldId, learnerId },
-      include: { photo: true, thumbnail: true },
+      include: WITH_PHOTOS_AND_WORDS,
     });
     if (!world) {
       throw new AppError(
@@ -258,8 +278,8 @@ export class WorldsService {
       status: world.status,
       failureReason: world.failureReason,
       thumbnailUrl: await this.linkTo(world.thumbnail),
-      // Both arrive with the vocabulary increment; a world has no words before it.
-      wordCount: 0,
+      wordCount: world.occurrences?.length ?? 0,
+      // Mastery arrives with the game; until then nothing has been learned yet.
       masteredCount: 0,
       createdAt: world.createdAt.toISOString(),
     };
@@ -269,7 +289,69 @@ export class WorldsService {
     return {
       ...(await this.summaryOf(world)),
       photoUrl: await this.linkTo(world.photo),
+      words: (world.occurrences ?? []).map((occurrence) => ({
+        id: occurrence.id,
+        english: occurrence.vocabularyWord.english,
+        thaiMeaning: occurrence.vocabularyWord.thaiMeaning,
+        exampleSentence: occurrence.exampleSentence,
+        cefrLevel: occurrence.cefrLevel,
+        box: {
+          x: occurrence.boxX,
+          y: occurrence.boxY,
+          width: occurrence.boxWidth,
+          height: occurrence.boxHeight,
+        },
+        // The game has not been built yet, so nothing has a mastery level.
+        mastery: 'NEW',
+      })),
     };
+  }
+
+  /**
+   * Removes one word from a world (FR-026, FR-027). The last word cannot go: a
+   * world with no words is nothing to practise, so the learner deletes it instead
+   * (V5). The word itself is deleted when this was its last occurrence, which takes
+   * its mastery and mistakes with it.
+   */
+  async removeWord(
+    learnerId: string,
+    worldId: string,
+    occurrenceId: string,
+  ): Promise<void> {
+    await this.own(learnerId, worldId);
+
+    await this.prisma.$transaction(async (tx) => {
+      const occurrence = await tx.wordOccurrence.findFirst({
+        where: { id: occurrenceId, worldId },
+      });
+      if (!occurrence) {
+        throw new AppError(
+          ErrorCode.NOT_FOUND,
+          HttpStatus.NOT_FOUND,
+          'This word is not in this world.',
+        );
+      }
+
+      const left = await tx.wordOccurrence.count({ where: { worldId } });
+      if (left <= 1) {
+        throw new AppError(
+          ErrorCode.LAST_WORD,
+          HttpStatus.CONFLICT,
+          'A world keeps at least one word. Delete the world instead.',
+        );
+      }
+
+      await tx.wordOccurrence.delete({ where: { id: occurrenceId } });
+
+      const elsewhere = await tx.wordOccurrence.count({
+        where: { vocabularyWordId: occurrence.vocabularyWordId },
+      });
+      if (elsewhere === 0) {
+        await tx.vocabularyWord.delete({
+          where: { id: occurrence.vocabularyWordId },
+        });
+      }
+    });
   }
 
   /** A link only this learner can use, and only for a few minutes (P4, NFR-008). */
