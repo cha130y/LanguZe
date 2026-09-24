@@ -28,6 +28,11 @@ export default defineConfig({
       LINE_CLIENT_ID: 'e2e-line-client-id',
       LINE_CLIENT_SECRET: 'e2e-line-client-secret',
       /*
+       * No Gemini key, whatever the developer's .env says: the suite would
+       * otherwise send every test photo to a paid API. The fake provider answers.
+       */
+      GEMINI_API_KEY: '',
+      /*
        * Photo storage is pinned to the local SeaweedFS for the same reason: once a
        * developer's .env holds R2 credentials, an unpinned suite would create and
        * delete objects in the real bucket.
