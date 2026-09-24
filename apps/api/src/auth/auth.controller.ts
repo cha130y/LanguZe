@@ -40,6 +40,9 @@ import {
   Public,
 } from './session.decorators.js';
 import type { SessionContext } from './auth.service.js';
+import { AnalysisService } from '../worlds/analysis.service.js';
+import { nextReset } from '../worlds/daily-limit.js';
+import { UsageResponseDto } from '../worlds/dto/worlds.dto.js';
 
 /** Rate limits from the API design, section 5. */
 const SIGN_IN_LIMIT = { default: { limit: 5, ttl: 15 * 60_000 } };
@@ -176,7 +179,10 @@ export class AuthController {
 @ApiTags('account')
 @Controller('me')
 export class MeController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly analysis: AnalysisService,
+  ) {}
 
   @Get()
   // A provider sign-up reads this before accepting the Terms: it is how the web app
@@ -221,6 +227,21 @@ export class MeController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
     return this.authService.declineTerms(user.id, req, res);
+  }
+
+  /** What is left of today's limits (FR-080, US-080). */
+  @Get('usage')
+  @ApiOkResponse({ type: UsageResponseDto })
+  async usage(
+    @CurrentUser() user: SessionContext['user'],
+  ): Promise<UsageResponseDto> {
+    const now = new Date();
+    const { left, limit } = await this.analysis.usage(user.id, now);
+    return {
+      analysesLeft: left,
+      analysesLimit: limit,
+      resetsAt: nextReset(now).toISOString(),
+    };
   }
 
   /** Deletes the account and everything belonging to it (FR-007, US-009). */
