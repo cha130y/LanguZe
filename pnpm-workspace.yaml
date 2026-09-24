@@ -8,5 +8,8 @@ allowBuilds:
   prisma: true
   # Download telemetry pulled in by @nestjs/swagger -> swagger-ui-dist; not needed.
   '@scarf/scarf': false
+  # The Gemini SDK's install script only prints a line; protobufjs's builds its CLI.
+  '@google/genai': false
+  protobufjs: false
   sharp: false
   unrs-resolver: false
