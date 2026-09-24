@@ -52,6 +52,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/worlds/{worldId}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["WorldsController_retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/worlds/{worldId}/words/{occurrenceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["WorldsController_removeWord"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/sign-up": {
         parameters: {
             query?: never;
@@ -228,6 +260,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/me/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["MeController_usage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -263,6 +311,27 @@ export interface components {
             masteredCount: number;
             createdAt: string;
         };
+        HighlightBoxDto: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+        };
+        WorldWordDto: {
+            /** @description Identifies this word in this world (FR-026). */
+            id: string;
+            english: string;
+            thaiMeaning: string;
+            exampleSentence: string;
+            /** @enum {string} */
+            cefrLevel: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+            box: components["schemas"]["HighlightBoxDto"];
+            /**
+             * @description What the learner has to do with this word to master it.
+             * @enum {string}
+             */
+            mastery: "NEW" | "LEARNING" | "FAMILIAR" | "MASTERED";
+        };
         WorldDetailDto: {
             id: string;
             name: string;
@@ -279,6 +348,7 @@ export interface components {
             createdAt: string;
             /** @description A signed link to the prepared photo (P4). */
             photoUrl?: string | null;
+            words: components["schemas"]["WorldWordDto"][];
         };
         ErrorBodyDto: {
             /** @enum {string} */
@@ -370,6 +440,14 @@ export interface components {
             name: string;
             /** @description Year of birth; the learner must turn 18 this year (V20). */
             birthYear: number;
+        };
+        UsageResponseDto: {
+            /** @description Photo analyses left today. */
+            analysesLeft: number;
+            /** @description How many a learner gets each day. */
+            analysesLimit: number;
+            /** @description When the count starts again, in Bangkok time. */
+            resetsAt: string;
         };
         DeleteAccountDto: {
             /**
@@ -539,6 +617,63 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorldStatusDto"];
+                };
+            };
+        };
+    };
+    WorldsController_retry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description RETRY_NOT_AVAILABLE */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    WorldsController_removeWord: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worldId: string;
+                occurrenceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description LAST_WORD */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
         };
@@ -878,6 +1013,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    MeController_usage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageResponseDto"];
+                };
             };
         };
     };

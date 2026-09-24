@@ -1,4 +1,4 @@
-import { Logger, Module } from '@nestjs/common';
+import { forwardRef, Logger, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../config/env.validation.js';
 import { MailSender } from '../notifications/mail-sender.js';
@@ -9,6 +9,7 @@ import {
 } from '../notifications/templates/account-emails.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { WorldsModule } from '../worlds/worlds.module.js';
 import { AuthController, MeController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { AUTH } from './auth.tokens.js';
@@ -23,7 +24,7 @@ const mailLogger = new Logger('AccountEmails');
  * triggered it: the learner can ask for a new one (UC-001 extension 4a).
  */
 @Module({
-  imports: [PrismaModule, NotificationsModule],
+  imports: [PrismaModule, NotificationsModule, forwardRef(() => WorldsModule)],
   controllers: [AuthController, MeController],
   providers: [
     PendingSignUpCleanupService,

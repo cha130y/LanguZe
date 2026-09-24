@@ -18,6 +18,8 @@ export interface PhotoUpload {
  */
 export abstract class PhotoStorage {
   abstract store(upload: PhotoUpload): Promise<void>;
+  /** The bytes back, which the analysis needs to send the photo to an AI provider. */
+  abstract read(key: string): Promise<Buffer>;
   abstract remove(key: string): Promise<void>;
   abstract signedLink(key: string): Promise<string>;
 }

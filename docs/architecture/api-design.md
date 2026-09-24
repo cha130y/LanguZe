@@ -106,7 +106,7 @@ Provider sign-in is the exception: the provider sends the browser straight back 
 | `GET`    | `/v1/me`               | The signed-in account and what it may do                                                   | FR-006, FR-096, FR-108 |
 | `POST`   | `/v1/me/terms`         | Complete a pending provider sign-up: accept the Terms, confirm display name, year of birth | FR-090, V20            |
 | `POST`   | `/v1/me/terms/decline` | Decline: removes the pending sign-up and signs out                                         | FR-090                 |
-| `GET`    | `/v1/me/usage`         | Analyses and tutor messages left today, and when they reset                                | FR-080                 |
+| `GET`    | `/v1/me/usage`         | Analyses left today and when they reset; tutor messages follow in their own increment      | FR-080                 |
 | `DELETE` | `/v1/me`               | Delete the account; body `{ "confirmation": "DELETE" }`                                    | FR-007                 |
 
 `GET /v1/me` returns:
@@ -147,7 +147,7 @@ Provider sign-in is the exception: the provider sends the browser straight back 
 | `POST`   | `/v1/worlds/{worldId}/retry`                | Retry a failed analysis on the same photo; `202`                     | FR-025                        |
 | `DELETE` | `/v1/worlds/{worldId}/words/{occurrenceId}` | Remove a word from the world; `204`                                  | FR-026, FR-027                |
 
-- Creating a world returns `202 Accepted` with the world. The analysis runs in the background and the world stays `ANALYZING` until it finishes (P2). Until the AI module exists, a new world is `READY` at once and has no words (B4).
+- Creating a world returns `202 Accepted` with the world in `ANALYZING`; the analysis runs in the background (P2) and the words appear when it finishes. The daily limit is decided before the photo is stored, so a learner who has none left ends up with no world and no file (FR-020).
 - A world carries `thumbnailUrl` and, when opened, `photoUrl`: signed links that work for a few minutes and only for that object (P4). They are empty when the photo is gone.
 - Uploads are `multipart/form-data` and are kept in memory only; the file is prepared before anything is stored, and the original is never written down (FR-017).
 - Creation and retry can fail with `NOT_VERIFIED` or `AI_SUSPENDED` (`403`), `WORLD_LIMIT_REACHED` (`409`), `DAILY_ANALYSIS_LIMIT` (`429`), `PHOTO_TOO_LARGE` (`413`), or `PHOTO_TYPE_NOT_ALLOWED` (`415`).

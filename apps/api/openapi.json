@@ -208,6 +208,80 @@
         ]
       }
     },
+    "/v1/worlds/{worldId}/retry": {
+      "post": {
+        "operationId": "WorldsController_retry",
+        "parameters": [
+          {
+            "name": "worldId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": ""
+          },
+          "409": {
+            "description": "RETRY_NOT_AVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
+    "/v1/worlds/{worldId}/words/{occurrenceId}": {
+      "delete": {
+        "operationId": "WorldsController_removeWord",
+        "parameters": [
+          {
+            "name": "worldId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "occurrenceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "409": {
+            "description": "LAST_WORD",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
     "/v1/auth/sign-up": {
       "post": {
         "operationId": "AuthController_signUp",
@@ -607,6 +681,27 @@
         ]
       }
     },
+    "/v1/me/usage": {
+      "get": {
+        "operationId": "MeController_usage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "account"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -697,6 +792,80 @@
           "createdAt"
         ]
       },
+      "HighlightBoxDto": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y",
+          "width",
+          "height"
+        ]
+      },
+      "WorldWordDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifies this word in this world (FR-026)."
+          },
+          "english": {
+            "type": "string"
+          },
+          "thaiMeaning": {
+            "type": "string"
+          },
+          "exampleSentence": {
+            "type": "string"
+          },
+          "cefrLevel": {
+            "type": "string",
+            "enum": [
+              "A1",
+              "A2",
+              "B1",
+              "B2",
+              "C1",
+              "C2"
+            ]
+          },
+          "box": {
+            "$ref": "#/components/schemas/HighlightBoxDto"
+          },
+          "mastery": {
+            "type": "string",
+            "description": "What the learner has to do with this word to master it.",
+            "enum": [
+              "NEW",
+              "LEARNING",
+              "FAMILIAR",
+              "MASTERED"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "english",
+          "thaiMeaning",
+          "exampleSentence",
+          "cefrLevel",
+          "box",
+          "mastery"
+        ]
+      },
       "WorldDetailDto": {
         "type": "object",
         "properties": {
@@ -739,6 +908,12 @@
             "type": "string",
             "nullable": true,
             "description": "A signed link to the prepared photo (P4)."
+          },
+          "words": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorldWordDto"
+            }
           }
         },
         "required": [
@@ -747,7 +922,8 @@
           "status",
           "wordCount",
           "masteredCount",
-          "createdAt"
+          "createdAt",
+          "words"
         ]
       },
       "ErrorBodyDto": {
@@ -1061,6 +1237,28 @@
         "required": [
           "name",
           "birthYear"
+        ]
+      },
+      "UsageResponseDto": {
+        "type": "object",
+        "properties": {
+          "analysesLeft": {
+            "type": "number",
+            "description": "Photo analyses left today."
+          },
+          "analysesLimit": {
+            "type": "number",
+            "description": "How many a learner gets each day."
+          },
+          "resetsAt": {
+            "type": "string",
+            "description": "When the count starts again, in Bangkok time."
+          }
+        },
+        "required": [
+          "analysesLeft",
+          "analysesLimit",
+          "resetsAt"
         ]
       },
       "DeleteAccountDto": {

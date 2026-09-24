@@ -10,6 +10,7 @@ import { FakeMailSender } from '../src/notifications/fake-mail-sender.js';
 import { MailSender } from '../src/notifications/mail-sender.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { PhotoStorage } from '../src/storage/photo-storage.js';
+import { AnalysisService } from '../src/worlds/analysis.service.js';
 import type {
   WorldDetailDto,
   WorldSummaryDto,
@@ -137,7 +138,8 @@ describe('Worlds (e2e)', () => {
 
       const world = response.body as WorldDetailDto;
       expect(world.name).toBe('ห้องครัว');
-      expect(world.status).toBe('READY');
+      // The words come from a background analysis, so the answer comes first (FR-021).
+      expect(world.status).toBe('ANALYZING');
       expect(world.photoUrl).toContain('X-Amz-Signature');
       expect(world.thumbnailUrl).toContain('X-Amz-Signature');
     });
@@ -272,11 +274,17 @@ describe('Worlds (e2e)', () => {
       const world = (await createWorld(agent).expect(202))
         .body as WorldDetailDto;
 
-      const response = await agent
+      const waiting = await agent
         .get(`/v1/worlds/${world.id}/status`)
         .expect(200);
+      expect(waiting.body).toEqual({
+        status: 'ANALYZING',
+        failureReason: null,
+      });
 
-      expect(response.body).toEqual({ status: 'READY', failureReason: null });
+      await app.get(AnalysisService).settled(world.id);
+      const done = await agent.get(`/v1/worlds/${world.id}/status`).expect(200);
+      expect(done.body).toEqual({ status: 'READY', failureReason: null });
     });
 
     it('refuses a world id that is not an id at all', async () => {

@@ -14,6 +14,12 @@ export class FakePhotoStorage extends PhotoStorage {
     return Promise.resolve();
   }
 
+  read(key: string): Promise<Buffer> {
+    const stored = this.objects.get(key);
+    if (!stored) return Promise.reject(new Error(`No photo at ${key}`));
+    return Promise.resolve(stored.body);
+  }
+
   remove(key: string): Promise<void> {
     if (this.failing.has(key)) {
       return Promise.reject(new Error(`storage refused to delete ${key}`));

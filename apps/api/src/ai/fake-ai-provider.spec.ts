@@ -13,9 +13,9 @@ describe('FakeAiProvider (B4)', () => {
   });
 
   it('allows a photo and describes it', async () => {
-    expect(await provider.checkPhoto(photo)).toEqual({ allowed: true });
+    expect((await provider.checkPhoto(photo)).value).toEqual({ allowed: true });
 
-    const items = await provider.extractVocabulary(photo);
+    const { value: items } = await provider.extractVocabulary(photo);
 
     expect(items.length).toBeGreaterThanOrEqual(3);
     expect(items[0].english).toBe('sofa');
@@ -23,15 +23,28 @@ describe('FakeAiProvider (B4)', () => {
 
   /* The fixed answer is only useful if it survives the rules the real one must pass. */
   it('returns items that all pass the extraction rules', async () => {
-    const items = await provider.extractVocabulary(photo);
+    const { value: items } = await provider.extractVocabulary(photo);
 
     expect(checkedItems(items)).toHaveLength(items.length);
+  });
+
+  /* What each call cost travels with the answer, so it can be recorded (AIR-007). */
+  it('reports what a call cost', async () => {
+    const { usage } = await provider.extractVocabulary(photo);
+
+    expect(usage?.inputTokens).toBeGreaterThan(0);
+    expect(usage?.outputTokens).toBeGreaterThan(0);
+  });
+
+  it('names itself and its model for the call record', () => {
+    expect(provider.name).toBe('fake');
+    expect(provider.modelFor('EXTRACTION')).toBe('fake-extraction');
   });
 
   it('blocks a photo with a category when asked', async () => {
     provider.behaviour = 'BLOCKED';
 
-    expect(await provider.checkPhoto(photo)).toEqual({
+    expect((await provider.checkPhoto(photo)).value).toEqual({
       allowed: false,
       category: 'VIOLENCE',
     });
@@ -52,14 +65,14 @@ describe('FakeAiProvider (B4)', () => {
   it('returns too few words when asked (FR-024)', async () => {
     provider.behaviour = 'TOO_FEW_WORDS';
 
-    expect(await provider.extractVocabulary(photo)).toHaveLength(2);
+    expect((await provider.extractVocabulary(photo)).value).toHaveLength(2);
   });
 
   /* What a bad response looks like: every item is refused, so nothing can be saved. */
   it('returns output that fails every rule when asked', async () => {
     provider.behaviour = 'INVALID_OUTPUT';
 
-    const items = await provider.extractVocabulary(photo);
+    const { value: items } = await provider.extractVocabulary(photo);
 
     expect(items.length).toBeGreaterThan(0);
     expect(checkedItems(items)).toEqual([]);
@@ -69,16 +82,20 @@ describe('FakeAiProvider (B4)', () => {
     it('affects the next call only', async () => {
       provider.behaveOnce('BLOCKED');
 
-      expect(await provider.checkPhoto(photo)).toEqual({
+      expect((await provider.checkPhoto(photo)).value).toEqual({
         allowed: false,
         category: 'VIOLENCE',
       });
       // The standing behaviour is back, which is how a test fails one call of two.
-      expect(await provider.checkPhoto(photo)).toEqual({ allowed: true });
+      expect((await provider.checkPhoto(photo)).value).toEqual({
+        allowed: true,
+      });
     });
 
     it('lets the check pass and the extraction fail', async () => {
-      expect(await provider.checkPhoto(photo)).toEqual({ allowed: true });
+      expect((await provider.checkPhoto(photo)).value).toEqual({
+        allowed: true,
+      });
       provider.behaveOnce('PROVIDER_ERROR');
 
       await expect(provider.extractVocabulary(photo)).rejects.toBeInstanceOf(

@@ -14,7 +14,9 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
+  ApiAcceptedResponse,
   ApiBody,
+  ApiConflictResponse,
   ApiConsumes,
   ApiCreatedResponse,
   ApiForbiddenResponse,
@@ -34,6 +36,7 @@ import {
   WorldStatusDto,
   WorldSummaryDto,
 } from './dto/worlds.dto.js';
+import { AnalysisService } from './analysis.service.js';
 import {
   MAX_PHOTO_BYTES,
   WorldsService,
@@ -46,7 +49,10 @@ const UPLOAD_LIMIT = { default: { limit: 5, ttl: 60_000 } };
 @ApiTags('worlds')
 @Controller('worlds')
 export class WorldsController {
-  constructor(private readonly worlds: WorldsService) {}
+  constructor(
+    private readonly worlds: WorldsService,
+    private readonly analysis: AnalysisService,
+  ) {}
 
   @Get()
   @ApiOkResponse({ type: WorldSummaryDto, isArray: true })
@@ -117,6 +123,35 @@ export class WorldsController {
     @Body() dto: RenameWorldDto,
   ): Promise<WorldDetailDto> {
     return this.worlds.rename(user.id, worldId, dto.name);
+  }
+
+  /** Runs the analysis of the same photo again (FR-025, US-021). */
+  @Post(':worldId/retry')
+  @Throttle(UPLOAD_LIMIT)
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiAcceptedResponse()
+  @ApiConflictResponse({
+    type: ErrorResponseDto,
+    description: 'RETRY_NOT_AVAILABLE',
+  })
+  retry(
+    @CurrentUser() user: SessionContext['user'],
+    @Param('worldId', ParseUUIDPipe) worldId: string,
+  ): Promise<void> {
+    return this.analysis.retry(user.id, worldId);
+  }
+
+  /** Removes a word the analysis got wrong (FR-026, US-022). */
+  @Delete(':worldId/words/:occurrenceId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  @ApiConflictResponse({ type: ErrorResponseDto, description: 'LAST_WORD' })
+  removeWord(
+    @CurrentUser() user: SessionContext['user'],
+    @Param('worldId', ParseUUIDPipe) worldId: string,
+    @Param('occurrenceId', ParseUUIDPipe) occurrenceId: string,
+  ): Promise<void> {
+    return this.worlds.removeWord(user.id, worldId, occurrenceId);
   }
 
   @Delete(':worldId')

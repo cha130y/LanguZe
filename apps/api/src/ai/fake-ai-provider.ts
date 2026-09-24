@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import type { ExtractedItem } from '../vocabulary/extraction-rules.js';
+import type { AiPurpose } from '../generated/prisma/enums.js';
 import {
   AiProvider,
   AiProviderError,
+  type AiAnswer,
   type PhotoForAi,
   type SafetyVerdict,
 } from './ai-provider.js';
@@ -119,6 +121,12 @@ const NONSENSE: ExtractedItem[] = [
  */
 @Injectable()
 export class FakeAiProvider extends AiProvider {
+  readonly name = 'fake';
+
+  modelFor(purpose: AiPurpose): string {
+    return `fake-${purpose.toLowerCase()}`;
+  }
+
   /** What every call does unless a test asks for something else. */
   behaviour: FakeBehaviour = 'ALLOWED';
 
@@ -143,28 +151,38 @@ export class FakeAiProvider extends AiProvider {
    * as a real provider's would: a caller may reasonably use `.catch` instead of
    * try/catch, and a fake that threw first would let that mistake through.
    */
-  checkPhoto(photo: PhotoForAi): Promise<SafetyVerdict> {
+  checkPhoto(photo: PhotoForAi): Promise<AiAnswer<SafetyVerdict>> {
     this.calls.push({ purpose: 'SAFETY_CHECK', bytes: photo.data.byteLength });
     const behaviour = this.take();
     const failure = this.failureFor(behaviour);
     if (failure) return Promise.reject(failure);
 
-    return Promise.resolve(
-      behaviour === 'BLOCKED'
-        ? { allowed: false, category: 'VIOLENCE' }
-        : { allowed: true },
-    );
+    return Promise.resolve({
+      value:
+        behaviour === 'BLOCKED'
+          ? { allowed: false, category: 'VIOLENCE' }
+          : { allowed: true },
+      // A made-up but plausible cost, so the recorded numbers are not all empty.
+      usage: { inputTokens: 780, outputTokens: 12 },
+    });
   }
 
-  extractVocabulary(photo: PhotoForAi): Promise<ExtractedItem[]> {
+  extractVocabulary(photo: PhotoForAi): Promise<AiAnswer<ExtractedItem[]>> {
     this.calls.push({ purpose: 'EXTRACTION', bytes: photo.data.byteLength });
     const behaviour = this.take();
     const failure = this.failureFor(behaviour);
     if (failure) return Promise.reject(failure);
 
-    if (behaviour === 'TOO_FEW_WORDS') return Promise.resolve(ALMOST_NOTHING);
-    if (behaviour === 'INVALID_OUTPUT') return Promise.resolve(NONSENSE);
-    return Promise.resolve(LIVING_ROOM);
+    const value =
+      behaviour === 'TOO_FEW_WORDS'
+        ? ALMOST_NOTHING
+        : behaviour === 'INVALID_OUTPUT'
+          ? NONSENSE
+          : LIVING_ROOM;
+    return Promise.resolve({
+      value,
+      usage: { inputTokens: 820, outputTokens: 40 * value.length },
+    });
   }
 
   /**
