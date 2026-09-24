@@ -8,6 +8,8 @@
   },
   "scripts": {
     "dev": "pnpm --parallel -r dev",
+    "tunnel": "cloudflared tunnel run languze-dev",
+    "dev:tunnel": "node scripts/dev-tunnel.mjs",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
