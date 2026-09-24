@@ -4,7 +4,38 @@ import {
   isProvider,
   type Account,
   type Provider,
+  type World,
+  type WorldSummary,
 } from './client';
+
+/**
+ * Reads on the server, with the learner's session cookie. `null` means the API
+ * refused or could not be reached, which every page renders as its empty state
+ * rather than as a crash.
+ */
+async function read<T>(path: string): Promise<T | null> {
+  const cookieHeader = (await cookies()).toString();
+  if (!cookieHeader) return null;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      headers: { Cookie: cookieHeader },
+      // Worlds and their signed photo links change and expire, so nothing is cached.
+      cache: 'no-store',
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+/** The learner's worlds, newest first (FR-013). */
+export const getWorlds = () => read<WorldSummary[]>('/v1/worlds');
+
+/** One world, or null when it does not exist or belongs to someone else (FR-008). */
+export const getWorld = (worldId: string) =>
+  read<World>(`/v1/worlds/${worldId}`);
 
 /**
  * The provider sign-ins the API offers (FR-003). Asking the API keeps the two in
