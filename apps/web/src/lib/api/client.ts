@@ -129,6 +129,16 @@ export const api = {
   declineTerms: () => call<void>('/v1/me/terms/decline', { method: 'POST' }),
 
   /**
+   * Deletes the account and everything belonging to it (FR-007, US-009). The word
+   * is the API's own guard against a stray request; the learner confirms on screen.
+   */
+  deleteAccount: () =>
+    call<void>('/v1/me', {
+      method: 'DELETE',
+      body: JSON.stringify({ confirmation: 'DELETE' }),
+    }),
+
+  /**
    * Starts sign-in with a provider (FR-003). Better Auth serves this itself at
    * `/auth`, outside the `/v1` endpoints, so it answers with its own shape rather
    * than LanguZe's error contract and is called directly rather than through `call`.

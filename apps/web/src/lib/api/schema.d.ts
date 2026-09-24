@@ -142,7 +142,7 @@ export interface paths {
         get: operations["MeController_me"];
         put?: never;
         post?: never;
-        delete?: never;
+        delete: operations["MeController_deleteAccount"];
         options?: never;
         head?: never;
         patch?: never;
@@ -282,6 +282,13 @@ export interface components {
             name: string;
             /** @description Year of birth; the learner must turn 18 this year (V20). */
             birthYear: number;
+        };
+        DeleteAccountDto: {
+            /**
+             * @description Exactly "DELETE". Deletion is permanent, so it is never the result of one stray request (FR-007).
+             * @enum {string}
+             */
+            confirmation: "DELETE";
         };
         HealthResponseDto: {
             /** @enum {string} */
@@ -548,6 +555,36 @@ export interface operations {
             };
             /** @description NOT_SIGNED_IN */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    MeController_deleteAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAccountDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED when the confirmation is missing or wrong */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
