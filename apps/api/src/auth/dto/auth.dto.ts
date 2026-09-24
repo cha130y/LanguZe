@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  Equals,
   IsBoolean,
   IsEmail,
   IsInt,
@@ -126,6 +127,19 @@ export class ResetPasswordDto {
   @MinLength(8)
   @MaxLength(MAX_PASSWORD_LENGTH)
   newPassword: string;
+}
+
+/** The word a learner has to send to delete their account (FR-007, API design 3.2). */
+export const DELETE_CONFIRMATION = 'DELETE';
+
+export class DeleteAccountDto {
+  @ApiProperty({
+    enum: [DELETE_CONFIRMATION],
+    description:
+      'Exactly "DELETE". Deletion is permanent, so it is never the result of one stray request (FR-007).',
+  })
+  @Equals(DELETE_CONFIRMATION)
+  confirmation: string;
 }
 
 /** Which provider sign-ins this API offers (FR-003). */

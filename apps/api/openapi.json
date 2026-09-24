@@ -311,6 +311,38 @@
         "tags": [
           "account"
         ]
+      },
+      "delete": {
+        "operationId": "MeController_deleteAccount",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "VALIDATION_FAILED when the confirmation is missing or wrong",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/me/terms": {
@@ -688,6 +720,21 @@
         "required": [
           "name",
           "birthYear"
+        ]
+      },
+      "DeleteAccountDto": {
+        "type": "object",
+        "properties": {
+          "confirmation": {
+            "type": "string",
+            "enum": [
+              "DELETE"
+            ],
+            "description": "Exactly \"DELETE\". Deletion is permanent, so it is never the result of one stray request (FR-007)."
+          }
+        },
+        "required": [
+          "confirmation"
         ]
       },
       "HealthResponseDto": {

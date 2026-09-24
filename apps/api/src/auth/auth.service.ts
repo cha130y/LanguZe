@@ -313,6 +313,21 @@ export class AuthService {
     await this.signOut(req, res);
   }
 
+  /**
+   * Deletes the account and everything belonging to it (FR-007, US-009).
+   *
+   * The browser is signed out first, so the answer carries Better Auth's own
+   * cookie-clearing headers, and the row goes last: if anything fails, the account
+   * survives rather than being half removed. Sessions and provider sign-ins go with
+   * it through the schema's cascades, and so will worlds, photos, and the rest as
+   * those tables arrive (data model). Stored photos are removed separately, within
+   * 24 hours (NFR-009, V10), which the storage module adds in its own increment.
+   */
+  async deleteAccount(userId: string, req: Request, res: Response) {
+    await this.signOut(req, res);
+    await this.prisma.user.delete({ where: { id: userId } });
+  }
+
   private checkAge(birthYear: number, req: Request, res: Response): void {
     const tooYoung = !isOldEnough(birthYear);
     if (!tooYoung && !hasAgeBlockCookie(req.headers.cookie)) return;
