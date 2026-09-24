@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -24,6 +25,7 @@ import { AuthService } from './auth.service.js';
 import {
   AcceptTermsDto,
   AcknowledgementDto,
+  DeleteAccountDto,
   EmailOnlyDto,
   MeResponseDto,
   ResetPasswordDto,
@@ -219,5 +221,22 @@ export class MeController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
     return this.authService.declineTerms(user.id, req, res);
+  }
+
+  /** Deletes the account and everything belonging to it (FR-007, US-009). */
+  @Delete()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  @ApiBadRequestResponse({
+    type: ErrorResponseDto,
+    description: 'VALIDATION_FAILED when the confirmation is missing or wrong',
+  })
+  deleteAccount(
+    @CurrentUser() user: SessionContext['user'],
+    @Body() _dto: DeleteAccountDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    return this.authService.deleteAccount(user.id, req, res);
   }
 }

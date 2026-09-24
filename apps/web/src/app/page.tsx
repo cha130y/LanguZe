@@ -44,6 +44,12 @@ export default async function Home() {
             </Alert>
           ) : null}
 
+          <Link
+            href="/account"
+            className={buttonVariants({ variant: 'outline', size: 'xl' })}
+          >
+            บัญชีของฉัน
+          </Link>
           <SignOutButton />
         </div>
       ) : (
