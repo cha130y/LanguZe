@@ -14,6 +14,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { OriginGuard } from './platform/http/origin.guard.js';
 import { RateLimitGuard } from './platform/http/rate-limit.guard.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { AiModule } from './ai/ai.module.js';
 import { StorageModule } from './storage/storage.module.js';
 import { WorldsModule } from './worlds/worlds.module.js';
 
@@ -41,6 +42,7 @@ import { WorldsModule } from './worlds/worlds.module.js';
     PrismaModule,
     NotificationsModule,
     StorageModule,
+    AiModule,
     WorldsModule,
     AuthModule,
     HealthModule,
