@@ -15,6 +15,7 @@ import { OriginGuard } from './platform/http/origin.guard.js';
 import { RateLimitGuard } from './platform/http/rate-limit.guard.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { StorageModule } from './storage/storage.module.js';
+import { WorldsModule } from './worlds/worlds.module.js';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { StorageModule } from './storage/storage.module.js';
     PrismaModule,
     NotificationsModule,
     StorageModule,
+    WorldsModule,
     AuthModule,
     HealthModule,
   ],

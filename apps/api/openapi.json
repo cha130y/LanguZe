@@ -1,6 +1,213 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/v1/worlds": {
+      "get": {
+        "operationId": "WorldsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorldSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "worlds"
+        ]
+      },
+      "post": {
+        "operationId": "WorldsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "photo"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "photo": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldDetailDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "NOT_VERIFIED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
+    "/v1/worlds/{worldId}": {
+      "get": {
+        "operationId": "WorldsController_get",
+        "parameters": [
+          {
+            "name": "worldId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldDetailDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "worlds"
+        ]
+      },
+      "patch": {
+        "operationId": "WorldsController_rename",
+        "parameters": [
+          {
+            "name": "worldId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameWorldDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "worlds"
+        ]
+      },
+      "delete": {
+        "operationId": "WorldsController_remove",
+        "parameters": [
+          {
+            "name": "worldId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
+    "/v1/worlds/{worldId}/status": {
+      "get": {
+        "operationId": "WorldsController_status",
+        "parameters": [
+          {
+            "name": "worldId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorldStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "worlds"
+        ]
+      }
+    },
     "/v1/auth/sign-up": {
       "post": {
         "operationId": "AuthController_signUp",
@@ -442,41 +649,105 @@
   "servers": [],
   "components": {
     "schemas": {
-      "SignUpDto": {
+      "WorldSummaryDto": {
         "type": "object",
         "properties": {
-          "email": {
-            "type": "string",
-            "maxLength": 254,
-            "description": "Cannot be a placeholder address (D1)."
-          },
-          "password": {
-            "type": "string",
-            "minLength": 8,
-            "maxLength": 128,
-            "description": "At least 8 characters (V2)."
+          "id": {
+            "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "status": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 50,
-            "description": "Display name (V12, V19)."
+            "enum": [
+              "ANALYZING",
+              "READY",
+              "FAILED"
+            ]
           },
-          "birthYear": {
+          "failureReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the analysis failed, when it did."
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "A signed link to the thumbnail, valid for a few minutes (P4). Empty when the photo is gone."
+          },
+          "wordCount": {
             "type": "number",
-            "description": "Year of birth; the learner must turn 18 this year (V20)."
+            "description": "Words found in this world (FR-013)."
           },
-          "acceptTerms": {
-            "type": "boolean",
-            "description": "Must be true: accepting the Terms of Use and Privacy Policy (FR-090). False is answered with TERMS_NOT_ACCEPTED."
+          "masteredCount": {
+            "type": "number",
+            "description": "Of those, the ones the learner has mastered."
+          },
+          "createdAt": {
+            "type": "string"
           }
         },
         "required": [
-          "email",
-          "password",
+          "id",
           "name",
-          "birthYear",
-          "acceptTerms"
+          "status",
+          "wordCount",
+          "masteredCount",
+          "createdAt"
+        ]
+      },
+      "WorldDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ANALYZING",
+              "READY",
+              "FAILED"
+            ]
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the analysis failed, when it did."
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "A signed link to the thumbnail, valid for a few minutes (P4). Empty when the photo is gone."
+          },
+          "wordCount": {
+            "type": "number",
+            "description": "Words found in this world (FR-013)."
+          },
+          "masteredCount": {
+            "type": "number",
+            "description": "Of those, the ones the learner has mastered."
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "A signed link to the prepared photo (P4)."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "wordCount",
+          "masteredCount",
+          "createdAt"
         ]
       },
       "ErrorBodyDto": {
@@ -546,6 +817,76 @@
         },
         "required": [
           "error"
+        ]
+      },
+      "WorldStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ANALYZING",
+              "READY",
+              "FAILED"
+            ]
+          },
+          "failureReason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "RenameWorldDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "SignUpDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "description": "Cannot be a placeholder address (D1)."
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "description": "At least 8 characters (V2)."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "Display name (V12, V19)."
+          },
+          "birthYear": {
+            "type": "number",
+            "description": "Year of birth; the learner must turn 18 this year (V20)."
+          },
+          "acceptTerms": {
+            "type": "boolean",
+            "description": "Must be true: accepting the Terms of Use and Privacy Policy (FR-090). False is answered with TERMS_NOT_ACCEPTED."
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "name",
+          "birthYear",
+          "acceptTerms"
         ]
       },
       "SignInDto": {

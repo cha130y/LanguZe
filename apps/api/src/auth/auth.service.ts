@@ -19,6 +19,7 @@ import {
   isOldEnough,
 } from './age-gate.js';
 import { AUTH } from './auth.tokens.js';
+import { CREDENTIAL_PROVIDER } from './secure-linked-account.js';
 import type { Auth } from './create-auth.js';
 import type {
   AcceptTermsDto,
@@ -222,6 +223,25 @@ export class AuthService {
    */
   providers(): ProvidersResponseDto {
     return { providers: Object.keys(this.auth.options.socialProviders ?? {}) };
+  }
+
+  /**
+   * Whether the account may use the AI features: a verified email address, or any
+   * provider sign-in, which counts as verified (V13, V14, FR-006).
+   */
+  async isVerifiedForAi(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        emailVerified: true,
+        accounts: {
+          where: { providerId: { not: CREDENTIAL_PROVIDER } },
+          select: { id: true },
+          take: 1,
+        },
+      },
+    });
+    return user !== null && (user.emailVerified || user.accounts.length > 0);
   }
 
   /** The account and what it may do (API design, section 3.2). */
