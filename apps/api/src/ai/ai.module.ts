@@ -2,9 +2,12 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EnvironmentVariables } from '../config/env.validation.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
+import { GoogleGenAI } from '@google/genai';
+import { Logger } from '@nestjs/common';
 import { AiCallRecorder } from './ai-call-recorder.js';
 import { AiProvider } from './ai-provider.js';
 import { FakeAiProvider } from './fake-ai-provider.js';
+import { GeminiAiProvider } from './gemini/gemini-ai-provider.js';
 
 /**
  * The AI interface and the provider behind it (AIR-001, ADR-0004). Only this module
@@ -21,11 +24,26 @@ import { FakeAiProvider } from './fake-ai-provider.js';
       provide: AiProvider,
       inject: [ConfigService],
       useFactory: (config: ConfigService<EnvironmentVariables, true>) => {
+        const apiKey = config.get('GEMINI_API_KEY', { infer: true });
+        const logger = new Logger('AiModule');
+
+        if (apiKey) {
+          logger.log('Photo analysis uses Gemini');
+          return new GeminiAiProvider(new GoogleGenAI({ apiKey }).models, {
+            safetyModel: config.get('GEMINI_SAFETY_MODEL', { infer: true }),
+            extractionModel: config.get('GEMINI_EXTRACTION_MODEL', {
+              infer: true,
+            }),
+            timeoutMs: config.get('AI_TIMEOUT_MS', { infer: true }),
+          });
+        }
+
         const provider = new FakeAiProvider();
         // Lets a developer see a blocked photo or a provider error in the browser.
-        provider.behaviour = config.get('AI_FAKE_BEHAVIOUR', {
-          infer: true,
-        });
+        provider.behaviour = config.get('AI_FAKE_BEHAVIOUR', { infer: true });
+        logger.log(
+          `Photo analysis uses the fake provider (${provider.behaviour})`,
+        );
         return provider;
       },
     },

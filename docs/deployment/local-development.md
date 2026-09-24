@@ -157,6 +157,22 @@ decides which path it takes, which is how the failure screens can be seen at all
 
 Restart the API after changing it, as with every environment value.
 
+## Using the real Gemini
+
+Setting `GEMINI_API_KEY` switches photo analysis from the fake provider to Gemini
+(ADR-0004); the API logs which one it uses at startup. Everything else stays the
+same, because the analysis only knows LanguZe's own AI interface.
+
+1. In [Google AI Studio](https://aistudio.google.com/apikey), create an API key
+2. Put it in `apps/api/.env` as `GEMINI_API_KEY` and restart
+3. `GEMINI_SAFETY_MODEL` and `GEMINI_EXTRACTION_MODEL` choose the models; both
+   default to a Flash-Lite model, which costs a fraction of a cent per photo
+
+**Which key to use.** On the free tier Google uses submitted content to improve its
+products, so it may only be used with test photos. Anything holding real learner
+photos — production above all — needs a **paid** key (ADR-0004). Changing either
+model means running the evaluation set again before it reaches production.
+
 ## Services and ports
 
 | Service                   | URL / port                 | Notes                                     |

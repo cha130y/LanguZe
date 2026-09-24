@@ -110,6 +110,29 @@ export class EnvironmentVariables {
   GOOGLE_CLIENT_SECRET: string = '';
 
   /**
+   * Gemini (ADR-0004). With no key the fake provider answers instead, so the API
+   * runs and costs nothing; production always has one, and it must be a paid key,
+   * because Google uses free-tier content to improve its products.
+   */
+  @IsString()
+  GEMINI_API_KEY: string = '';
+
+  @IsString()
+  @IsNotEmpty()
+  GEMINI_SAFETY_MODEL: string = 'gemini-flash-lite-latest';
+
+  @IsString()
+  @IsNotEmpty()
+  GEMINI_EXTRACTION_MODEL: string = 'gemini-flash-lite-latest';
+
+  /** How long one AI call may take before it counts as lost (NFR-001, V16). */
+  @Type(() => Number)
+  @IsInt()
+  @Min(1000)
+  @Max(120_000)
+  AI_TIMEOUT_MS: number = 30_000;
+
+  /**
    * What the fake AI provider does (B4), so a developer can see a blocked photo or
    * a provider error without a real key: ALLOWED, BLOCKED, PROVIDER_ERROR,
    * TIMED_OUT, TOO_FEW_WORDS, or INVALID_OUTPUT.

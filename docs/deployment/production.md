@@ -72,25 +72,28 @@ Names only. Values live in each provider's settings and never in the repository,
 
 **API** — the variables `apps/api/src/config/env.validation.ts` already requires, with production values:
 
-| Variable                                                                                    | Production value                                          |
-| ------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `NODE_ENV`                                                                                  | `production`                                              |
-| `PORT`                                                                                      | Supplied by Railway                                       |
-| `DATABASE_URL`                                                                              | Neon connection string, **pooled**                        |
-| `DATABASE_URL_UNPOOLED`                                                                     | Neon **direct** string; migrations only (section 7)       |
-| `WEB_ORIGIN`                                                                                | `https://languze.com`                                     |
-| `AUTH_SECRET`                                                                               | Generated for production only; never reused from local    |
-| `AUTH_URL`                                                                                  | `https://api.languze.com`                                 |
-| `COOKIE_DOMAIN`                                                                             | `.languze.com` — see section 6                            |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`                                                  | From the LanguZe project in Google Cloud Console          |
-| `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET`                                      | The R2 bucket's S3 endpoint, `auto`, and the bucket name  |
-| `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`                                        | An R2 API token limited to that one bucket                |
-| `PHOTO_LINK_TTL_SECONDS`                                                                    | How long a photo link works; 900 unless there is a reason |
-| `LINE_CLIENT_ID`, `LINE_CLIENT_SECRET`                                                      | Channel ID and secret of the Thailand LINE Login channel  |
-| `MAIL_HOST`, `MAIL_PORT`                                                                    | `smtp.resend.com`, `587`                                  |
-| `MAIL_USER`, `MAIL_PASSWORD`                                                                | `resend`, and a Resend API key                            |
-| `MAIL_FROM`                                                                                 | `LanguZe <no-reply@languze.com>`, on the verified domain  |
-| `WORLD_LIMIT`, `DAILY_ANALYSIS_LIMIT`, `DAILY_TUTOR_MESSAGE_LIMIT`, `RATE_LIMIT_PER_MINUTE` | Defaults unless a limit proves wrong                      |
+| Variable                                                                                    | Production value                                                            |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `NODE_ENV`                                                                                  | `production`                                                                |
+| `PORT`                                                                                      | Supplied by Railway                                                         |
+| `DATABASE_URL`                                                                              | Neon connection string, **pooled**                                          |
+| `DATABASE_URL_UNPOOLED`                                                                     | Neon **direct** string; migrations only (section 7)                         |
+| `WEB_ORIGIN`                                                                                | `https://languze.com`                                                       |
+| `AUTH_SECRET`                                                                               | Generated for production only; never reused from local                      |
+| `AUTH_URL`                                                                                  | `https://api.languze.com`                                                   |
+| `COOKIE_DOMAIN`                                                                             | `.languze.com` — see section 6                                              |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`                                                  | From the LanguZe project in Google Cloud Console                            |
+| `GEMINI_API_KEY`                                                                            | A **paid** Gemini key; the free tier may not hold learner photos (ADR-0004) |
+| `GEMINI_SAFETY_MODEL`, `GEMINI_EXTRACTION_MODEL`                                            | The pinned model IDs; changing one needs an evaluation run                  |
+| `AI_TIMEOUT_MS`                                                                             | How long one AI call may take; 30000 unless there is a reason               |
+| `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET`                                      | The R2 bucket's S3 endpoint, `auto`, and the bucket name                    |
+| `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`                                        | An R2 API token limited to that one bucket                                  |
+| `PHOTO_LINK_TTL_SECONDS`                                                                    | How long a photo link works; 900 unless there is a reason                   |
+| `LINE_CLIENT_ID`, `LINE_CLIENT_SECRET`                                                      | Channel ID and secret of the Thailand LINE Login channel                    |
+| `MAIL_HOST`, `MAIL_PORT`                                                                    | `smtp.resend.com`, `587`                                                    |
+| `MAIL_USER`, `MAIL_PASSWORD`                                                                | `resend`, and a Resend API key                                              |
+| `MAIL_FROM`                                                                                 | `LanguZe <no-reply@languze.com>`, on the verified domain                    |
+| `WORLD_LIMIT`, `DAILY_ANALYSIS_LIMIT`, `DAILY_TUTOR_MESSAGE_LIMIT`, `RATE_LIMIT_PER_MINUTE` | Defaults unless a limit proves wrong                                        |
 
 `MAIL_USER`, `MAIL_PASSWORD` and `COOKIE_DOMAIN` are empty by default, which is what local development needs: Maildev accepts anonymous mail, and on `localhost` the cookie is already shared.
 
