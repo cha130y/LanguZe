@@ -72,22 +72,25 @@ Names only. Values live in each provider's settings and never in the repository,
 
 **API** — the variables `apps/api/src/config/env.validation.ts` already requires, with production values:
 
-| Variable                                                                                    | Production value                                         |
-| ------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `NODE_ENV`                                                                                  | `production`                                             |
-| `PORT`                                                                                      | Supplied by Railway                                      |
-| `DATABASE_URL`                                                                              | Neon connection string, **pooled**                       |
-| `DATABASE_URL_UNPOOLED`                                                                     | Neon **direct** string; migrations only (section 7)      |
-| `WEB_ORIGIN`                                                                                | `https://languze.com`                                    |
-| `AUTH_SECRET`                                                                               | Generated for production only; never reused from local   |
-| `AUTH_URL`                                                                                  | `https://api.languze.com`                                |
-| `COOKIE_DOMAIN`                                                                             | `.languze.com` — see section 6                           |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`                                                  | From the LanguZe project in Google Cloud Console         |
-| `LINE_CLIENT_ID`, `LINE_CLIENT_SECRET`                                                      | Channel ID and secret of the Thailand LINE Login channel |
-| `MAIL_HOST`, `MAIL_PORT`                                                                    | `smtp.resend.com`, `587`                                 |
-| `MAIL_USER`, `MAIL_PASSWORD`                                                                | `resend`, and a Resend API key                           |
-| `MAIL_FROM`                                                                                 | `LanguZe <no-reply@languze.com>`, on the verified domain |
-| `WORLD_LIMIT`, `DAILY_ANALYSIS_LIMIT`, `DAILY_TUTOR_MESSAGE_LIMIT`, `RATE_LIMIT_PER_MINUTE` | Defaults unless a limit proves wrong                     |
+| Variable                                                                                    | Production value                                          |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `NODE_ENV`                                                                                  | `production`                                              |
+| `PORT`                                                                                      | Supplied by Railway                                       |
+| `DATABASE_URL`                                                                              | Neon connection string, **pooled**                        |
+| `DATABASE_URL_UNPOOLED`                                                                     | Neon **direct** string; migrations only (section 7)       |
+| `WEB_ORIGIN`                                                                                | `https://languze.com`                                     |
+| `AUTH_SECRET`                                                                               | Generated for production only; never reused from local    |
+| `AUTH_URL`                                                                                  | `https://api.languze.com`                                 |
+| `COOKIE_DOMAIN`                                                                             | `.languze.com` — see section 6                            |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`                                                  | From the LanguZe project in Google Cloud Console          |
+| `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET`                                      | The R2 bucket's S3 endpoint, `auto`, and the bucket name  |
+| `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`                                        | An R2 API token limited to that one bucket                |
+| `PHOTO_LINK_TTL_SECONDS`                                                                    | How long a photo link works; 900 unless there is a reason |
+| `LINE_CLIENT_ID`, `LINE_CLIENT_SECRET`                                                      | Channel ID and secret of the Thailand LINE Login channel  |
+| `MAIL_HOST`, `MAIL_PORT`                                                                    | `smtp.resend.com`, `587`                                  |
+| `MAIL_USER`, `MAIL_PASSWORD`                                                                | `resend`, and a Resend API key                            |
+| `MAIL_FROM`                                                                                 | `LanguZe <no-reply@languze.com>`, on the verified domain  |
+| `WORLD_LIMIT`, `DAILY_ANALYSIS_LIMIT`, `DAILY_TUTOR_MESSAGE_LIMIT`, `RATE_LIMIT_PER_MINUTE` | Defaults unless a limit proves wrong                      |
 
 `MAIL_USER`, `MAIL_PASSWORD` and `COOKIE_DOMAIN` are empty by default, which is what local development needs: Maildev accepts anonymous mail, and on `localhost` the cookie is already shared.
 
@@ -167,7 +170,18 @@ The domain is billed yearly and is the one cost that does not scale with traffic
 
 Each free tier has a ceiling that real traffic will eventually reach; the point to re-read this section is when one of them does, not before.
 
-## 11. The contact address
+## 11. Photo storage
+
+Photos live in a private Cloudflare R2 bucket (A3, H6); nothing is served from a public URL, and a browser only ever gets a link that works for a few minutes (P4, NFR-008).
+
+1. In the Cloudflare dashboard, **R2 → Create bucket**, named `languze-photos`, location **Asia-Pacific**, and leave public access off
+2. **Manage R2 API Tokens → Create API token**, permission **Object Read & Write**, scoped to that bucket alone
+3. Copy the access key, the secret, and the S3 endpoint into the API's environment as `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`, and `STORAGE_ENDPOINT`; `STORAGE_REGION` stays `auto`
+4. Check from the API's logs on the first deployment that the bucket is reachable: a missing or unreachable bucket is logged as a warning at startup rather than stopping the API
+
+The token needs no permission to create buckets, which is why a missing bucket is only reported. Storage costs nothing to serve: R2 charges for stored bytes and operations, not for downloads.
+
+## 12. The contact address
 
 The Terms of Use, the Privacy Policy and the contact page all name one address, `support@languze.com` (FR-099), which also receives suspension appeals and PDPA requests. It costs nothing to run: **Cloudflare → Email → Email Routing** forwards it to an existing inbox, and no mailbox has to be paid for.
 
@@ -178,12 +192,12 @@ The Terms of Use, the Privacy Policy and the contact page all name one address, 
 
 Replies come from the destination address unless a separate sending setup is added, so answers to learners will show that address until then.
 
-## 12. Before the legal pages go public
+## 13. Before the legal pages go public
 
 - **The operator's name.** The pages carry `[OPERATOR NAME]` in `apps/web/src/lib/legal.ts` until a real name replaces it. Thailand's PDPA requires an identifiable data controller, so the pages cannot go public with the placeholder.
 - **A lawyer's review.** The text is written from the requirements (FR-090, FR-091, FR-099) and is not legal advice. The final text is an increment 14 task, together with the pre-launch checks in SRS 3.10.
 - **The last-updated date** in the same file moves with any change to the text.
 
-## 13. Not set up yet
+## 14. Not set up yet
 
 Deliberately absent, each waiting for a requirement that justifies it: Redis, RabbitMQ, a staging environment, a second API instance, and any CDN in front of R2. Adding one of these is an architecture decision, not a deployment detail.
