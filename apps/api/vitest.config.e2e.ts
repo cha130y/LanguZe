@@ -27,6 +27,16 @@ export default defineConfig({
       GOOGLE_CLIENT_SECRET: 'e2e-google-client-secret',
       LINE_CLIENT_ID: 'e2e-line-client-id',
       LINE_CLIENT_SECRET: 'e2e-line-client-secret',
+      /*
+       * Photo storage is pinned to the local SeaweedFS for the same reason: once a
+       * developer's .env holds R2 credentials, an unpinned suite would create and
+       * delete objects in the real bucket.
+       */
+      STORAGE_ENDPOINT: 'http://localhost:8334',
+      STORAGE_REGION: 'auto',
+      STORAGE_BUCKET: 'languze-photos',
+      STORAGE_ACCESS_KEY_ID: 'languze',
+      STORAGE_SECRET_ACCESS_KEY: 'languze',
       // Low enough that a test can reach the limit without a long loop.
       RATE_LIMIT_PER_MINUTE: '20',
     },
