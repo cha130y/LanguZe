@@ -10,6 +10,7 @@ import {
 import { isPlaceholderAddress } from '../platform/email/placeholder-address.js';
 import { AppError } from '../platform/errors/app-error.js';
 import { ErrorCode } from '../platform/errors/error-codes.js';
+import { PhotoDeletionReason } from '../generated/prisma/enums.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import {
   AGE_BLOCK_COOKIE,
@@ -325,7 +326,26 @@ export class AuthService {
    */
   async deleteAccount(userId: string, req: Request, res: Response) {
     await this.signOut(req, res);
-    await this.prisma.user.delete({ where: { id: userId } });
+
+    const photos = await this.prisma.storedPhoto.findMany({
+      where: { ownerId: userId },
+      select: { storageKey: true },
+    });
+
+    /*
+     * One transaction, because a cleanup record that is not written is a photo kept
+     * for ever: the rows that name it disappear with the account. The files
+     * themselves are removed by the cleanup task, within 24 hours (V10).
+     */
+    await this.prisma.$transaction([
+      this.prisma.photoDeletion.createMany({
+        data: photos.map(({ storageKey }) => ({
+          storageKey,
+          reason: PhotoDeletionReason.ACCOUNT_DELETED,
+        })),
+      }),
+      this.prisma.user.delete({ where: { id: userId } }),
+    ]);
   }
 
   private checkAge(birthYear: number, req: Request, res: Response): void {

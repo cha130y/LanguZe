@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
@@ -180,6 +181,42 @@ describe('Deleting an account (e2e)', () => {
       .expect(401);
 
     expect((await rowsFor(userId)).users).toBe(1);
+  });
+
+  /*
+   * The rows naming a photo disappear with the account, so unless the cleanup record
+   * is written in the same transaction the file would stay in storage for ever
+   * (NFR-009, V10). The file itself is removed later by the cleanup task.
+   */
+  it('leaves a cleanup record for every photo of the account', async () => {
+    const { agent, userId } = await learner();
+    const storageKey = `prepared/${randomUUID()}.jpg`;
+    await prisma.storedPhoto.create({
+      data: {
+        ownerId: userId,
+        storageKey,
+        kind: 'PREPARED',
+        contentType: 'image/jpeg',
+        width: 2048,
+        height: 1536,
+        byteSize: 350_000,
+      },
+    });
+
+    await agent
+      .delete('/v1/me')
+      .set('Origin', WEB_ORIGIN)
+      .send({ confirmation: 'DELETE' })
+      .expect(204);
+
+    expect(await prisma.storedPhoto.count({ where: { ownerId: userId } })).toBe(
+      0,
+    );
+    const cleanup = await prisma.photoDeletion.findFirstOrThrow({
+      where: { storageKey },
+    });
+    expect(cleanup.reason).toBe('ACCOUNT_DELETED');
+    await prisma.photoDeletion.delete({ where: { id: cleanup.id } });
   });
 
   it('leaves other learners alone', async () => {
