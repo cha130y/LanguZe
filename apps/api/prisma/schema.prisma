@@ -48,6 +48,7 @@ model User {
   accounts Account[]
   sessions Session[]
   photos   StoredPhoto[]
+  worlds   World[]
 
   @@map("users")
 }
@@ -141,7 +142,9 @@ model StoredPhoto {
   byteSize    Int       @map("byte_size")
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner          User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  worldPhoto     World? @relation("WorldPhoto")
+  worldThumbnail World? @relation("WorldThumbnail")
 
   @@index([ownerId])
   @@map("stored_photos")
@@ -162,4 +165,46 @@ model PhotoDeletion {
 
   @@index([nextAttemptAt])
   @@map("photo_deletions")
+}
+
+enum WorldStatus {
+  ANALYZING
+  READY
+  FAILED
+
+  @@map("world_status")
+}
+
+enum AnalysisFailure {
+  /// The photo broke the content rules and was deleted (FR-092).
+  BLOCKED
+  TOO_FEW_WORDS
+  PROVIDER_ERROR
+  INVALID_OUTPUT
+  TIMED_OUT
+
+  @@map("analysis_failure")
+}
+
+/// A place a learner photographed, and the words found in it (FR-010–FR-017).
+model World {
+  id            String           @id @default(uuid(7)) @db.Uuid
+  learnerId     String           @map("learner_id") @db.Uuid
+  /// 1–50 characters (V3).
+  name          String           @db.VarChar(50)
+  status        WorldStatus      @default(ANALYZING)
+  /// Set when FAILED; decides the message and whether a retry is offered.
+  failureReason AnalysisFailure? @map("failure_reason")
+  /// Empty after a blocked photo is deleted (FR-092).
+  photoId       String?          @unique @map("photo_id") @db.Uuid
+  thumbnailId   String?          @unique @map("thumbnail_id") @db.Uuid
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  learner   User         @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  photo     StoredPhoto? @relation("WorldPhoto", fields: [photoId], references: [id], onDelete: SetNull)
+  thumbnail StoredPhoto? @relation("WorldThumbnail", fields: [thumbnailId], references: [id], onDelete: SetNull)
+
+  @@index([learnerId, createdAt])
+  @@map("worlds")
 }

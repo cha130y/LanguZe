@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/v1/worlds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorldsController_list"];
+        put?: never;
+        post: operations["WorldsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/worlds/{worldId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorldsController_get"];
+        put?: never;
+        post?: never;
+        delete: operations["WorldsController_remove"];
+        options?: never;
+        head?: never;
+        patch: operations["WorldsController_rename"];
+        trace?: never;
+    };
+    "/v1/worlds/{worldId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["WorldsController_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/sign-up": {
         parameters: {
             query?: never;
@@ -200,17 +248,37 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        SignUpDto: {
-            /** @description Cannot be a placeholder address (D1). */
-            email: string;
-            /** @description At least 8 characters (V2). */
-            password: string;
-            /** @description Display name (V12, V19). */
+        WorldSummaryDto: {
+            id: string;
             name: string;
-            /** @description Year of birth; the learner must turn 18 this year (V20). */
-            birthYear: number;
-            /** @description Must be true: accepting the Terms of Use and Privacy Policy (FR-090). False is answered with TERMS_NOT_ACCEPTED. */
-            acceptTerms: boolean;
+            /** @enum {string} */
+            status: "ANALYZING" | "READY" | "FAILED";
+            /** @description Why the analysis failed, when it did. */
+            failureReason?: string | null;
+            /** @description A signed link to the thumbnail, valid for a few minutes (P4). Empty when the photo is gone. */
+            thumbnailUrl?: string | null;
+            /** @description Words found in this world (FR-013). */
+            wordCount: number;
+            /** @description Of those, the ones the learner has mastered. */
+            masteredCount: number;
+            createdAt: string;
+        };
+        WorldDetailDto: {
+            id: string;
+            name: string;
+            /** @enum {string} */
+            status: "ANALYZING" | "READY" | "FAILED";
+            /** @description Why the analysis failed, when it did. */
+            failureReason?: string | null;
+            /** @description A signed link to the thumbnail, valid for a few minutes (P4). Empty when the photo is gone. */
+            thumbnailUrl?: string | null;
+            /** @description Words found in this world (FR-013). */
+            wordCount: number;
+            /** @description Of those, the ones the learner has mastered. */
+            masteredCount: number;
+            createdAt: string;
+            /** @description A signed link to the prepared photo (P4). */
+            photoUrl?: string | null;
         };
         ErrorBodyDto: {
             /** @enum {string} */
@@ -223,6 +291,26 @@ export interface components {
         };
         ErrorResponseDto: {
             error: components["schemas"]["ErrorBodyDto"];
+        };
+        WorldStatusDto: {
+            /** @enum {string} */
+            status: "ANALYZING" | "READY" | "FAILED";
+            failureReason?: string | null;
+        };
+        RenameWorldDto: {
+            name: string;
+        };
+        SignUpDto: {
+            /** @description Cannot be a placeholder address (D1). */
+            email: string;
+            /** @description At least 8 characters (V2). */
+            password: string;
+            /** @description Display name (V12, V19). */
+            name: string;
+            /** @description Year of birth; the learner must turn 18 this year (V20). */
+            birthYear: number;
+            /** @description Must be true: accepting the Terms of Use and Privacy Policy (FR-090). False is answered with TERMS_NOT_ACCEPTED. */
+            acceptTerms: boolean;
         };
         SignInDto: {
             email: string;
@@ -305,6 +393,156 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    WorldsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorldSummaryDto"][];
+                };
+            };
+        };
+    };
+    WorldsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    name: string;
+                    /** Format: binary */
+                    photo: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorldDetailDto"];
+                };
+            };
+            /** @description NOT_VERIFIED */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    WorldsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorldDetailDto"];
+                };
+            };
+            /** @description NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    WorldsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorldsController_rename: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameWorldDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorldDetailDto"];
+                };
+            };
+        };
+    };
+    WorldsController_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorldStatusDto"];
+                };
+            };
+        };
+    };
     AuthController_signUp: {
         parameters: {
             query?: never;

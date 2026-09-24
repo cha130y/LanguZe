@@ -28,6 +28,17 @@ function isBodyParserError(exception: unknown): exception is BodyParserError {
 }
 
 /**
+ * Whether a "payload too large" came from the photo upload rather than from the JSON
+ * body: Nest turns multer's file-size error into a `PayloadTooLargeException` carrying
+ * multer's own wording. The end-to-end test for an oversized photo pins this.
+ */
+const isPhotoUpload = (exception: HttpException): boolean =>
+  exception.message === 'File too large';
+
+/** `getStatus()` answers a plain number, so the status to compare it with is one too. */
+const PAYLOAD_TOO_LARGE: number = HttpStatus.PAYLOAD_TOO_LARGE;
+
+/**
  * Nest puts a string or a list of validation messages in `message`. Query strings are
  * removed, because Nest's "Cannot GET /path?query" messages would echo personal data
  * such as an email address from a search.
@@ -80,6 +91,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
+      /*
+       * The upload interceptor stops a file over the limit before any LanguZe code
+       * runs, so its generic "payload too large" is translated here into the code
+       * the API promises for a photo (FR-011, API design, section 3.3).
+       */
+      if (status === PAYLOAD_TOO_LARGE && isPhotoUpload(exception)) {
+        return this.build(
+          status,
+          ErrorCode.PHOTO_TOO_LARGE,
+          'This photo is larger than 10 MB.',
+        );
+      }
       if (status >= 500) return this.unexpected(exception, status);
       return this.build(status, codeForStatus(status), messageOf(exception));
     }

@@ -147,7 +147,9 @@ Provider sign-in is the exception: the provider sends the browser straight back 
 | `POST`   | `/v1/worlds/{worldId}/retry`                | Retry a failed analysis on the same photo; `202`                     | FR-025                        |
 | `DELETE` | `/v1/worlds/{worldId}/words/{occurrenceId}` | Remove a word from the world; `204`                                  | FR-026, FR-027                |
 
-- Creating a world returns `202 Accepted` with the world in status `ANALYZING`; the analysis runs in the background (P2).
+- Creating a world returns `202 Accepted` with the world. The analysis runs in the background and the world stays `ANALYZING` until it finishes (P2). Until the AI module exists, a new world is `READY` at once and has no words (B4).
+- A world carries `thumbnailUrl` and, when opened, `photoUrl`: signed links that work for a few minutes and only for that object (P4). They are empty when the photo is gone.
+- Uploads are `multipart/form-data` and are kept in memory only; the file is prepared before anything is stored, and the original is never written down (FR-017).
 - Creation and retry can fail with `NOT_VERIFIED` or `AI_SUSPENDED` (`403`), `WORLD_LIMIT_REACHED` (`409`), `DAILY_ANALYSIS_LIMIT` (`429`), `PHOTO_TOO_LARGE` (`413`), or `PHOTO_TYPE_NOT_ALLOWED` (`415`).
 - Retry fails with `RETRY_NOT_AVAILABLE` (`409`) when the world is not `FAILED` or its photo was blocked.
 - Removing the last word fails with `LAST_WORD` (`409`).
