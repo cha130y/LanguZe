@@ -61,5 +61,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Photo storage comes from docker-compose rather than a service container, so it
+      # runs with the same image, version and S3 identities file as a developer's machine.
+      - run: docker compose up -d --wait storage
       - run: pnpm --filter @languze/api exec prisma migrate deploy
       - run: pnpm test:e2e

@@ -23,6 +23,8 @@
     "openapi:generate": "nest build && node dist/generate-openapi.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1138.0",
+    "@aws-sdk/s3-request-presigner": "^3.1138.0",
     "@nestjs/common": "^12.0.3",
     "@nestjs/config": "^12.0.0",
     "@nestjs/core": "^12.0.3",
@@ -38,7 +40,8 @@
     "nodemailer": "^10.0.10",
     "prisma": "^7.10.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

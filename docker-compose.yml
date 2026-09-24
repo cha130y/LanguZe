@@ -28,5 +28,36 @@ services:
       - '${MAILDEV_SMTP_PORT:-1026}:1025'
       - '${MAILDEV_WEB_PORT:-1081}:1080'
 
+  storage:
+    # S3-compatible object storage for photos, standing in for Cloudflare R2 (A3).
+    # `server -s3` runs master, volume and filer with the S3 gateway in one container,
+    # which is all local development needs.
+    image: chrislusf/seaweedfs:3.97
+    # The identities file makes SeaweedFS check S3 credentials and signatures, the way
+    # Cloudflare R2 does. Without it every object would be readable by anyone who can
+    # reach the port, and a signed link would prove nothing (P4, NFR-008).
+    # `-ip.bind=0.0.0.0` matters: SeaweedFS otherwise listens on the container's own
+    # address only, so nothing inside the container — the health check included —
+    # can reach it on localhost.
+    command: 'server -dir=/data -ip.bind=0.0.0.0 -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json -master.volumeSizeLimitMB=256'
+    ports:
+      - '${STORAGE_PORT:-8334}:8333'
+    volumes:
+      - storage-data:/data
+      - ./docker/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      # Unauthenticated requests are refused now, so 403 means the gateway is up.
+      # The address is spelled out: `localhost` resolves to IPv6 in this image, and
+      # SeaweedFS listens on IPv4.
+      test:
+        [
+          'CMD-SHELL',
+          'wget -q -S -O /dev/null http://127.0.0.1:8333 2>&1 | grep -q "HTTP/"',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
 volumes:
   postgres-data:
+  storage-data:

@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { plainToInstance } from 'class-transformer';
+import { plainToInstance, Type } from 'class-transformer';
 import {
   IsEnum,
   IsInt,
@@ -107,6 +107,36 @@ export class EnvironmentVariables {
 
   @IsString()
   GOOGLE_CLIENT_SECRET: string = '';
+
+  /**
+   * Photo storage (A3): SeaweedFS from docker-compose locally, Cloudflare R2 in
+   * production. Both speak S3, so only these values differ between them.
+   */
+  @IsString()
+  @IsNotEmpty()
+  STORAGE_ENDPOINT: string = 'http://localhost:8334';
+
+  /** R2 has one region, named `auto`; SeaweedFS ignores the value but needs one. */
+  @IsString()
+  @IsNotEmpty()
+  STORAGE_REGION: string = 'auto';
+
+  @IsString()
+  @IsNotEmpty()
+  STORAGE_BUCKET: string = 'languze-photos';
+
+  @IsString()
+  STORAGE_ACCESS_KEY_ID: string = 'languze';
+
+  @IsString()
+  STORAGE_SECRET_ACCESS_KEY: string = 'languze';
+
+  /** How long a signed photo link stays valid (P4, API design, section 5). */
+  @Type(() => Number)
+  @IsInt()
+  @Min(60)
+  @Max(3600)
+  PHOTO_LINK_TTL_SECONDS: number = 900;
 
   /**
    * LINE sign-in (FR-003), from one LINE Login channel for Thailand (ADR-0003).

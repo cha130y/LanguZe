@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "languze",
+      "credentials": [
+        {
+          "accessKey": "languze",
+          "secretKey": "languze"
+        }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

@@ -121,16 +121,19 @@ pnpm dev
 
 ## Services and ports
 
-| Service                  | URL / port                 | Notes                                     |
-| ------------------------ | -------------------------- | ----------------------------------------- |
-| Web (Next.js)            | http://localhost:3003      |                                           |
-| API (NestJS)             | http://localhost:4001      | `GET /health` checks the API and database |
-| API docs (Swagger)       | http://localhost:4001/docs | Disabled when `NODE_ENV=production`       |
-| PostgreSQL 18 + pgvector | `localhost:5435`           | user/password/db: `languze` (local only)  |
-| Maildev SMTP             | `localhost:1026`           | Captures outgoing email                   |
-| Maildev inbox            | http://localhost:1081      |                                           |
+| Service                   | URL / port                 | Notes                                     |
+| ------------------------- | -------------------------- | ----------------------------------------- |
+| Web (Next.js)             | http://localhost:3003      |                                           |
+| API (NestJS)              | http://localhost:4001      | `GET /health` checks the API and database |
+| API docs (Swagger)        | http://localhost:4001/docs | Disabled when `NODE_ENV=production`       |
+| PostgreSQL 18 + pgvector  | `localhost:5435`           | user/password/db: `languze` (local only)  |
+| Maildev SMTP              | `localhost:1026`           | Captures outgoing email                   |
+| Maildev inbox             | http://localhost:1081      |                                           |
+| Photo storage (SeaweedFS) | `localhost:8334`           | S3 API; key/secret `languze` (local only) |
 
-Host ports can be changed with `POSTGRES_PORT`, `MAILDEV_SMTP_PORT`, and `MAILDEV_WEB_PORT` when running `docker compose`.
+Host ports can be changed with `POSTGRES_PORT`, `MAILDEV_SMTP_PORT`, `MAILDEV_WEB_PORT`, and `STORAGE_PORT` when running `docker compose`.
+
+SeaweedFS stands in for Cloudflare R2 (A3) and runs with the credentials in `docker/seaweedfs-s3.json`, so it checks signatures exactly as R2 does: an unsigned request is refused. Without that file every object would be readable by anyone who could reach the port, and a signed link would prove nothing (P4). The API creates the bucket at startup when it is missing, so a fresh machine needs no setup beyond `pnpm infra:up`.
 
 ## Everyday commands
 
