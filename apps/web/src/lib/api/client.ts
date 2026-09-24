@@ -14,8 +14,12 @@ export type AcceptTermsBody = Json<
   paths['/v1/me/terms']['post']['requestBody']
 >;
 
-/** The providers LanguZe offers (FR-003). */
-export type Provider = 'google';
+/** The providers LanguZe can offer (FR-003); the API says which are configured. */
+export const PROVIDERS = ['google', 'line'] as const;
+export type Provider = (typeof PROVIDERS)[number];
+
+export const isProvider = (value: string): value is Provider =>
+  (PROVIDERS as readonly string[]).includes(value);
 
 /** The error shape every endpoint uses (API design, section 2.4). */
 export interface ApiErrorBody {
@@ -145,7 +149,8 @@ export const api = {
           provider,
           callbackURL: `${origin}/`,
           newUserCallbackURL: `${origin}/terms`,
-          errorCallbackURL: `${origin}/sign-in?error=provider`,
+          // Better Auth appends its own `?error=<code>`, which the page reads.
+          errorCallbackURL: `${origin}/sign-in`,
         }),
       });
     } catch {

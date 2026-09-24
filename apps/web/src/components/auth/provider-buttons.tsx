@@ -7,6 +7,7 @@ import { messageForError } from '@/lib/api/error-messages';
 
 const LABEL: Record<Provider, string> = {
   google: 'Google',
+  line: 'LINE',
 };
 
 /**

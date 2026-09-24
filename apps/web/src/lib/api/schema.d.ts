@@ -116,6 +116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AuthController_providers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/me": {
         parameters: {
             query?: never;
@@ -185,6 +201,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         SignUpDto: {
+            /** @description Cannot be a placeholder address (D1). */
             email: string;
             /** @description At least 8 characters (V2). */
             password: string;
@@ -249,6 +266,16 @@ export interface components {
             /** @description The token from the reset link. */
             token: string;
             newPassword: string;
+        };
+        ProvidersResponseDto: {
+            /**
+             * @description The providers with credentials configured, in the order to show them.
+             * @example [
+             *       "google",
+             *       "line"
+             *     ]
+             */
+            providers: string[];
         };
         AcceptTermsDto: {
             /** @description Display name, prefilled from the provider profile (V12, V19). */
@@ -479,6 +506,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_providers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProvidersResponseDto"];
                 };
             };
         };
