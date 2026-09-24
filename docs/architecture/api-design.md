@@ -90,6 +90,7 @@ Better Auth runs inside the API (ADR-0003), but learners reach it through LanguZ
 - Sign-in is refused with `INVALID_CREDENTIALS` (`401`), which never says whether the address is known, or `ACCOUNT_SUSPENDED` (`403`) once the password has confirmed the person (FR-105).
 - The two email endpoints always answer `{ "ok": true }`, whether or not the address has an account (FR-005).
 - Verification and reset links point at the web app, which sends the token to the API. A used or expired token is answered with `INVALID_TOKEN` (`400`).
+- `DELETE /v1/me` answers `204` and signs the browser out. The confirmation word is the API's own guard, so one stray request can never delete an account; the learner confirms on screen as well (FR-007, US-009). Anything else in `confirmation` is `VALIDATION_FAILED` (`400`) and deletes nothing. Everything belonging to the account goes with it through the schema's cascades; stored photos are removed within 24 hours by the storage module (NFR-009, V10).
 
 Provider sign-in is the exception: the provider sends the browser straight back to the API, so these two routes are Better Auth's own and answer in its format. Nothing else of Better Auth's is served — its own sign-up, for example, would skip the age check and the Terms.
 

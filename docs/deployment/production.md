@@ -167,6 +167,23 @@ The domain is billed yearly and is the one cost that does not scale with traffic
 
 Each free tier has a ceiling that real traffic will eventually reach; the point to re-read this section is when one of them does, not before.
 
-## 11. Not set up yet
+## 11. The contact address
+
+The Terms of Use, the Privacy Policy and the contact page all name one address, `support@languze.com` (FR-099), which also receives suspension appeals and PDPA requests. It costs nothing to run: **Cloudflare → Email → Email Routing** forwards it to an existing inbox, and no mailbox has to be paid for.
+
+1. In the Cloudflare dashboard for `languze.com`, open **Email → Email Routing** and enable it; Cloudflare adds the MX and TXT records itself
+2. Add the destination address and confirm it from the verification email Cloudflare sends there
+3. Create the custom address `support@languze.com`, forwarding to that destination
+4. Send a test message and check it arrives
+
+Replies come from the destination address unless a separate sending setup is added, so answers to learners will show that address until then.
+
+## 12. Before the legal pages go public
+
+- **The operator's name.** The pages carry `[OPERATOR NAME]` in `apps/web/src/lib/legal.ts` until a real name replaces it. Thailand's PDPA requires an identifiable data controller, so the pages cannot go public with the placeholder.
+- **A lawyer's review.** The text is written from the requirements (FR-090, FR-091, FR-099) and is not legal advice. The final text is an increment 14 task, together with the pre-launch checks in SRS 3.10.
+- **The last-updated date** in the same file moves with any change to the text.
+
+## 13. Not set up yet
 
 Deliberately absent, each waiting for a requirement that justifies it: Redis, RabbitMQ, a staging environment, a second API instance, and any CDN in front of R2. Adding one of these is an architecture decision, not a deployment detail.

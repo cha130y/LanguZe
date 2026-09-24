@@ -427,7 +427,7 @@ Index also on `learner_id`. A database trigger rejects every update and delete (
 
 ## 7. Personal data
 
-For the Privacy Policy and PDPA requests, this is where personal data lives and how it is removed.
+For the Privacy Policy and PDPA requests, this is where personal data lives and how it is removed. A learner deletes everything themselves with `DELETE /v1/me`, which removes the `users` row; every table below with a foreign key to it is removed by the cascade in the same statement.
 
 | Data                                       | Where                                        | Removed                                                    |
 | ------------------------------------------ | -------------------------------------------- | ---------------------------------------------------------- |
