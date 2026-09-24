@@ -1,3 +1,5 @@
+import { isPlaceholderAddress } from '../platform/email/placeholder-address.js';
+
 export interface MailMessage {
   to: string;
   subject: string;
@@ -5,16 +7,6 @@ export interface MailMessage {
   text: string;
   html: string;
 }
-
-/**
- * Accounts that sign in with a provider that shares no email address get a
- * placeholder on the reserved `.invalid` domain, which exists only to satisfy the
- * column (D1). RFC 2606 reserves it precisely so it can never resolve.
- */
-const PLACEHOLDER_DOMAIN_SUFFIX = '.invalid';
-
-export const isPlaceholderAddress = (address: string): boolean =>
-  address.toLowerCase().endsWith(PLACEHOLDER_DOMAIN_SUFFIX);
 
 /**
  * Sends an email. The abstract class is also the injection token, so tests can

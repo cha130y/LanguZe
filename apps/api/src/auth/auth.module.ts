@@ -56,6 +56,10 @@ const mailLogger = new Logger('AccountEmails');
             clientId: config.get('GOOGLE_CLIENT_ID', { infer: true }),
             clientSecret: config.get('GOOGLE_CLIENT_SECRET', { infer: true }),
           },
+          line: {
+            clientId: config.get('LINE_CLIENT_ID', { infer: true }),
+            clientSecret: config.get('LINE_CLIENT_SECRET', { infer: true }),
+          },
           sendVerificationEmail: (to, url) => send(verificationEmail(to, url)),
           sendPasswordResetEmail: (to, url) =>
             send(passwordResetEmail(to, url)),

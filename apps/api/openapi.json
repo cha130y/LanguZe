@@ -261,6 +261,27 @@
         ]
       }
     },
+    "/v1/auth/providers": {
+      "get": {
+        "operationId": "AuthController_providers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvidersResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "MeController_me",
@@ -394,7 +415,8 @@
         "properties": {
           "email": {
             "type": "string",
-            "maxLength": 254
+            "maxLength": 254,
+            "description": "Cannot be a placeholder address (D1)."
           },
           "password": {
             "type": "string",
@@ -628,6 +650,25 @@
         "required": [
           "token",
           "newPassword"
+        ]
+      },
+      "ProvidersResponseDto": {
+        "type": "object",
+        "properties": {
+          "providers": {
+            "example": [
+              "google",
+              "line"
+            ],
+            "description": "The providers with credentials configured, in the order to show them.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "providers"
         ]
       },
       "AcceptTermsDto": {
