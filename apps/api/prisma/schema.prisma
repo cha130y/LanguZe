@@ -45,10 +45,13 @@ model User {
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  accounts Account[]
-  sessions Session[]
-  photos   StoredPhoto[]
-  worlds   World[]
+  accounts    Account[]
+  sessions    Session[]
+  photos      StoredPhoto[]
+  worlds      World[]
+  analyses    Analysis[]
+  words       VocabularyWord[]
+  photoBlocks PhotoBlock[]
 
   @@map("users")
 }
@@ -201,10 +204,159 @@ model World {
   createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt     DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  learner   User         @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  photo     StoredPhoto? @relation("WorldPhoto", fields: [photoId], references: [id], onDelete: SetNull)
-  thumbnail StoredPhoto? @relation("WorldThumbnail", fields: [thumbnailId], references: [id], onDelete: SetNull)
+  learner     User             @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  photo       StoredPhoto?     @relation("WorldPhoto", fields: [photoId], references: [id], onDelete: SetNull)
+  thumbnail   StoredPhoto?     @relation("WorldThumbnail", fields: [thumbnailId], references: [id], onDelete: SetNull)
+  analyses    Analysis[]
+  occurrences WordOccurrence[]
 
   @@index([learnerId, createdAt])
   @@map("worlds")
+}
+
+enum AnalysisStatus {
+  IN_PROGRESS
+  SUCCEEDED
+  /// The photo broke the content rules; it counts toward the daily limit (FR-093).
+  BLOCKED
+  /// LanguZe or its provider failed, so the analysis is not counted (FR-025).
+  FAILED
+
+  @@map("analysis_status")
+}
+
+enum CefrLevel {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+
+  @@map("cefr_level")
+}
+
+enum BlockCategory {
+  SEXUAL_CONTENT
+  SUSPECTED_ILLEGAL_MATERIAL
+  VIOLENCE
+  ILLEGAL_ACTIVITY
+  HATE_SYMBOL
+  PERSONAL_DATA
+  OTHER
+
+  @@map("block_category")
+}
+
+enum AiPurpose {
+  SAFETY_CHECK
+  EXTRACTION
+  TUTOR
+
+  @@map("ai_purpose")
+}
+
+enum AiOutcome {
+  SUCCEEDED
+  FAILED
+  TIMED_OUT
+  INVALID_OUTPUT
+
+  @@map("ai_outcome")
+}
+
+/// One analysis run of one photo, which is also what the daily limit counts
+/// (FR-020, U2). It outlives its world, so deleting a world cannot give an
+/// analysis back.
+model Analysis {
+  id            String           @id @default(uuid(7)) @db.Uuid
+  learnerId     String           @map("learner_id") @db.Uuid
+  worldId       String?          @map("world_id") @db.Uuid
+  status        AnalysisStatus   @default(IN_PROGRESS)
+  failureReason AnalysisFailure? @map("failure_reason")
+  startedAt     DateTime         @default(now()) @map("started_at") @db.Timestamptz(3)
+  finishedAt    DateTime?        @map("finished_at") @db.Timestamptz(3)
+
+  learner User   @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  world   World? @relation(fields: [worldId], references: [id], onDelete: SetNull)
+
+  @@index([learnerId, startedAt])
+  @@index([status, startedAt])
+  @@map("analyses")
+}
+
+/// A learner's word, identified by the English word and the Thai meaning (FR-043).
+model VocabularyWord {
+  id              String   @id @default(uuid(7)) @db.Uuid
+  learnerId       String   @map("learner_id") @db.Uuid
+  /// Normalized, singular base form (SRS 4.2, AIR-003).
+  english         String   @db.VarChar(40)
+  thaiMeaning     String   @map("thai_meaning") @db.VarChar(100)
+  /// The Thai meaning with outer spaces removed and inner spaces collapsed, so two
+  /// spellings of the same meaning are one word.
+  thaiMeaningKey  String   @map("thai_meaning_key") @db.VarChar(100)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  learner     User             @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  occurrences WordOccurrence[]
+
+  @@unique([learnerId, english, thaiMeaningKey])
+  @@map("vocabulary_words")
+}
+
+/// One word as it appears in one world's photo, with the box that highlights it.
+model WordOccurrence {
+  id               String    @id @default(uuid(7)) @db.Uuid
+  worldId          String    @map("world_id") @db.Uuid
+  vocabularyWordId String    @map("vocabulary_word_id") @db.Uuid
+  /// Relative to the prepared photo, so resizing never moves the box (AIR-003).
+  boxX             Float     @map("box_x")
+  boxY             Float     @map("box_y")
+  boxWidth         Float     @map("box_width")
+  boxHeight        Float     @map("box_height")
+  exampleSentence  String    @map("example_sentence") @db.VarChar(200)
+  cefrLevel        CefrLevel @map("cefr_level")
+  /// Other answers the game accepts; normalized, at most 10, never the word itself.
+  acceptedVariants String[]  @map("accepted_variants") @db.VarChar(40)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  world          World          @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  vocabularyWord VocabularyWord @relation(fields: [vocabularyWordId], references: [id], onDelete: Cascade)
+
+  @@unique([worldId, vocabularyWordId])
+  @@index([vocabularyWordId])
+  @@map("word_occurrences")
+}
+
+/// That a learner's photo was blocked, and why — never the photo itself (FR-095).
+model PhotoBlock {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  learnerId String        @map("learner_id") @db.Uuid
+  category  BlockCategory
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  learner User @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  @@index([learnerId, createdAt])
+  @@map("photo_blocks")
+}
+
+/// What one AI call cost and how it went (AIR-007). Holds no learner identifier,
+/// photo, prompt, or message text, which is why it has no foreign key.
+model AiCall {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  purpose      AiPurpose
+  provider     String    @db.VarChar(50)
+  model        String    @db.VarChar(100)
+  startedAt    DateTime  @default(now()) @map("started_at") @db.Timestamptz(3)
+  latencyMs    Int       @map("latency_ms")
+  inputTokens  Int?      @map("input_tokens")
+  outputTokens Int?      @map("output_tokens")
+  outcome      AiOutcome
+  errorCode    String?   @map("error_code") @db.VarChar(100)
+  /// Links the call to the API's request logs (NFR-016).
+  requestId    String?   @map("request_id") @db.VarChar(100)
+
+  @@index([startedAt])
+  @@map("ai_calls")
 }

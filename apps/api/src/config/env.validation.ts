@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { plainToInstance, Type } from 'class-transformer';
 import {
   IsEnum,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsString,
@@ -107,6 +108,21 @@ export class EnvironmentVariables {
 
   @IsString()
   GOOGLE_CLIENT_SECRET: string = '';
+
+  /**
+   * What the fake AI provider does (B4), so a developer can see a blocked photo or
+   * a provider error without a real key: ALLOWED, BLOCKED, PROVIDER_ERROR,
+   * TIMED_OUT, TOO_FEW_WORDS, or INVALID_OUTPUT.
+   */
+  @IsIn([
+    'ALLOWED',
+    'BLOCKED',
+    'PROVIDER_ERROR',
+    'TIMED_OUT',
+    'TOO_FEW_WORDS',
+    'INVALID_OUTPUT',
+  ])
+  AI_FAKE_BEHAVIOUR: string = 'ALLOWED';
 
   /**
    * Photo storage (A3): SeaweedFS from docker-compose locally, Cloudflare R2 in

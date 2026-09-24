@@ -140,6 +140,23 @@ Then start both apps:
 pnpm dev
 ```
 
+## Seeing each analysis result
+
+Photo analysis uses a fake AI provider until a Gemini key is configured (B4), so it
+costs nothing and always answers the same. `AI_FAKE_BEHAVIOUR` in `apps/api/.env`
+decides which path it takes, which is how the failure screens can be seen at all:
+
+| Value            | What a learner sees                                   |
+| ---------------- | ----------------------------------------------------- |
+| `ALLOWED`        | Six words from a living room, the normal case         |
+| `BLOCKED`        | The photo breaks the rules; it is deleted (FR-092)    |
+| `PROVIDER_ERROR` | The analysis fails and is not counted (FR-025)        |
+| `TIMED_OUT`      | The same, as a timeout                                |
+| `TOO_FEW_WORDS`  | Two words, below the minimum of three (FR-024)        |
+| `INVALID_OUTPUT` | Output that fails every rule, so nothing can be saved |
+
+Restart the API after changing it, as with every environment value.
+
 ## Services and ports
 
 | Service                   | URL / port                 | Notes                                     |

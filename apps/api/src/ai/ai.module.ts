@@ -1,0 +1,35 @@
+import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { EnvironmentVariables } from '../config/env.validation.js';
+import { PrismaModule } from '../prisma/prisma.module.js';
+import { AiCallRecorder } from './ai-call-recorder.js';
+import { AiProvider } from './ai-provider.js';
+import { FakeAiProvider } from './fake-ai-provider.js';
+
+/**
+ * The AI interface and the provider behind it (AIR-001, ADR-0004). Only this module
+ * knows which provider answers; everything else depends on `AiProvider`.
+ *
+ * The fake provider is the default, so development and tests cost nothing and give
+ * the same answer every time (B4). Gemini arrives as another adapter here.
+ */
+@Module({
+  imports: [PrismaModule],
+  providers: [
+    AiCallRecorder,
+    {
+      provide: AiProvider,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<EnvironmentVariables, true>) => {
+        const provider = new FakeAiProvider();
+        // Lets a developer see a blocked photo or a provider error in the browser.
+        provider.behaviour = config.get('AI_FAKE_BEHAVIOUR', {
+          infer: true,
+        });
+        return provider;
+      },
+    },
+  ],
+  exports: [AiProvider, AiCallRecorder],
+})
+export class AiModule {}
