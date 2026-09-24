@@ -1,21 +1,10 @@
 import { FakeMailSender } from './fake-mail-sender.js';
-import { isPlaceholderAddress } from './mail-sender.js';
 
 const message = (to: string) => ({
   to,
   subject: 'ยืนยันอีเมลของคุณ',
   text: 'link',
   html: '<a>link</a>',
-});
-
-describe('placeholder addresses', () => {
-  it('recognises the reserved domain whatever the case', () => {
-    expect(isPlaceholderAddress('a1b2@languze.invalid')).toBe(true);
-    expect(isPlaceholderAddress('A1B2@LANGUZE.INVALID')).toBe(true);
-    expect(isPlaceholderAddress('nok@example.com')).toBe(false);
-    // Only the domain counts; an address may legitimately contain the word.
-    expect(isPlaceholderAddress('invalid@example.com')).toBe(false);
-  });
 });
 
 describe('MailSender', () => {

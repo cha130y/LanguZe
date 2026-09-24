@@ -82,9 +82,11 @@ Better Auth runs inside the API (ADR-0003), but learners reach it through LanguZ
 | `POST` | `/v1/auth/verify-email`            | Verifies the address with the token from the email                                                                                  | FR-004                      |
 | `POST` | `/v1/auth/request-password-reset`  | Sends a reset link                                                                                                                  | FR-005                      |
 | `POST` | `/v1/auth/reset-password`          | Sets a new password and ends every session                                                                                          | FR-005, S7                  |
+| `GET`  | `/v1/auth/providers`               | Which provider sign-ins this API offers, in the order to show them                                                                  | FR-003                      |
 
 - Sign-up and sign-in answer with the account, in the same shape as `GET /v1/me`, and set the session cookie.
-- Sign-up is refused with `TERMS_NOT_ACCEPTED` (`400`), `AGE_BELOW_MINIMUM` (`403`, V20), or `EMAIL_ALREADY_REGISTERED` (`409`, U7). An under-age answer also sets a short `HttpOnly` cookie that blocks further attempts from that browser for 24 hours.
+- Sign-up is refused with `TERMS_NOT_ACCEPTED` (`400`), `AGE_BELOW_MINIMUM` (`403`, V20), or `EMAIL_ALREADY_REGISTERED` (`409`, U7). An under-age answer also sets a short `HttpOnly` cookie that blocks further attempts from that browser for 24 hours. A placeholder address (D1) is refused as invalid, so nobody can claim the address a provider identity resolves to.
+- `/v1/auth/providers` answers `{ "providers": ["google", "line"] }` and needs no session. It lists the providers whose credentials are configured, so the web app never shows a button that cannot work.
 - Sign-in is refused with `INVALID_CREDENTIALS` (`401`), which never says whether the address is known, or `ACCOUNT_SUSPENDED` (`403`) once the password has confirmed the person (FR-105).
 - The two email endpoints always answer `{ "ok": true }`, whether or not the address has an account (FR-005).
 - Verification and reset links point at the web app, which sends the token to the API. A used or expired token is answered with `INVALID_TOKEN` (`400`).
@@ -301,16 +303,17 @@ The generic codes (`BAD_REQUEST`, `FORBIDDEN`, `CONFLICT`, `PAYLOAD_TOO_LARGE`, 
 
 Starting values, all configurable per environment (E3). Rate limits are kept in the API's memory (A2) and answer `RATE_LIMITED` with `Retry-After`.
 
-| What                                   | Limit                     | Keyed by                       |
-| -------------------------------------- | ------------------------- | ------------------------------ |
-| Email sign-in                          | 5 attempts per 15 minutes | Email address and IP           |
-| Sign-up                                | 5 per hour                | IP                             |
-| Password reset and verification emails | 3 per hour                | Email address                  |
-| Photo upload and retry                 | 5 per minute              | Account                        |
-| Tutor messages                         | 10 per minute             | Account                        |
-| Admin actions                          | 30 per minute             | Admin account                  |
-| Any other request                      | 120 per minute            | Account, or IP when signed out |
-| Lifetime of a signed photo link        | 15 minutes                | —                              |
+| What                                    | Limit                     | Keyed by                       |
+| --------------------------------------- | ------------------------- | ------------------------------ |
+| Email sign-in                           | 5 attempts per 15 minutes | Email address and IP           |
+| Sign-up                                 | 5 per hour                | IP                             |
+| Password reset and verification emails  | 3 per hour                | Email address                  |
+| Photo upload and retry                  | 5 per minute              | Account                        |
+| Tutor messages                          | 10 per minute             | Account                        |
+| Admin actions                           | 30 per minute             | Admin account                  |
+| Any other request                       | 120 per minute            | Account, or IP when signed out |
+| Provider sign-in and callback (`/auth`) | 120 per minute            | IP                             |
+| Lifetime of a signed photo link         | 15 minutes                | —                              |
 
 The daily limits of the SRS (10 analyses, 30 tutor messages) are separate and apply on top of these.
 

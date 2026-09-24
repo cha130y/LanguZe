@@ -28,6 +28,7 @@ import {
   MeResponseDto,
   ResetPasswordDto,
   SignInDto,
+  ProvidersResponseDto,
   SignUpDto,
   VerifyEmailDto,
 } from './dto/auth.dto.js';
@@ -160,6 +161,13 @@ export class AuthController {
   ): Promise<AcknowledgementDto> {
     await this.authService.resetPassword(dto.token, dto.newPassword);
     return ACKNOWLEDGED;
+  }
+
+  @Get('providers')
+  @Public()
+  @ApiOkResponse({ type: ProvidersResponseDto })
+  providers(): ProvidersResponseDto {
+    return this.authService.providers();
   }
 }
 

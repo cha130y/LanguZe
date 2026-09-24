@@ -15,9 +15,9 @@ export default defineConfig({
      * origin check and the session cookie fail in ways that look like broken code.
      * DATABASE_URL is deliberately left alone: the suite needs a real database.
      *
-     * Google gets placeholder credentials so the provider exists whether or not a
-     * developer has set up an OAuth client. Starting a sign-in only builds Google's
-     * address, so the suite never contacts Google.
+     * Google and LINE get placeholder credentials so both providers exist whether or
+     * not a developer has set up OAuth clients. Starting a sign-in only builds the
+     * provider's address, so the suite never contacts Google or LINE.
      */
     env: {
       WEB_ORIGIN: 'http://localhost:3003',
@@ -25,6 +25,10 @@ export default defineConfig({
       COOKIE_DOMAIN: '',
       GOOGLE_CLIENT_ID: 'e2e-google-client-id',
       GOOGLE_CLIENT_SECRET: 'e2e-google-client-secret',
+      LINE_CLIENT_ID: 'e2e-line-client-id',
+      LINE_CLIENT_SECRET: 'e2e-line-client-secret',
+      // Low enough that a test can reach the limit without a long loop.
+      RATE_LIMIT_PER_MINUTE: '20',
     },
   },
 });

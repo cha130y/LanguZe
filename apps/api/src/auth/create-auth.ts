@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import type { PrismaService } from '../prisma/prisma.service.js';
+import { lineProfileToUser } from './line-profile.js';
 import { secureLinkedAccount } from './secure-linked-account.js';
 
 export interface AuthDependencies {
@@ -18,10 +19,21 @@ export interface AuthDependencies {
    */
   cookieDomain: string;
   /** Google OAuth credentials; the provider is not offered while either is empty. */
-  google: { clientId: string; clientSecret: string };
+  google: ProviderCredentials;
+  /** LINE Login credentials, one channel for Thailand; optional in the same way. */
+  line: ProviderCredentials;
   sendVerificationEmail: (to: string, url: string) => Promise<void>;
   sendPasswordResetEmail: (to: string, url: string) => Promise<void>;
 }
+
+/** A provider is offered only once both of its values are set. */
+export interface ProviderCredentials {
+  clientId: string;
+  clientSecret: string;
+}
+
+const isConfigured = (credentials: ProviderCredentials): boolean =>
+  credentials.clientId !== '' && credentials.clientSecret !== '';
 
 /** Path of the Better Auth sign-up endpoint, used to tell email sign-ups from provider sign-ups. */
 const EMAIL_SIGN_UP_PATH = '/sign-up/email';
@@ -101,18 +113,41 @@ export function createAuth(deps: AuthDependencies) {
       },
     },
     /*
-     * Offered only once both credentials exist, so a developer without an OAuth
-     * client still gets a working API — the provider button simply is not there.
+     * Each provider is offered only once both its credentials exist, so a developer
+     * without an OAuth client still gets a working API — the button simply is not
+     * there, and `GET /v1/auth/providers` tells the web app which ones to show.
      */
-    socialProviders:
-      deps.google.clientId && deps.google.clientSecret
+    socialProviders: {
+      ...(isConfigured(deps.google)
         ? {
             google: {
               clientId: deps.google.clientId,
               clientSecret: deps.google.clientSecret,
+              // LanguZe shows no profile pictures, so Google's is not kept.
+              mapProfileToUser: () => ({ image: undefined }),
             },
           }
-        : {},
+        : {}),
+      ...(isConfigured(deps.line)
+        ? {
+            line: {
+              clientId: deps.line.clientId,
+              clientSecret: deps.line.clientSecret,
+              /*
+               * Better Auth asks LINE for the email address by default. LanguZe
+               * cannot use it — LINE never says whether it is verified (FR-009) —
+               * and asking needs LINE's approval of the email permission, which
+               * would fail the sign-in until granted. So it asks only for what it
+               * keeps: the LINE user ID and the display name.
+               */
+              disableDefaultScope: true,
+              scope: ['openid', 'profile'],
+              // A LINE account is always stored with a placeholder address (D1, FR-009).
+              mapProfileToUser: lineProfileToUser,
+            },
+          }
+        : {}),
+    },
     account: {
       accountLinking: {
         enabled: true,

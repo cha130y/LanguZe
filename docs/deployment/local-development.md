@@ -44,7 +44,7 @@ MAIL_FROM="LanguZe <no-reply@languze.local>"
 
 Only `DATABASE_URL` and `AUTH_SECRET` are required; the other values above are the defaults. The API validates these variables at startup and refuses to start if any are invalid.
 
-Three more variables exist for production and stay empty locally: `MAIL_USER` and `MAIL_PASSWORD`, because Maildev accepts anonymous mail, and `COOKIE_DOMAIN`, because the web app and the API already share `localhost`. See [production deployment](production.md). `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are covered under Google sign-in below.
+Three more variables exist for production and stay empty locally: `MAIL_USER` and `MAIL_PASSWORD`, because Maildev accepts anonymous mail, and `COOKIE_DOMAIN`, because the web app and the API already share `localhost`. See [production deployment](production.md). The provider credentials — `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `LINE_CLIENT_ID` and `LINE_CLIENT_SECRET` — are covered under the two sign-in sections below. Each provider is offered only once both of its values are set, and the web app reads the list from `GET /v1/auth/providers`, so a button never appears for a provider the API cannot serve.
 
 The web app needs no environment file locally: it calls `http://localhost:4001` unless `NEXT_PUBLIC_API_URL` says otherwise in `apps/web/.env.local`.
 
@@ -64,6 +64,20 @@ Optional: without credentials the API still starts, and simply does not offer Go
 6. Copy the secret straight away — it may not be shown again — and put both values in `apps/api/.env` as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
 
 A `redirect_uri_mismatch` from Google means the URI above differs from the one registered, even by a trailing slash.
+
+## LINE sign-in
+
+Also optional. LINE Login needs one channel per country, and LanguZe uses a Thailand channel (ADR-0003).
+
+1. In the [LINE Developers console](https://developers.line.biz/console/), sign in with the LINE account that will own the app and create a **provider** — LINE's word for the publisher shown to learners
+2. Create a **LINE Login** channel: region **Thailand**, app type **Web app**, and the LanguZe name, description, and icon
+3. Under **LINE Login → Callback URL**, add both, one per line:
+   - `https://api.languze.com/auth/callback/line`
+   - `http://localhost:4001/auth/callback/line`
+4. Copy the **Channel ID** and **Channel secret** from the **Basic settings** tab into `apps/api/.env` as `LINE_CLIENT_ID` and `LINE_CLIENT_SECRET`
+5. Add your own LINE account as a tester under **Roles** while the channel is in development
+
+The **email permission** under **OIDC** is not needed and not requested. It takes LINE's approval and a screenshot of the consent screen, and LanguZe could not use the address anyway: LINE never states that one is verified, so FR-009 forbids it, and every LINE account is stored with a placeholder address (D1). The API asks LINE for `openid profile` only — the user ID and the display name — so an unapproved permission can never fail a sign-in.
 
 ## Testing through the tunnel
 
@@ -85,9 +99,17 @@ While it runs, `languze.com` is public and anyone who finds it can sign up, so s
 | `COOKIE_DOMAIN`                 | _(empty)_               | `.languze.com`            |
 | `NEXT_PUBLIC_API_URL` (web app) | `http://localhost:4001` | `https://api.languze.com` |
 
+Both provider callback URLs have to be registered for both addresses, which step 5 above and step 3 under LINE already do.
+
 In tunnel mode, open `https://languze.com` rather than `localhost:3003`: the API only accepts requests from the origin it is configured for, and the browser blocks the rest without saying why.
 
 `next.config.ts` allows `languze.com` as a development origin. Without it the Next.js development server refuses to serve its scripts to that origin, so pages render but no button does anything, and the only clue is a failed `/_next/hmr` WebSocket in the browser console.
+
+**Cloudflare must not cache the development server's JavaScript.** Next.js serves its chunks with `Cache-Control: no-cache`, but a Cloudflare zone rewrites that to its **Browser Cache TTL**, four hours by default. The browser then keeps old chunks while the dev server rebuilds new ones at the same addresses, and the page ends up running two versions of the same code: buttons throw before sending any request, and the console stays empty. Set **Caching → Configuration → Browser Cache TTL** to **Respect Existing Headers** once, for the whole zone. It is also the right setting for production, where Next.js sends its own long-lived headers for hashed files.
+
+To check: `curl -sI https://languze.com/_next/static/chunks/<any-chunk>.js | grep -i cache-control` should answer `no-cache, must-revalidate`, not `max-age=14400`. After changing it, purge Cloudflare's cache and empty the browser's own (DevTools open, right-click reload, **Empty cache and hard reload**).
+
+**Restart `pnpm dev` after switching branches.** Git rewrites `next.config.ts` at each step of a checkout, and the development server can restart on an intermediate version — then `allowedDevOrigins` is missing and every request from `languze.com` is refused, with the same empty console.
 
 **When something does nothing in the browser, open the console first** (F12). `curl` skips exactly the checks a browser enforces — CORS and the origin headers — so a request can succeed from the terminal and be blocked in the page.
 

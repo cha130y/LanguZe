@@ -1,5 +1,5 @@
 import type { PrismaService } from '../prisma/prisma.service.js';
-import { createAuth, type AuthDependencies } from './create-auth.js';
+import { createAuth, type Auth, type AuthDependencies } from './create-auth.js';
 
 /**
  * The session cookie has to reach both the web app and the API in production (H5),
@@ -20,6 +20,7 @@ const deps = (
   webOrigin: 'https://languze.com',
   cookieDomain,
   google: { clientId: '', clientSecret: '' },
+  line: { clientId: '', clientSecret: '' },
   sendVerificationEmail: async () => {},
   sendPasswordResetEmail: async () => {},
 });
@@ -76,5 +77,88 @@ describe('session cookie', () => {
 
     expect(attributes.secure).toBe(false);
     expect(name.startsWith('__Secure-')).toBe(false);
+  });
+});
+
+const withProviders = (
+  providers: Partial<Pick<AuthDependencies, 'google' | 'line'>>,
+): Auth => createAuth({ ...deps(''), ...providers });
+
+const credentials = { clientId: 'client', clientSecret: 'secret' };
+
+/** An ID token the way LINE returns one; only its payload is ever read. */
+const idTokenFor = (payload: Record<string, unknown>) =>
+  [
+    'eyJhbGciOiJIUzI1NiJ9',
+    Buffer.from(JSON.stringify(payload)).toString('base64url'),
+    'signature',
+  ].join('.');
+
+describe('providers on offer (FR-003)', () => {
+  it('offers only the ones with credentials', () => {
+    const auth = withProviders({ line: credentials });
+
+    expect(Object.keys(auth.options.socialProviders ?? {})).toEqual(['line']);
+  });
+
+  it('offers none at all without credentials', () => {
+    expect(
+      Object.keys(withProviders({}).options.socialProviders ?? {}),
+    ).toEqual([]);
+  });
+
+  /*
+   * The mapping is what keeps LINE's address out of the database (D1, FR-009), so
+   * this drives the provider Better Auth built rather than the mapping alone: a
+   * mapping that is written but not wired would pass the one and fail the other.
+   */
+  it('stores a LINE sign-in under a placeholder address', async () => {
+    const auth = withProviders({ line: credentials });
+    const context = await auth.$context;
+    const line = context.socialProviders.find(
+      (provider) => provider.id === 'line',
+    );
+
+    const info = await line?.getUserInfo({
+      idToken: idTokenFor({
+        sub: 'U4af4980629',
+        name: 'นก',
+        email: 'nok@example.com',
+      }),
+      accessToken: 'line-access-token',
+    });
+
+    expect(info?.user.email).toBe('line.u4af4980629@no-email.languze.invalid');
+    expect(info?.user.emailVerified).toBe(false);
+  });
+
+  it('keeps no profile picture from Google', () => {
+    const google = withProviders({ google: credentials }).options
+      .socialProviders?.google;
+
+    expect(google?.mapProfileToUser?.()).toEqual({
+      image: undefined,
+    });
+  });
+
+  /*
+   * Asking LINE for the email address needs LINE's approval of the email
+   * permission, and LanguZe never keeps the answer, so the request must not
+   * include it: an unapproved scope would fail the sign-in for nothing.
+   */
+  it('asks LINE only for what it keeps', async () => {
+    const auth = withProviders({ line: credentials });
+    const context = await auth.$context;
+    const line = context.socialProviders.find(
+      (provider) => provider.id === 'line',
+    );
+
+    const url = await line?.createAuthorizationURL({
+      state: 'state',
+      codeVerifier: 'verifier',
+      redirectURI: 'https://api.languze.com/auth/callback/line',
+    });
+
+    expect(url?.searchParams.get('scope')).toBe('openid profile');
   });
 });

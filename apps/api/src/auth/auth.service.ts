@@ -7,6 +7,7 @@ import {
   NodeEnv,
   type EnvironmentVariables,
 } from '../config/env.validation.js';
+import { isPlaceholderAddress } from '../platform/email/placeholder-address.js';
 import { AppError } from '../platform/errors/app-error.js';
 import { ErrorCode } from '../platform/errors/error-codes.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -21,6 +22,7 @@ import type { Auth } from './create-auth.js';
 import type {
   AcceptTermsDto,
   MeResponseDto,
+  ProvidersResponseDto,
   SignInDto,
   SignUpDto,
 } from './dto/auth.dto.js';
@@ -212,6 +214,15 @@ export class AuthService {
     };
   }
 
+  /**
+   * The provider sign-ins on offer (FR-003). Read from Better Auth itself rather
+   * than from a list of names, so a provider whose credentials are missing is
+   * never shown as a button that cannot work.
+   */
+  providers(): ProvidersResponseDto {
+    return { providers: Object.keys(this.auth.options.socialProviders ?? {}) };
+  }
+
   /** The account and what it may do (API design, section 3.2). */
   async me(userId: string): Promise<MeResponseDto> {
     const user = await this.prisma.user.findUniqueOrThrow({
@@ -237,7 +248,7 @@ export class AuthService {
       id: user.id,
       name: user.name,
       // A placeholder address is not a contact address, so it is never shown (D1).
-      email: user.email.endsWith('.invalid') ? null : user.email,
+      email: isPlaceholderAddress(user.email) ? null : user.email,
       emailVerified: user.emailVerified,
       verifiedForAi,
       role: user.role,

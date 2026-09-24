@@ -1,12 +1,23 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AuthCard } from '@/components/auth/auth-card';
-import { ProviderButtons } from '@/components/auth/provider-buttons';
+import { ProviderSection } from '@/components/auth/provider-section';
 import { SignInForm } from '@/components/auth/sign-in-form';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { messageForProviderError } from '@/lib/api/provider-errors';
 
 export const metadata: Metadata = { title: 'เข้าสู่ระบบ · LanguZe' };
 
-export default function SignInPage() {
+export default async function SignInPage({
+  searchParams,
+}: {
+  // A provider sign-in that fails comes back here with Better Auth's own code,
+  // and repeating a parameter is legal, so this may arrive as a list (US-004).
+  searchParams: Promise<{ error?: string | string[] }>;
+}) {
+  const { error } = await searchParams;
+  const message = messageForProviderError(error);
+
   return (
     <AuthCard
       title="เข้าสู่ระบบ"
@@ -19,10 +30,13 @@ export default function SignInPage() {
         </>
       }
     >
+      {message ? (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      ) : null}
       <SignInForm />
-      <div className="mt-5">
-        <ProviderButtons providers={['google']} />
-      </div>
+      <ProviderSection />
     </AuthCard>
   );
 }

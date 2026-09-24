@@ -107,6 +107,16 @@ export class EnvironmentVariables {
 
   @IsString()
   GOOGLE_CLIENT_SECRET: string = '';
+
+  /**
+   * LINE sign-in (FR-003), from one LINE Login channel for Thailand (ADR-0003).
+   * Optional in the same way as Google.
+   */
+  @IsString()
+  LINE_CLIENT_ID: string = '';
+
+  @IsString()
+  LINE_CLIENT_SECRET: string = '';
 }
 
 /**

@@ -1,8 +1,9 @@
 import { NotFoundException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { ThrottlerStorage } from '@nestjs/throttler';
 import { toNodeHandler } from 'better-auth/node';
-import type { NextFunction, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { AUTH } from './auth/auth.tokens.js';
 import type { Auth } from './auth/create-auth.js';
 import { isProviderRoute } from './auth/provider-routes.js';
@@ -10,6 +11,7 @@ import type { EnvironmentVariables } from './config/env.validation.js';
 import { AllExceptionsFilter } from './platform/errors/all-exceptions.filter.js';
 import { validationErrorFactory } from './platform/errors/validation-error.factory.js';
 import { requestLoggingMiddleware } from './platform/logging/request-logging.middleware.js';
+import { providerRouteLimit } from './platform/http/provider-route-limit.js';
 import { requestContextMiddleware } from './platform/request-context/request-context.js';
 
 /** LanguZe endpoints live under /v1; the health check stays at the root (API design, E1). */
@@ -55,16 +57,26 @@ export function configureApp(app: NestExpressApplication): void {
    *
    * Only the provider routes reach it; every other path under /auth answers
    * NOT_FOUND in the API's error format (provider-routes.ts). Nest's own 404
-   * handler covers /v1 only, so it cannot be left to the router.
+   * handler covers /v1 only, so it cannot be left to the router, and neither can
+   * the rate limit: the guards run after this middleware.
    */
   const authHandler = toNodeHandler(app.get<Auth>(AUTH));
-  app.use('/auth', (req: Request, res: Response, next: NextFunction) => {
-    if (!isProviderRoute(req.method, req.path)) {
-      const { status, body } = errors.toErrorResponse(new NotFoundException());
-      res.status(status).json(body);
-      return;
-    }
-    authHandler(req, res).catch(next);
+  const limitProviderRoute = providerRouteLimit(
+    app.get<ThrottlerStorage>(ThrottlerStorage),
+    config.get('RATE_LIMIT_PER_MINUTE', { infer: true }),
+  );
+  app.use('/auth', (req: Request, res: Response) => {
+    void (async () => {
+      try {
+        if (!isProviderRoute(req.method, req.path))
+          throw new NotFoundException();
+        await limitProviderRoute(req, res);
+        await authHandler(req, res);
+      } catch (error) {
+        const { status, body } = errors.toErrorResponse(error);
+        if (!res.headersSent) res.status(status).json(body);
+      }
+    })();
   });
   app.useBodyParser('json');
 

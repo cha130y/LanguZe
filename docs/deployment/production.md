@@ -83,6 +83,7 @@ Names only. Values live in each provider's settings and never in the repository,
 | `AUTH_URL`                                                                                  | `https://api.languze.com`                                |
 | `COOKIE_DOMAIN`                                                                             | `.languze.com` — see section 6                           |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`                                                  | From the LanguZe project in Google Cloud Console         |
+| `LINE_CLIENT_ID`, `LINE_CLIENT_SECRET`                                                      | Channel ID and secret of the Thailand LINE Login channel |
 | `MAIL_HOST`, `MAIL_PORT`                                                                    | `smtp.resend.com`, `587`                                 |
 | `MAIL_USER`, `MAIL_PASSWORD`                                                                | `resend`, and a Resend API key                           |
 | `MAIL_FROM`                                                                                 | `LanguZe <no-reply@languze.com>`, on the verified domain |

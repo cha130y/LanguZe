@@ -11,15 +11,20 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
+import { IsDeliverableAddress } from '../../platform/email/is-deliverable-address.decorator.js';
 
 /** Longest value the API accepts for a password, to keep hashing work bounded. */
 const MAX_PASSWORD_LENGTH = 128;
 const MAX_TOKEN_LENGTH = 512;
 
 export class SignUpDto {
-  @ApiProperty({ maxLength: 254 })
+  @ApiProperty({
+    maxLength: 254,
+    description: 'Cannot be a placeholder address (D1).',
+  })
   @IsEmail()
   @MaxLength(254)
+  @IsDeliverableAddress()
   email: string;
 
   @ApiProperty({
@@ -121,6 +126,18 @@ export class ResetPasswordDto {
   @MinLength(8)
   @MaxLength(MAX_PASSWORD_LENGTH)
   newPassword: string;
+}
+
+/** Which provider sign-ins this API offers (FR-003). */
+export class ProvidersResponseDto {
+  @ApiProperty({
+    isArray: true,
+    type: String,
+    example: ['google', 'line'],
+    description:
+      'The providers with credentials configured, in the order to show them.',
+  })
+  providers: string[];
 }
 
 export class AiAccessDto {
