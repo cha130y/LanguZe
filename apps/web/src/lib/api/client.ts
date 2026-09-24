@@ -14,6 +14,13 @@ export type AcceptTermsBody = Json<
   paths['/v1/me/terms']['post']['requestBody']
 >;
 
+export type World = Json<
+  paths['/v1/worlds/{worldId}']['get']['responses'][200]
+>;
+export type WorldSummary = Json<
+  paths['/v1/worlds']['get']['responses'][200]
+>[number];
+
 /** The providers LanguZe can offer (FR-003); the API says which are configured. */
 export const PROVIDERS = ['google', 'line'] as const;
 export type Provider = (typeof PROVIDERS)[number];
@@ -51,13 +58,21 @@ function isApiErrorBody(body: unknown): body is ApiErrorBody {
  * Calls the API with the session cookie. The browser adds the `Origin` header,
  * which the API requires for requests that change data (API design, section 2.3).
  */
-async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function call<T>(
+  path: string,
+  // `json: false` is for a body the browser has to describe itself, such as an
+  // upload, where naming the type by hand would leave out the multipart boundary.
+  { json = true, ...init }: RequestInit & { json?: boolean } = {},
+): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       ...init,
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json', ...init.headers },
+      headers: {
+        ...(json ? { 'Content-Type': 'application/json' } : {}),
+        ...init.headers,
+      },
     });
   } catch {
     // No answer at all: the API is unreachable, or the network dropped.
@@ -137,6 +152,28 @@ export const api = {
       method: 'DELETE',
       body: JSON.stringify({ confirmation: 'DELETE' }),
     }),
+
+  listWorlds: () => call<WorldSummary[]>('/v1/worlds'),
+  getWorld: (worldId: string) => call<World>(`/v1/worlds/${worldId}`),
+  renameWorld: (worldId: string, name: string) =>
+    call<World>(`/v1/worlds/${worldId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    }),
+  deleteWorld: (worldId: string) =>
+    call<void>(`/v1/worlds/${worldId}`, { method: 'DELETE' }),
+
+  /**
+   * Creates a world from a photo (US-010). The body is `multipart/form-data`, so
+   * the browser writes the content type itself — setting it by hand would leave out
+   * the boundary and the API would read an empty body.
+   */
+  createWorld: (name: string, photo: File) => {
+    const body = new FormData();
+    body.set('name', name);
+    body.set('photo', photo);
+    return call<World>('/v1/worlds', { method: 'POST', body, json: false });
+  },
 
   /**
    * Starts sign-in with a provider (FR-003). Better Auth serves this itself at
