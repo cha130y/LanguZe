@@ -47,6 +47,7 @@ model User {
 
   accounts Account[]
   sessions Session[]
+  photos   StoredPhoto[]
 
   @@map("users")
 }
@@ -106,4 +107,59 @@ model Verification {
 
   @@index([identifier])
   @@map("verifications")
+}
+
+enum PhotoKind {
+  /// The photo a learner sees and the AI receives: at most 2,048 pixels (FR-017, V18).
+  PREPARED
+  /// The small copy the world list shows (FR-013).
+  THUMBNAIL
+
+  @@map("photo_kind")
+}
+
+enum PhotoDeletionReason {
+  WORLD_DELETED
+  ACCOUNT_DELETED
+  PHOTO_BLOCKED
+  UPLOAD_FAILED
+
+  @@map("photo_deletion_reason")
+}
+
+/// Every photo file LanguZe keeps in photo storage (FR-017). The file itself lives in
+/// object storage; this row is what the API knows about it.
+model StoredPhoto {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  ownerId     String    @map("owner_id") @db.Uuid
+  /// Random key of the object in photo storage; never derived from learner data.
+  storageKey  String    @unique @map("storage_key") @db.VarChar(200)
+  kind        PhotoKind
+  contentType String    @map("content_type") @db.VarChar(50)
+  width       Int
+  height      Int
+  byteSize    Int       @map("byte_size")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@map("stored_photos")
+}
+
+/// A photo still to be removed from photo storage (NFR-009, V10). Written in the same
+/// transaction as the deletion that causes it, so nothing is forgotten when a request
+/// or the API fails; a scheduled task deletes the object and then this row.
+model PhotoDeletion {
+  id            String              @id @default(uuid(7)) @db.Uuid
+  /// No foreign key on purpose: the owner and the photo row may already be gone.
+  storageKey    String              @map("storage_key") @db.VarChar(200)
+  reason        PhotoDeletionReason
+  requestedAt   DateTime            @default(now()) @map("requested_at") @db.Timestamptz(3)
+  attempts      Int                 @default(0)
+  nextAttemptAt DateTime            @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+  lastError     String?             @map("last_error") @db.VarChar(500)
+
+  @@index([nextAttemptAt])
+  @@map("photo_deletions")
 }
