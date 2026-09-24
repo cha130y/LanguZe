@@ -89,7 +89,8 @@ flowchart TD
 
 - An account counts as verified for AI features when its email is verified or it has any Google, LINE, or Facebook sign-in (SRS 1.3, V13, V14).
 - The pending sign-up (step 13) is not a usable account: no session exists until the visitor accepts the Terms, and declining or waiting more than 15 minutes leaves nothing behind (FR-090, U5). The implementation may store it as a locked account that is removed on decline or expiry, as long as it cannot be used before acceptance.
-- In the LINE and Facebook in-app browsers, the sign-in page offers only methods that work there, plus a way to open LanguZe in the default browser (NFR-018).
+- LINE always takes the "no verified email" branch: it never states whether an address is verified, so a LINE sign-in always creates or uses its own account with a placeholder address (D1), and never joins one made another way (US-005 criterion 3).
+- In the LINE and Facebook in-app browsers, the sign-in page offers only methods that work there, plus a way to open LanguZe in the default browser (NFR-018). Google refuses its own sign-in inside an embedded browser, so it is the method left out.
 
 ## 3. Authorizing every request
 
