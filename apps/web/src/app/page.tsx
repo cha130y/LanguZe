@@ -45,6 +45,12 @@ export default async function Home() {
           ) : null}
 
           <Link
+            href="/worlds"
+            className={buttonVariants({ variant: 'cta', size: 'xl' })}
+          >
+            โลกของฉัน
+          </Link>
+          <Link
             href="/account"
             className={buttonVariants({ variant: 'outline', size: 'xl' })}
           >
