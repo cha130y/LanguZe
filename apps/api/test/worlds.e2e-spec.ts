@@ -236,8 +236,18 @@ describe('Worlds (e2e)', () => {
   describe('the list and one world (US-011, US-012)', () => {
     it('lists the learner’s worlds, newest first', async () => {
       const { agent } = await learner();
-      await createWorld(agent, 'ห้องครัว').expect(202);
-      await createWorld(agent, 'โต๊ะทำงาน').expect(202);
+      const older = (await createWorld(agent, 'ห้องครัว').expect(202))
+        .body as WorldDetailDto;
+      const newer = (await createWorld(agent, 'โต๊ะทำงาน').expect(202))
+        .body as WorldDetailDto;
+      /*
+       * Both analyses are waited for, so the list is read in a settled state.
+       * Reading it in between asserted that a fresh world had no words yet, which
+       * is a claim about timing rather than about listing: the fake provider
+       * answers at once, so sometimes the words were already there.
+       */
+      await app.get(AnalysisService).settled(older.id);
+      await app.get(AnalysisService).settled(newer.id);
 
       const response = await agent.get('/v1/worlds').expect(200);
 
@@ -247,7 +257,9 @@ describe('Worlds (e2e)', () => {
         'ห้องครัว',
       ]);
       expect(worlds[0].thumbnailUrl).toContain('X-Amz-Signature');
-      expect(worlds[0].wordCount).toBe(0);
+      // Once an analysis has finished, the list reports what it found (FR-013).
+      expect(worlds[0].wordCount).toBeGreaterThan(0);
+      expect(worlds[0].masteredCount).toBe(0);
     });
 
     it('shows a learner nothing but their own worlds', async () => {
