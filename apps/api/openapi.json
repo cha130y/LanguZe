@@ -908,6 +908,27 @@
         ]
       }
     },
+    "/v1/progress": {
+      "get": {
+        "operationId": "ProgressController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgressDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "progress"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -1738,6 +1759,77 @@
           "xpAwarded",
           "mastery",
           "sessionCompleted"
+        ]
+      },
+      "MasteryCountsDto": {
+        "type": "object",
+        "properties": {
+          "NEW": {
+            "type": "number",
+            "description": "Never answered."
+          },
+          "LEARNING": {
+            "type": "number"
+          },
+          "FAMILIAR": {
+            "type": "number"
+          },
+          "MASTERED": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "NEW",
+          "LEARNING",
+          "FAMILIAR",
+          "MASTERED"
+        ]
+      },
+      "WorldProgressDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "wordCount": {
+            "type": "number"
+          },
+          "masteredCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "wordCount",
+          "masteredCount"
+        ]
+      },
+      "ProgressDto": {
+        "type": "object",
+        "properties": {
+          "totalXp": {
+            "type": "number",
+            "description": "Only ever rises, whatever is deleted (V4)."
+          },
+          "words": {
+            "$ref": "#/components/schemas/MasteryCountsDto"
+          },
+          "worlds": {
+            "description": "Every world the learner has, newest first.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorldProgressDto"
+            }
+          }
+        },
+        "required": [
+          "totalXp",
+          "words",
+          "worlds"
         ]
       },
       "HealthResponseDto": {

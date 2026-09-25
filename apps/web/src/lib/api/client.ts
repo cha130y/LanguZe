@@ -25,6 +25,7 @@ export type WorldStatus = Json<
   paths['/v1/worlds/{worldId}/status']['get']['responses'][200]
 >;
 export type Usage = Json<paths['/v1/me/usage']['get']['responses'][200]>;
+export type Progress = Json<paths['/v1/progress']['get']['responses'][200]>;
 
 export type PracticeSession = Json<
   paths['/v1/sessions/{sessionId}']['get']['responses'][200]
