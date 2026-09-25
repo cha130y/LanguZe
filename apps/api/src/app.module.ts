@@ -18,6 +18,7 @@ import { AiModule } from './ai/ai.module.js';
 import { StorageModule } from './storage/storage.module.js';
 import { LearningModule } from './learning/learning.module.js';
 import { ProgressModule } from './progress/progress.module.js';
+import { TutorModule } from './tutor/tutor.module.js';
 import { WorldsModule } from './worlds/worlds.module.js';
 
 @Module({
@@ -48,6 +49,7 @@ import { WorldsModule } from './worlds/worlds.module.js';
     WorldsModule,
     LearningModule,
     ProgressModule,
+    TutorModule,
     AuthModule,
     HealthModule,
   ],
