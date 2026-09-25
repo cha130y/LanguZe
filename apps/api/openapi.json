@@ -702,6 +702,50 @@
         ]
       }
     },
+    "/v1/tutor/messages": {
+      "get": {
+        "operationId": "TutorController_conversation",
+        "parameters": [
+          {
+            "name": "before",
+            "required": false,
+            "in": "query",
+            "description": "The oldest message already seen; older ones follow it.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TutorConversationDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "tutor"
+        ]
+      },
+      "delete": {
+        "operationId": "TutorController_clear",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "tutor"
+        ]
+      }
+    },
     "/v1/sessions/current": {
       "get": {
         "operationId": "SessionsController_current",
@@ -1477,14 +1521,24 @@
             "type": "number",
             "description": "How many a learner gets each day."
           },
+          "messagesLeft": {
+            "type": "number",
+            "description": "Tutor messages left today (FR-071)."
+          },
+          "messagesLimit": {
+            "type": "number",
+            "description": "How many a learner gets each day."
+          },
           "resetsAt": {
             "type": "string",
-            "description": "When the count starts again, in Bangkok time."
+            "description": "When both counts start again, in Bangkok time."
           }
         },
         "required": [
           "analysesLeft",
           "analysesLimit",
+          "messagesLeft",
+          "messagesLimit",
           "resetsAt"
         ]
       },
@@ -1501,6 +1555,52 @@
         },
         "required": [
           "confirmation"
+        ]
+      },
+      "TutorMessageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "LEARNER",
+              "TUTOR"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "content",
+          "createdAt"
+        ]
+      },
+      "TutorConversationDto": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TutorMessageDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Pass as `before` for older messages; empty at the beginning."
+          }
+        },
+        "required": [
+          "messages"
         ]
       },
       "QuestionDto": {

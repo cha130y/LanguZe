@@ -22,6 +22,7 @@ import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { ErrorResponseDto } from '../platform/errors/error-response.dto.js';
 import { nextBangkokMidnight } from '../platform/time/bangkok-day.js';
+import { TutorService } from '../tutor/tutor.service.js';
 import { AuthService } from './auth.service.js';
 import {
   AcceptTermsDto,
@@ -182,6 +183,7 @@ export class MeController {
   constructor(
     private readonly authService: AuthService,
     private readonly analysis: AnalysisService,
+    private readonly tutor: TutorService,
   ) {}
 
   @Get()
@@ -236,10 +238,16 @@ export class MeController {
     @CurrentUser() user: SessionContext['user'],
   ): Promise<UsageResponseDto> {
     const now = new Date();
-    const { left, limit } = await this.analysis.usage(user.id, now);
+    const [analyses, messages] = await Promise.all([
+      this.analysis.usage(user.id, now),
+      this.tutor.usage(user.id, now),
+    ]);
     return {
-      analysesLeft: left,
-      analysesLimit: limit,
+      analysesLeft: analyses.left,
+      analysesLimit: analyses.limit,
+      messagesLeft: messages.left,
+      messagesLimit: messages.limit,
+      // Both reset together, because both count a Bangkok day (V1).
       resetsAt: nextBangkokMidnight(now).toISOString(),
     };
   }

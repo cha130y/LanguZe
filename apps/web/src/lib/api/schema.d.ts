@@ -276,6 +276,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/tutor/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["TutorController_conversation"];
+        put?: never;
+        post?: never;
+        delete: operations["TutorController_clear"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/sessions/current": {
         parameters: {
             query?: never;
@@ -526,7 +542,11 @@ export interface components {
             analysesLeft: number;
             /** @description How many a learner gets each day. */
             analysesLimit: number;
-            /** @description When the count starts again, in Bangkok time. */
+            /** @description Tutor messages left today (FR-071). */
+            messagesLeft: number;
+            /** @description How many a learner gets each day. */
+            messagesLimit: number;
+            /** @description When both counts start again, in Bangkok time. */
             resetsAt: string;
         };
         DeleteAccountDto: {
@@ -535,6 +555,18 @@ export interface components {
              * @enum {string}
              */
             confirmation: "DELETE";
+        };
+        TutorMessageDto: {
+            id: string;
+            /** @enum {string} */
+            role: "LEARNER" | "TUTOR";
+            content: string;
+            createdAt: string;
+        };
+        TutorConversationDto: {
+            messages: components["schemas"]["TutorMessageDto"][];
+            /** @description Pass as `before` for older messages; empty at the beginning. */
+            nextCursor?: string | null;
         };
         QuestionDto: {
             id: string;
@@ -1203,6 +1235,45 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["UsageResponseDto"];
                 };
+            };
+        };
+    };
+    TutorController_conversation: {
+        parameters: {
+            query?: {
+                /** @description The oldest message already seen; older ones follow it. */
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TutorConversationDto"];
+                };
+            };
+        };
+    };
+    TutorController_clear: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
