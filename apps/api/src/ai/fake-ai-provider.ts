@@ -7,6 +7,8 @@ import {
   type AiAnswer,
   type PhotoForAi,
   type SafetyVerdict,
+  type TutorEvent,
+  type TutorTurn,
 } from './ai-provider.js';
 
 /**
@@ -145,7 +147,7 @@ export class FakeAiProvider extends AiProvider {
    * for a test to check that the prepared photo was sent rather than the upload.
    */
   readonly calls: {
-    purpose: 'SAFETY_CHECK' | 'EXTRACTION';
+    purpose: 'SAFETY_CHECK' | 'EXTRACTION' | 'TUTOR';
     bytes: number;
   }[] = [];
 
@@ -197,6 +199,41 @@ export class FakeAiProvider extends AiProvider {
           }),
     );
   }
+
+  /**
+   * A tutor reply, in pieces, as a real one arrives (NFR-003).
+   *
+   * It looks up the learner's weak words whenever it is asked anything, which is
+   * how the tool path gets exercised without a key: everything a real tutor does
+   * to the database, this does too. What it says is fixed, because a fake that
+   * invented answers would teach a test nothing.
+   */
+  async *tutorReply(turn: TutorTurn): AsyncIterable<TutorEvent> {
+    this.calls.push({ purpose: 'TUTOR', bytes: turn.message.length });
+    const behaviour = this.take();
+    const failure = this.failureFor(behaviour);
+    if (failure) throw failure;
+
+    const weak = turn.tools.find((tool) => tool.name === 'weak_words');
+    // The tool result is data about the learner; it is never acted upon here.
+    this.lastToolResult = weak ? await weak.run({ count: 3 }) : null;
+
+    for (const piece of [
+      'เข้าใจแล้วค่ะ ',
+      'คำนี้ใช้บอกสิ่งของในห้อง ',
+      'ตัวอย่างเช่น "The sofa is soft."',
+    ]) {
+      if (this.delayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, this.delayMs));
+      }
+      yield { type: 'delta', text: piece };
+    }
+
+    yield { type: 'done', usage: { inputTokens: 400, outputTokens: 60 } };
+  }
+
+  /** What the last reply looked up, which a test reads to check the tool path. */
+  lastToolResult: unknown = null;
 
   /**
    * Answers after `delayMs`, so a developer can watch the page wait (FR-021). The
