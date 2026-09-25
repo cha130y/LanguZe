@@ -273,7 +273,7 @@ Unique: (`world_id`, `vocabulary_word_id`), because duplicates within a photo ar
 | `last_practised_at`  | timestamptz    | no   | For "least recently practised first" (FR-050).                        |
 | `updated_at`         | timestamptz    | no   |                                                                       |
 
-Index: (`learner_id`, `level`).
+Index: (`learner_id`, `level`). Check constraint: the streak is not negative.
 
 **`practice_sessions`:** game and review sessions (FR-030, FR-036, FR-050).
 
@@ -287,7 +287,7 @@ Index: (`learner_id`, `level`).
 | `started_at`   | timestamptz     | no   | An `IN_PROGRESS` session older than 24 hours counts as `ABANDONED` (V17). |
 | `completed_at` | timestamptz     | yes  |                                                                           |
 
-Partial unique indexes: one `IN_PROGRESS` game per learner and world, and one `IN_PROGRESS` review per learner. Starting a new session first marks the old one `ABANDONED` in the same transaction.
+Index: (`learner_id`, `started_at`). Partial unique indexes: one `IN_PROGRESS` game per learner and world, and one `IN_PROGRESS` review per learner. Starting a new session first marks the old one `ABANDONED` in the same transaction; the indexes are what keep two sessions from existing if two requests arrive together. A game whose world was deleted keeps an empty `world_id`, which the index treats as distinct, so those closed-off sessions constrain nothing.
 
 **`session_questions`:** the ordered questions of a session, fixed when it is created.
 
@@ -295,7 +295,7 @@ Partial unique indexes: one `IN_PROGRESS` game per learner and world, and one `I
 | -------------------- | -------- | ---- | -------------------------------------------------------------------- |
 | `id`                 | uuid     | no   | Primary key.                                                         |
 | `session_id`         | uuid     | no   | → `practice_sessions`, cascade.                                      |
-| `position`           | smallint | no   | 1–10. Unique with `session_id`.                                      |
+| `position`           | smallint | no   | 1–10. Unique with `session_id`; a check keeps it at 1 or above.      |
 | `vocabulary_word_id` | uuid     | yes  | → `vocabulary_words`, set null.                                      |
 | `occurrence_id`      | uuid     | yes  | → `word_occurrences`, set null. When empty, the question is skipped. |
 
@@ -315,15 +315,15 @@ Partial unique indexes: one `IN_PROGRESS` game per learner and world, and one `I
 | `xp_awarded`         | smallint     | no   | 10 or 0 (FR-060).                                                                            |
 | `answered_at`        | timestamptz  | no   |                                                                                              |
 
-Indexes: (`learner_id`, `answered_at`) for recent mistakes; (`vocabulary_word_id`, `answered_at`). Check constraint: an "I don't know" attempt has no answer text and is not correct.
+Indexes: (`learner_id`, `answered_at`) for recent mistakes; (`vocabulary_word_id`, `answered_at`). Check constraints: an "I don't know" attempt has no answer text and is not correct; XP is never negative, and an incorrect attempt earns none (FR-033, V4).
 
 **`learner_xp`:** total XP, stored so it never decreases when attempts are deleted (FR-060, V4).
 
-| Column       | Type        | Null | Notes                            |
-| ------------ | ----------- | ---- | -------------------------------- |
-| `learner_id` | uuid        | no   | Primary key; → `users`, cascade. |
-| `total_xp`   | integer     | no   | Default 0. Only ever increased.  |
-| `updated_at` | timestamptz | no   |                                  |
+| Column       | Type        | Null | Notes                                                           |
+| ------------ | ----------- | ---- | --------------------------------------------------------------- |
+| `learner_id` | uuid        | no   | Primary key; → `users`, cascade.                                |
+| `total_xp`   | integer     | no   | Default 0. Only ever increased; a check keeps it at 0 or above. |
+| `updated_at` | timestamptz | no   |                                                                 |
 
 ### 4.7 `tutor` module
 
