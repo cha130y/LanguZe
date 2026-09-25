@@ -324,6 +324,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/sessions/{sessionId}/questions/{questionId}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["SessionsController_answer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -512,6 +528,17 @@ export interface components {
             photoUrl?: string | null;
             box: components["schemas"]["HighlightBoxDto"];
         };
+        LevelChangeDto: {
+            english: string;
+            /** @enum {string} */
+            level: "LEARNING" | "FAMILIAR" | "MASTERED";
+        };
+        SessionSummaryDto: {
+            answeredCount: number;
+            correctCount: number;
+            xpEarned: number;
+            levelChanges: components["schemas"]["LevelChangeDto"][];
+        };
         SessionDto: {
             id: string;
             /** @enum {string} */
@@ -525,6 +552,8 @@ export interface components {
             /** @description What to ask next; empty when nothing is left to ask. */
             nextQuestion?: components["schemas"]["QuestionDto"] | null;
             startedAt: string;
+            /** @description Only for a COMPLETED session. One left unfinished has none (FR-036). */
+            summary?: components["schemas"]["SessionSummaryDto"] | null;
         };
         StartSessionDto: {
             /** @enum {string} */
@@ -534,6 +563,33 @@ export interface components {
              * @description The world to play (FR-030).
              */
             worldId: string;
+        };
+        AnswerDto: {
+            answer?: string;
+            /** @description The learner gave up on this word. */
+            dontKnow?: boolean;
+        };
+        WordFeedbackDto: {
+            english: string;
+            thaiMeaning: string;
+            exampleSentence: string;
+        };
+        MasteryChangeDto: {
+            /** @enum {string|null} */
+            before?: "LEARNING" | "FAMILIAR" | "MASTERED" | null;
+            /** @enum {string} */
+            after: "LEARNING" | "FAMILIAR" | "MASTERED";
+        };
+        AnswerResultDto: {
+            correct: boolean;
+            dontKnow: boolean;
+            /** @description This question was already answered; nothing was recorded again (FR-034). */
+            alreadyAnswered: boolean;
+            word: components["schemas"]["WordFeedbackDto"];
+            xpAwarded: number;
+            mastery: components["schemas"]["MasteryChangeDto"];
+            sessionCompleted: boolean;
+            summary?: components["schemas"]["SessionSummaryDto"] | null;
         };
         HealthResponseDto: {
             /** @enum {string} */
@@ -1205,6 +1261,50 @@ export interface operations {
             };
             /** @description NOT_FOUND */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    SessionsController_answer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+                questionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnswerResultDto"];
+                };
+            };
+            /** @description NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description SESSION_CLOSED or QUESTION_UNAVAILABLE */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

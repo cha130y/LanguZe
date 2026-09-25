@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { StorageModule } from '../storage/storage.module.js';
+import { AttemptsService } from './attempts.service.js';
 import { SessionsController } from './sessions.controller.js';
 import { SessionsService } from './sessions.service.js';
 
@@ -11,6 +12,6 @@ import { SessionsService } from './sessions.service.js';
 @Module({
   imports: [PrismaModule, StorageModule],
   controllers: [SessionsController],
-  providers: [SessionsService],
+  providers: [SessionsService, AttemptsService],
 })
 export class LearningModule {}

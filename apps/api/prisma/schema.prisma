@@ -460,20 +460,25 @@ model SessionQuestion {
 /// One answer (FR-034). An incorrect attempt is also the learner's mistake record
 /// (FR-042), which is why it keeps what they typed.
 model Attempt {
-  id               String   @id @default(uuid(7)) @db.Uuid
-  learnerId        String   @map("learner_id") @db.Uuid
-  vocabularyWordId String   @map("vocabulary_word_id") @db.Uuid
+  id               String        @id @default(uuid(7)) @db.Uuid
+  learnerId        String        @map("learner_id") @db.Uuid
+  vocabularyWordId String        @map("vocabulary_word_id") @db.Uuid
   /// Unique, so one question can never hold two attempts (FR-034, S5).
-  questionId       String?  @unique @map("question_id") @db.Uuid
-  sessionId        String?  @map("session_id") @db.Uuid
-  occurrenceId     String?  @map("occurrence_id") @db.Uuid
+  questionId       String?       @unique @map("question_id") @db.Uuid
+  sessionId        String?       @map("session_id") @db.Uuid
+  occurrenceId     String?       @map("occurrence_id") @db.Uuid
   /// What the learner typed, up to 100 characters; empty for "I don't know" (V19).
-  answerText       String?  @map("answer_text") @db.VarChar(100)
-  isDontKnow       Boolean  @default(false) @map("is_dont_know")
-  isCorrect        Boolean  @map("is_correct")
+  answerText       String?       @map("answer_text") @db.VarChar(100)
+  isDontKnow       Boolean       @default(false) @map("is_dont_know")
+  isCorrect        Boolean       @map("is_correct")
   /// 10 for a correct answer, 0 otherwise (FR-060).
-  xpAwarded        Int      @default(0) @map("xp_awarded") @db.SmallInt
-  answeredAt       DateTime @default(now()) @map("answered_at") @db.Timestamptz(3)
+  xpAwarded        Int           @default(0) @map("xp_awarded") @db.SmallInt
+  /// Where the word stood before this answer; empty means it was NEW (SRS 4.1).
+  levelBefore      MasteryLevel? @map("level_before")
+  /// And where it stands after. The two are kept because a summary has to name the
+  /// words whose level changed (FR-035), which nothing else can work out later.
+  levelAfter       MasteryLevel  @map("level_after")
+  answeredAt       DateTime      @default(now()) @map("answered_at") @db.Timestamptz(3)
 
   learner        User             @relation(fields: [learnerId], references: [id], onDelete: Cascade)
   vocabularyWord VocabularyWord   @relation(fields: [vocabularyWordId], references: [id], onDelete: Cascade)

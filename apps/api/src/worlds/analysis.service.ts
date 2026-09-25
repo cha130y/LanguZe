@@ -9,6 +9,7 @@ import type {
 } from '../generated/prisma/enums.js';
 import { AppError } from '../platform/errors/app-error.js';
 import { ErrorCode } from '../platform/errors/error-codes.js';
+import { startOfBangkokDay } from '../platform/time/bangkok-day.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { PhotoStorage } from '../storage/photo-storage.js';
 import {
@@ -16,7 +17,6 @@ import {
   checkedItems,
   type CheckedItem,
 } from '../vocabulary/extraction-rules.js';
-import { dayStart } from './daily-limit.js';
 
 /** Statuses that have used one of the learner's analyses for today (FR-020, U2). */
 const COUNTED = ['IN_PROGRESS', 'SUCCEEDED', 'BLOCKED'] as const;
@@ -125,7 +125,7 @@ export class AnalysisService {
     const used = await this.prisma.analysis.count({
       where: {
         learnerId,
-        startedAt: { gte: dayStart(now) },
+        startedAt: { gte: startOfBangkokDay(now) },
         status: { in: [...COUNTED] },
       },
     });
@@ -153,7 +153,7 @@ export class AnalysisService {
       const used = await tx.analysis.count({
         where: {
           learnerId,
-          startedAt: { gte: dayStart(new Date()) },
+          startedAt: { gte: startOfBangkokDay() },
           status: { in: [...COUNTED] },
         },
       });

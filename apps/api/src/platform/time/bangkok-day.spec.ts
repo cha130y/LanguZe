@@ -29,6 +29,24 @@ describe('Asia/Bangkok days', () => {
     ).toBe('2026-09-20T17:00:00.000Z');
   });
 
+  /*
+   * The two cases that catch the mistake anyone rewriting this would make. Using
+   * UTC midnight instead would put the daily limit and the mastery day into the
+   * wrong day for seven hours out of every twenty-four (V1, FR-080).
+   */
+  it('is not UTC midnight', () => {
+    expect(
+      startOfBangkokDay(new Date('2026-09-25T04:00:00.000Z')).getUTCHours(),
+    ).toBe(17);
+  });
+
+  it('keeps the last minute before midnight in the day that is ending', () => {
+    expect(
+      startOfBangkokDay(new Date('2026-09-25T16:59:00.000Z')).toISOString(),
+    ).toBe('2026-09-24T17:00:00.000Z');
+    expect(bangkokDay(new Date('2026-09-25T16:59:00.000Z'))).toBe('2026-09-25');
+  });
+
   it('crosses month and year boundaries', () => {
     expect(bangkokDay(new Date('2026-12-31T17:00:00Z'))).toBe('2027-01-01');
     expect(

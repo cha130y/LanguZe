@@ -301,19 +301,23 @@ Index: (`learner_id`, `started_at`). Partial unique indexes: one `IN_PROGRESS` g
 
 **`attempts`:** every answer (FR-034); an incorrect attempt is a mistake (FR-042).
 
-| Column               | Type         | Null | Notes                                                                                        |
-| -------------------- | ------------ | ---- | -------------------------------------------------------------------------------------------- |
-| `id`                 | uuid         | no   | Primary key.                                                                                 |
-| `learner_id`         | uuid         | no   | → `users`, cascade.                                                                          |
-| `vocabulary_word_id` | uuid         | no   | → `vocabulary_words`, cascade, so mistakes stay while the word exists in any world (FR-015). |
-| `question_id`        | uuid         | yes  | → `session_questions`, set null. **Unique**: one attempt per question (FR-034, S5).          |
-| `session_id`         | uuid         | yes  | → `practice_sessions`, set null (FR-034).                                                    |
-| `occurrence_id`      | uuid         | yes  | → `word_occurrences`, set null (FR-034).                                                     |
-| `answer_text`        | varchar(100) | yes  | What the learner typed; empty for "I don't know" (FR-032, V19).                              |
-| `is_dont_know`       | boolean      | no   |                                                                                              |
-| `is_correct`         | boolean      | no   |                                                                                              |
-| `xp_awarded`         | smallint     | no   | 10 or 0 (FR-060).                                                                            |
-| `answered_at`        | timestamptz  | no   |                                                                                              |
+| Column               | Type           | Null | Notes                                                                                        |
+| -------------------- | -------------- | ---- | -------------------------------------------------------------------------------------------- |
+| `id`                 | uuid           | no   | Primary key.                                                                                 |
+| `learner_id`         | uuid           | no   | → `users`, cascade.                                                                          |
+| `vocabulary_word_id` | uuid           | no   | → `vocabulary_words`, cascade, so mistakes stay while the word exists in any world (FR-015). |
+| `question_id`        | uuid           | yes  | → `session_questions`, set null. **Unique**: one attempt per question (FR-034, S5).          |
+| `session_id`         | uuid           | yes  | → `practice_sessions`, set null (FR-034).                                                    |
+| `occurrence_id`      | uuid           | yes  | → `word_occurrences`, set null (FR-034).                                                     |
+| `answer_text`        | varchar(100)   | yes  | What the learner typed; empty for "I don't know" (FR-032, V19).                              |
+| `is_dont_know`       | boolean        | no   |                                                                                              |
+| `is_correct`         | boolean        | no   |                                                                                              |
+| `xp_awarded`         | smallint       | no   | 10 or 0 (FR-060).                                                                            |
+| `level_before`       | `MasteryLevel` | yes  | Where the word stood before this answer; empty means it was `NEW`.                           |
+| `level_after`        | `MasteryLevel` | no   | And where it stands after.                                                                   |
+| `answered_at`        | timestamptz    | no   |                                                                                              |
+
+The two level columns are kept because a session's summary has to name the words whose level changed (FR-035), and nothing can work that out afterwards: `word_mastery` holds only where a word stands now, which by the end of a session is where it ended rather than where it began.
 
 Indexes: (`learner_id`, `answered_at`) for recent mistakes; (`vocabulary_word_id`, `answered_at`). Check constraints: an "I don't know" attempt has no answer text and is not correct; XP is never negative, and an incorrect attempt earns none (FR-033, V4).
 

@@ -6,6 +6,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { PhotoStorage } from '../storage/photo-storage.js';
 import type { SessionDto } from './dto/sessions.dto.js';
 import { selectQuestions } from './question-selection.js';
+import { summaryOf } from './session-summary.js';
 
 /** How long an unfinished session stays open (V17, FR-036). */
 export const SESSION_OPEN_MS = 24 * 60 * 60 * 1000;
@@ -15,7 +16,16 @@ const WITH_QUESTIONS = {
   questions: {
     orderBy: { position: 'asc' },
     include: {
-      attempt: { select: { id: true } },
+      attempt: {
+        select: {
+          id: true,
+          isCorrect: true,
+          xpAwarded: true,
+          levelBefore: true,
+          levelAfter: true,
+        },
+      },
+      vocabularyWord: { select: { english: true } },
       occurrence: { include: { world: { include: { photo: true } } } },
     },
   },
@@ -197,6 +207,24 @@ export class SessionsService {
             }
           : null,
       startedAt: session.startedAt.toISOString(),
+      /*
+       * Only a session that ran to its end has a summary. One abandoned halfway
+       * has nothing to show for itself, which is what FR-036 says of it.
+       */
+      summary:
+        session.status === 'COMPLETED'
+          ? summaryOf(
+              session.questions
+                .filter((q) => q.attempt && q.vocabularyWord)
+                .map((q) => ({
+                  isCorrect: q.attempt!.isCorrect,
+                  xpAwarded: q.attempt!.xpAwarded,
+                  levelBefore: q.attempt!.levelBefore,
+                  levelAfter: q.attempt!.levelAfter,
+                  english: q.vocabularyWord!.english,
+                })),
+            )
+          : null,
     };
   }
 }

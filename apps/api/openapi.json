@@ -838,6 +838,74 @@
         ]
       }
     },
+    "/v1/sessions/{sessionId}/questions/{questionId}/answer": {
+      "post": {
+        "operationId": "SessionsController_answer",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "questionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnswerResultDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SESSION_CLOSED or QUESTION_UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -1437,6 +1505,52 @@
           "box"
         ]
       },
+      "LevelChangeDto": {
+        "type": "object",
+        "properties": {
+          "english": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "LEARNING",
+              "FAMILIAR",
+              "MASTERED"
+            ]
+          }
+        },
+        "required": [
+          "english",
+          "level"
+        ]
+      },
+      "SessionSummaryDto": {
+        "type": "object",
+        "properties": {
+          "answeredCount": {
+            "type": "number"
+          },
+          "correctCount": {
+            "type": "number"
+          },
+          "xpEarned": {
+            "type": "number"
+          },
+          "levelChanges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LevelChangeDto"
+            }
+          }
+        },
+        "required": [
+          "answeredCount",
+          "correctCount",
+          "xpEarned",
+          "levelChanges"
+        ]
+      },
       "SessionDto": {
         "type": "object",
         "properties": {
@@ -1481,6 +1595,16 @@
           },
           "startedAt": {
             "type": "string"
+          },
+          "summary": {
+            "nullable": true,
+            "description": "Only for a COMPLETED session. One left unfinished has none (FR-036).",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SessionSummaryDto"
+              }
+            ]
           }
         },
         "required": [
@@ -1510,6 +1634,108 @@
         "required": [
           "kind",
           "worldId"
+        ]
+      },
+      "AnswerDto": {
+        "type": "object",
+        "properties": {
+          "answer": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "dontKnow": {
+            "type": "boolean",
+            "description": "The learner gave up on this word."
+          }
+        }
+      },
+      "WordFeedbackDto": {
+        "type": "object",
+        "properties": {
+          "english": {
+            "type": "string"
+          },
+          "thaiMeaning": {
+            "type": "string"
+          },
+          "exampleSentence": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "english",
+          "thaiMeaning",
+          "exampleSentence"
+        ]
+      },
+      "MasteryChangeDto": {
+        "type": "object",
+        "properties": {
+          "before": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "LEARNING",
+              "FAMILIAR",
+              "MASTERED"
+            ]
+          },
+          "after": {
+            "type": "string",
+            "enum": [
+              "LEARNING",
+              "FAMILIAR",
+              "MASTERED"
+            ]
+          }
+        },
+        "required": [
+          "after"
+        ]
+      },
+      "AnswerResultDto": {
+        "type": "object",
+        "properties": {
+          "correct": {
+            "type": "boolean"
+          },
+          "dontKnow": {
+            "type": "boolean"
+          },
+          "alreadyAnswered": {
+            "type": "boolean",
+            "description": "This question was already answered; nothing was recorded again (FR-034)."
+          },
+          "word": {
+            "$ref": "#/components/schemas/WordFeedbackDto"
+          },
+          "xpAwarded": {
+            "type": "number"
+          },
+          "mastery": {
+            "$ref": "#/components/schemas/MasteryChangeDto"
+          },
+          "sessionCompleted": {
+            "type": "boolean"
+          },
+          "summary": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SessionSummaryDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "correct",
+          "dontKnow",
+          "alreadyAnswered",
+          "word",
+          "xpAwarded",
+          "mastery",
+          "sessionCompleted"
         ]
       },
       "HealthResponseDto": {
