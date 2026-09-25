@@ -53,9 +53,15 @@ export function SessionResult({
             ))}
           </ul>
         ) : (
+          /*
+           * Not "play again to move them up". A word that reached FAMILIAR today
+           * cannot move again until another day (SRS 4.1), so that advice sent a
+           * learner who had just answered every question correctly into a game
+           * that could achieve nothing.
+           */
           <p className="text-sm text-muted-foreground">
             รอบนี้ยังไม่มีคำไหนเปลี่ยนระดับ
-            ลองเล่นอีกครั้งเพื่อเลื่อนระดับคำศัพท์
+            คำที่เพิ่งเลื่อนระดับในวันนี้จะเลื่อนได้อีกครั้งในวันถัดไป
           </p>
         )}
       </div>

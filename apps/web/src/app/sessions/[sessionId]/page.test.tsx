@@ -197,3 +197,31 @@ test('starts each question clean, with no trace of the last answer', async () =>
   expect(screen.queryByRole('button', { name: 'ข้อต่อไป' })).toBeNull();
   expect(screen.queryByText('sofa')).toBeNull();
 });
+
+/*
+ * Found by playing: a word that reached FAMILIAR today cannot move again until
+ * another day (SRS 4.1), so a perfect game can legitimately change nothing. The
+ * page must not then tell the learner to play again — it cannot help, and they
+ * will do it.
+ */
+test('never suggests a game that could not move a word today', async () => {
+  vi.mocked(getSession).mockResolvedValue(
+    session({
+      status: 'COMPLETED',
+      answeredCount: 6,
+      nextQuestion: null,
+      summary: {
+        answeredCount: 6,
+        correctCount: 6,
+        xpEarned: 60,
+        levelChanges: [],
+      },
+    }),
+  );
+
+  render(await SessionPage({ params }));
+
+  expect(screen.getByText('ตอบถูก 6 จาก 6 ข้อ')).toBeInTheDocument();
+  expect(screen.getByText(/วันถัดไป/)).toBeInTheDocument();
+  expect(screen.queryByText(/ลองเล่นอีกครั้งเพื่อเลื่อนระดับ/)).toBeNull();
+});
