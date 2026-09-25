@@ -702,6 +702,142 @@
         ]
       }
     },
+    "/v1/sessions/current": {
+      "get": {
+        "operationId": "SessionsController_current",
+        "parameters": [
+          {
+            "name": "kind",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "GAME"
+              ]
+            }
+          },
+          {
+            "name": "worldId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDto"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No session is open."
+          }
+        },
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/v1/sessions": {
+      "post": {
+        "operationId": "SessionsController_start",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "WORLD_NOT_READY",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/v1/sessions/{sessionId}": {
+      "get": {
+        "operationId": "SessionsController_get",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -1274,6 +1410,106 @@
         },
         "required": [
           "confirmation"
+        ]
+      },
+      "QuestionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number",
+            "description": "Which of the session’s questions this is."
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "A signed link to the world’s photo (P4)."
+          },
+          "box": {
+            "$ref": "#/components/schemas/HighlightBoxDto"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "box"
+        ]
+      },
+      "SessionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "GAME",
+              "REVIEW"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "IN_PROGRESS",
+              "COMPLETED",
+              "ABANDONED"
+            ]
+          },
+          "worldId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The world being played; empty for a review."
+          },
+          "answeredCount": {
+            "type": "number"
+          },
+          "questionCount": {
+            "type": "number"
+          },
+          "nextQuestion": {
+            "nullable": true,
+            "description": "What to ask next; empty when nothing is left to ask.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuestionDto"
+              }
+            ]
+          },
+          "startedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "answeredCount",
+          "questionCount",
+          "startedAt"
+        ]
+      },
+      "StartSessionDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "GAME"
+            ]
+          },
+          "worldId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The world to play (FR-030)."
+          }
+        },
+        "required": [
+          "kind",
+          "worldId"
         ]
       },
       "HealthResponseDto": {
