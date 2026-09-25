@@ -56,6 +56,8 @@ model User {
   practiceSessions PracticeSession[]
   attempts         Attempt[]
   xp               LearnerXp?
+  tutorMessages    TutorMessage[]
+  tutorDailyUsages TutorDailyUsage[]
 
   @@map("users")
 }
@@ -501,4 +503,43 @@ model LearnerXp {
   learner User @relation(fields: [learnerId], references: [id], onDelete: Cascade)
 
   @@map("learner_xp")
+}
+
+enum TutorRole {
+  LEARNER
+  TUTOR
+
+  @@map("tutor_role")
+}
+
+/// The learner's single conversation with the tutor (FR-070, V6). Kept until they
+/// clear it or delete the account; there is no second conversation to choose from.
+model TutorMessage {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  learnerId String    @map("learner_id") @db.Uuid
+  role      TutorRole
+  /// A learner's message is at most 1,000 characters (V7); a reply is not capped.
+  content   String
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  learner User @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  @@index([learnerId, createdAt])
+  @@map("tutor_messages")
+}
+
+/// Tutor messages used, per learner per day (FR-071). A message is reserved before
+/// the provider is called and given back if it fails, so a failure of ours costs
+/// the learner nothing (S6).
+model TutorDailyUsage {
+  learnerId    String   @map("learner_id") @db.Uuid
+  /// The Asia/Bangkok day the messages were sent on (V1).
+  day          DateTime @db.Date
+  messagesUsed Int      @default(0) @map("messages_used") @db.SmallInt
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  learner User @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  @@id([learnerId, day])
+  @@map("tutor_daily_usage")
 }
