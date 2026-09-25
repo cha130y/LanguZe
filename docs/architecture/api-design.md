@@ -171,6 +171,7 @@ A session's next question never includes the answer (FR-032):
   "id": "…",
   "kind": "GAME",
   "status": "IN_PROGRESS",
+  "worldId": "…",
   "answeredCount": 4,
   "questionCount": 10,
   "nextQuestion": {
@@ -179,6 +180,7 @@ A session's next question never includes the answer (FR-032):
     "photoUrl": "https://…signed…",
     "box": { "x": 0.12, "y": 0.4, "width": 0.25, "height": 0.2 }
   },
+  "startedAt": "2026-09-25T04:00:00.000Z",
   "summary": null
 }
 ```
@@ -202,6 +204,8 @@ An answer returns the feedback, and the summary when it was the last question:
 }
 ```
 
+- `worldId` is empty for a review, and `startedAt` lets the page say how long ago a session was left, which matters because it closes after 24 hours (V17).
+- `GET /v1/sessions/current` refuses a `kind` the API does not serve rather than answering with the other kind.
 - Answering the same question again returns the recorded result with `alreadyAnswered: true` and changes nothing (FR-034, S5).
 - `WORLD_NOT_READY` (`409`), `NOTHING_TO_REVIEW` (`409`, FR-053), `SESSION_CLOSED` (`409`), and `QUESTION_UNAVAILABLE` (`409`, word removed since the session started) cover the other states.
 - The summary lists the correct count, the XP earned, and the words whose level changed with their new level (FR-035).

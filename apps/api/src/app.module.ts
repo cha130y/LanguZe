@@ -16,6 +16,7 @@ import { RateLimitGuard } from './platform/http/rate-limit.guard.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { AiModule } from './ai/ai.module.js';
 import { StorageModule } from './storage/storage.module.js';
+import { LearningModule } from './learning/learning.module.js';
 import { WorldsModule } from './worlds/worlds.module.js';
 
 @Module({
@@ -44,6 +45,7 @@ import { WorldsModule } from './worlds/worlds.module.js';
     StorageModule,
     AiModule,
     WorldsModule,
+    LearningModule,
     AuthModule,
     HealthModule,
   ],

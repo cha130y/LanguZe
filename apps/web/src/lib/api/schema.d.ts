@@ -276,6 +276,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/sessions/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SessionsController_current"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["SessionsController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SessionsController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -455,6 +503,37 @@ export interface components {
              * @enum {string}
              */
             confirmation: "DELETE";
+        };
+        QuestionDto: {
+            id: string;
+            /** @description Which of the session’s questions this is. */
+            position: number;
+            /** @description A signed link to the world’s photo (P4). */
+            photoUrl?: string | null;
+            box: components["schemas"]["HighlightBoxDto"];
+        };
+        SessionDto: {
+            id: string;
+            /** @enum {string} */
+            kind: "GAME" | "REVIEW";
+            /** @enum {string} */
+            status: "IN_PROGRESS" | "COMPLETED" | "ABANDONED";
+            /** @description The world being played; empty for a review. */
+            worldId?: string | null;
+            answeredCount: number;
+            questionCount: number;
+            /** @description What to ask next; empty when nothing is left to ask. */
+            nextQuestion?: components["schemas"]["QuestionDto"] | null;
+            startedAt: string;
+        };
+        StartSessionDto: {
+            /** @enum {string} */
+            kind: "GAME";
+            /**
+             * Format: uuid
+             * @description The world to play (FR-030).
+             */
+            worldId: string;
         };
         HealthResponseDto: {
             /** @enum {string} */
@@ -1031,6 +1110,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UsageResponseDto"];
+                };
+            };
+        };
+    };
+    SessionsController_current: {
+        parameters: {
+            query: {
+                kind: "GAME";
+                worldId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDto"];
+                };
+            };
+            /** @description No session is open. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SessionsController_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartSessionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDto"];
+                };
+            };
+            /** @description NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description WORLD_NOT_READY */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    SessionsController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDto"];
+                };
+            };
+            /** @description NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
         };
