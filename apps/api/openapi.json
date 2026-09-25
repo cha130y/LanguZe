@@ -713,14 +713,16 @@
             "schema": {
               "type": "string",
               "enum": [
-                "GAME"
+                "GAME",
+                "REVIEW"
               ]
             }
           },
           {
             "name": "worldId",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Required for a game.",
             "schema": {
               "format": "uuid",
               "type": "string"
@@ -783,7 +785,7 @@
             }
           },
           "409": {
-            "description": "WORLD_NOT_READY",
+            "description": "WORLD_NOT_READY, or NOTHING_TO_REVIEW (FR-053)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1622,18 +1624,18 @@
           "kind": {
             "type": "string",
             "enum": [
-              "GAME"
+              "GAME",
+              "REVIEW"
             ]
           },
           "worldId": {
             "type": "string",
             "format": "uuid",
-            "description": "The world to play (FR-030)."
+            "description": "The world to play; required for a game only (FR-030)."
           }
         },
         "required": [
-          "kind",
-          "worldId"
+          "kind"
         ]
       },
       "AnswerDto": {

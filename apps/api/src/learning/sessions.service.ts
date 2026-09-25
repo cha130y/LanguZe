@@ -1,11 +1,16 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import type { Prisma } from '../generated/prisma/client.js';
+import type { SessionKind } from '../generated/prisma/enums.js';
 import { AppError } from '../platform/errors/app-error.js';
 import { ErrorCode } from '../platform/errors/error-codes.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { PhotoStorage } from '../storage/photo-storage.js';
 import type { SessionDto } from './dto/sessions.dto.js';
-import { selectQuestions } from './question-selection.js';
+import {
+  QUESTIONS_PER_SESSION,
+  selectQuestions,
+} from './question-selection.js';
+import { selectReviewWords } from './review-selection.js';
 import { summaryOf } from './session-summary.js';
 
 /** How long an unfinished session stays open (V17, FR-036). */
@@ -45,6 +50,83 @@ export class SessionsService {
     private readonly prisma: PrismaService,
     private readonly storage: PhotoStorage,
   ) {}
+
+  /**
+   * A new review, drawn from every world the learner has (FR-050). Unlike a game
+   * it names no world: each question uses the word's occurrence from the most
+   * recently created world that has it, which is the photo they saw it in last.
+   */
+  async startReview(learnerId: string): Promise<SessionDto> {
+    const mastery = await this.prisma.wordMastery.findMany({
+      // A MASTERED word has nothing to repair, and one never answered is not yet
+      // half-known — a mastery row exists only once a word has been attempted.
+      where: { learnerId, level: { in: ['LEARNING', 'FAMILIAR'] } },
+      include: {
+        vocabularyWord: {
+          include: {
+            occurrences: {
+              orderBy: { world: { createdAt: 'desc' } },
+              take: 1,
+              select: { id: true },
+            },
+            attempts: {
+              where: { isCorrect: false },
+              orderBy: { answeredAt: 'desc' },
+              take: 1,
+              select: { answeredAt: true },
+            },
+          },
+        },
+      },
+    });
+
+    const chosen = selectReviewWords(
+      mastery
+        // A word whose last world went with it has no photo to show it in.
+        .filter((row) => row.vocabularyWord.occurrences.length > 0)
+        .map((row) => ({
+          vocabularyWordId: row.vocabularyWordId,
+          occurrenceId: row.vocabularyWord.occurrences[0].id,
+          level: row.level,
+          lastPractisedAt: row.lastPractisedAt.getTime(),
+          lastMistakeAt:
+            row.vocabularyWord.attempts[0]?.answeredAt.getTime() ?? null,
+        })),
+      QUESTIONS_PER_SESSION,
+    );
+
+    if (chosen.length === 0) {
+      throw new AppError(
+        ErrorCode.NOTHING_TO_REVIEW,
+        HttpStatus.CONFLICT,
+        'There is nothing to review yet.',
+      );
+    }
+
+    const session = await this.prisma.$transaction(async (tx) => {
+      await tx.practiceSession.updateMany({
+        where: { learnerId, kind: 'REVIEW', status: 'IN_PROGRESS' },
+        data: { status: 'ABANDONED' },
+      });
+
+      return tx.practiceSession.create({
+        data: {
+          learnerId,
+          kind: 'REVIEW',
+          questions: {
+            create: chosen.map((question, index) => ({
+              position: index + 1,
+              vocabularyWordId: question.vocabularyWordId,
+              occurrenceId: question.occurrenceId,
+            })),
+          },
+        },
+        include: WITH_QUESTIONS,
+      });
+    });
+
+    return this.toDto(session);
+  }
 
   /**
    * A new game for a world (FR-030). The questions are chosen and written once,
@@ -116,16 +198,20 @@ export class SessionsService {
   }
 
   /**
-   * The game still open for this world, if there is one (FR-036). A learner who
+   * The session of that kind still open, if there is one (FR-036). A learner who
    * closed the tab, or whose in-app browser reloaded the page, comes back to the
    * question they were on rather than to a session they cannot find.
    */
   async current(
     learnerId: string,
-    worldId: string,
+    kind: SessionKind,
+    worldId?: string,
   ): Promise<SessionDto | null> {
     const session = await this.prisma.practiceSession.findFirst({
-      where: { learnerId, worldId, kind: 'GAME', status: 'IN_PROGRESS' },
+      where:
+        kind === 'GAME'
+          ? { learnerId, worldId, kind, status: 'IN_PROGRESS' }
+          : { learnerId, kind, status: 'IN_PROGRESS' },
       include: WITH_QUESTIONS,
     });
     if (!session) return null;

@@ -557,12 +557,12 @@ export interface components {
         };
         StartSessionDto: {
             /** @enum {string} */
-            kind: "GAME";
+            kind: "GAME" | "REVIEW";
             /**
              * Format: uuid
-             * @description The world to play (FR-030).
+             * @description The world to play; required for a game only (FR-030).
              */
-            worldId: string;
+            worldId?: string;
         };
         AnswerDto: {
             answer?: string;
@@ -1173,8 +1173,9 @@ export interface operations {
     SessionsController_current: {
         parameters: {
             query: {
-                kind: "GAME";
-                worldId: string;
+                kind: "GAME" | "REVIEW";
+                /** @description Required for a game. */
+                worldId?: string;
             };
             header?: never;
             path?: never;
@@ -1229,7 +1230,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
-            /** @description WORLD_NOT_READY */
+            /** @description WORLD_NOT_READY, or NOTHING_TO_REVIEW (FR-053) */
             409: {
                 headers: {
                     [name: string]: unknown;

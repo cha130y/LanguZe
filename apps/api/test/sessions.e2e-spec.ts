@@ -242,15 +242,22 @@ describe('Practice sessions (e2e)', () => {
       expect((found.body as SessionDto).id).toBe(started.id);
     });
 
-    /* A query for a kind the API cannot serve must be refused, not answered. */
+    /* A query for a kind the API does not have must be refused, not answered. */
     it('refuses a kind it does not serve', async () => {
       const { agent } = await learner();
       const world = await playableWorld(agent);
       await startGame(agent, world.id);
 
       await agent
-        .get(`/v1/sessions/current?kind=REVIEW&worldId=${world.id}`)
+        .get(`/v1/sessions/current?kind=PRACTICE&worldId=${world.id}`)
         .expect(400);
+    });
+
+    /* And a game must still name its world, even though a review does not. */
+    it('refuses to look for a game without a world', async () => {
+      const { agent } = await learner();
+
+      await agent.get('/v1/sessions/current?kind=GAME').expect(400);
     });
 
     it('says there is none when nothing is open', async () => {
@@ -349,6 +356,179 @@ describe('Practice sessions (e2e)', () => {
       const stranger = await learner();
 
       await stranger.agent.get(`/v1/sessions/${session.id}`).expect(404);
+    });
+  });
+
+  /*
+   * Review draws from every world by a rule of its own (US-050, US-051, FR-050).
+   * Its answers behave exactly like a game's, which the answering suite covers.
+   */
+  describe('starting a review (US-050)', () => {
+    const startReview = (agent: request.Agent, expect_ = 201) =>
+      agent
+        .post('/v1/sessions')
+        .set('Origin', WEB_ORIGIN)
+        .send({ kind: 'REVIEW' })
+        .expect(expect_);
+
+    /** Gives a word a mastery level and a history, as answering it would. */
+    async function practised(
+      learnerId: string,
+      occurrenceId: string,
+      at: {
+        level: 'LEARNING' | 'FAMILIAR' | 'MASTERED';
+        practisedAt: Date;
+        mistakeAt?: Date;
+      },
+    ) {
+      const occurrence = await prisma.wordOccurrence.findUniqueOrThrow({
+        where: { id: occurrenceId },
+      });
+      await prisma.wordMastery.create({
+        data: {
+          vocabularyWordId: occurrence.vocabularyWordId,
+          learnerId,
+          level: at.level,
+          lastPractisedAt: at.practisedAt,
+        },
+      });
+      if (at.mistakeAt) {
+        await prisma.attempt.create({
+          data: {
+            learnerId,
+            vocabularyWordId: occurrence.vocabularyWordId,
+            occurrenceId,
+            answerText: 'zzz',
+            isCorrect: false,
+            levelAfter: at.level,
+            answeredAt: at.mistakeAt,
+          },
+        });
+      }
+      return occurrence.vocabularyWordId;
+    }
+
+    /* US-051 criterion 4: a word never answered is not part of review. */
+    it('refuses when nothing has been practised yet (FR-053)', async () => {
+      const { agent } = await learner();
+      await playableWorld(agent);
+
+      const response = await startReview(agent, 409);
+
+      expect(response.body).toMatchObject({
+        error: { code: 'NOTHING_TO_REVIEW' },
+      });
+    });
+
+    it('asks about the words the learner got wrong, first (FR-050)', async () => {
+      const { agent, id } = await learner();
+      const world = await playableWorld(agent);
+      const [missed, familiar, learning] = world.words;
+      await practised(id, familiar.id, {
+        level: 'FAMILIAR',
+        practisedAt: new Date('2026-09-20T00:00:00Z'),
+      });
+      await practised(id, learning.id, {
+        level: 'LEARNING',
+        practisedAt: new Date('2026-09-19T00:00:00Z'),
+      });
+      const missedWordId = await practised(id, missed.id, {
+        level: 'FAMILIAR',
+        practisedAt: new Date('2026-09-24T00:00:00Z'),
+        mistakeAt: new Date('2026-09-24T00:00:00Z'),
+      });
+
+      const session = (await startReview(agent)).body as SessionDto;
+
+      expect(session.kind).toBe('REVIEW');
+      // A review belongs to no world, so the page knows not to offer one.
+      expect(session.worldId).toBeNull();
+      expect(session.questionCount).toBe(3);
+      const questions = await prisma.sessionQuestion.findMany({
+        where: { sessionId: session.id },
+        orderBy: { position: 'asc' },
+      });
+      expect(questions[0].vocabularyWordId).toBe(missedWordId);
+    });
+
+    /*
+     * US-050 criterion 4 and FR-050: a mastered word is not brought back, however
+     * badly it once went. Without this the query could quietly widen and review
+     * would fill up with words the learner already knows.
+     */
+    it('leaves out a word the learner has mastered', async () => {
+      const { agent, id } = await learner();
+      const world = await playableWorld(agent);
+      await practised(id, world.words[0].id, {
+        level: 'MASTERED',
+        practisedAt: new Date('2026-09-24T00:00:00Z'),
+        mistakeAt: new Date('2026-09-24T00:00:00Z'),
+      });
+      await practised(id, world.words[1].id, {
+        level: 'LEARNING',
+        practisedAt: new Date('2026-09-24T00:00:00Z'),
+      });
+
+      const session = (await startReview(agent)).body as SessionDto;
+
+      expect(session.questionCount).toBe(1);
+      const question = await prisma.sessionQuestion.findFirstOrThrow({
+        where: { sessionId: session.id },
+      });
+      expect(question.occurrenceId).toBe(world.words[1].id);
+    });
+
+    /* A review asks about words, not worlds, so it never sends one's answer early. */
+    it('sends no word with its questions either (S5)', async () => {
+      const { agent, id } = await learner();
+      const world = await playableWorld(agent);
+      await practised(id, world.words[0].id, {
+        level: 'LEARNING',
+        practisedAt: new Date('2026-09-24T00:00:00Z'),
+      });
+
+      const response = await startReview(agent);
+
+      const sent = JSON.stringify(response.body);
+      expect(sent).not.toContain(world.words[0].english);
+      expect(sent).not.toContain(world.words[0].thaiMeaning);
+    });
+
+    it('finds the review still open, and closes it when a new one starts', async () => {
+      const { agent, id } = await learner();
+      const world = await playableWorld(agent);
+      await practised(id, world.words[0].id, {
+        level: 'LEARNING',
+        practisedAt: new Date('2026-09-24T00:00:00Z'),
+      });
+      const first = (await startReview(agent)).body as SessionDto;
+
+      const found = await agent
+        .get('/v1/sessions/current?kind=REVIEW')
+        .expect(200);
+      expect((found.body as SessionDto).id).toBe(first.id);
+
+      const second = (await startReview(agent)).body as SessionDto;
+      expect(second.id).not.toBe(first.id);
+      const closed = await agent.get(`/v1/sessions/${first.id}`).expect(200);
+      expect((closed.body as SessionDto).status).toBe('ABANDONED');
+    });
+
+    it('says there is no review open when there is none', async () => {
+      const { agent } = await learner();
+
+      await agent.get('/v1/sessions/current?kind=REVIEW').expect(204);
+    });
+
+    /* A game still needs its world named; a review must not be asked for one. */
+    it('refuses a game with no world', async () => {
+      const { agent } = await learner();
+
+      await agent
+        .post('/v1/sessions')
+        .set('Origin', WEB_ORIGIN)
+        .send({ kind: 'GAME' })
+        .expect(400);
     });
   });
 });
