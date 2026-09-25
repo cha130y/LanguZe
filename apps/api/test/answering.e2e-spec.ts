@@ -419,6 +419,61 @@ describe('Answering a question (e2e)', () => {
     });
   });
 
+  /*
+   * FR-013 and FR-014: what the learner has learned has to show where they look
+   * for it. Both of these were placeholders until the game existed, and a world
+   * still reported every word as untouched however much it had been played.
+   */
+  describe('what a world reports once it has been played (FR-013, FR-014)', () => {
+    it('shows each word at the level the answers left it', async () => {
+      const { agent, world, session } = await playing();
+      const questionId = session.nextQuestion!.id;
+      const { english } = await wordOf(questionId);
+      const occurrenceId = (
+        await prisma.sessionQuestion.findUniqueOrThrow({
+          where: { id: questionId },
+        })
+      ).occurrenceId;
+
+      await answer(agent, session, questionId, { answer: english });
+
+      const after = (await agent.get(`/v1/worlds/${world.id}`).expect(200))
+        .body as WorldDetailDto;
+      const answered = after.words.find((word) => word.id === occurrenceId);
+      expect(answered?.mastery).toBe('LEARNING');
+      // The rest are untouched, so they stay NEW.
+      expect(after.words.filter((word) => word.id !== occurrenceId)).toSatisfy(
+        (rest: typeof after.words) =>
+          rest.every((word) => word.mastery === 'NEW'),
+      );
+    });
+
+    it('counts the words the learner has mastered', async () => {
+      const { agent, learnerId, world } = await playing();
+      const occurrence = await prisma.wordOccurrence.findFirstOrThrow({
+        where: { worldId: world.id },
+      });
+      await prisma.wordMastery.create({
+        data: {
+          vocabularyWordId: occurrence.vocabularyWordId,
+          learnerId,
+          level: 'MASTERED',
+          lastPractisedAt: new Date(),
+        },
+      });
+
+      const list = (await agent.get('/v1/worlds').expect(200)).body as {
+        id: string;
+        wordCount: number;
+        masteredCount: number;
+      }[];
+
+      const played = list.find((entry) => entry.id === world.id);
+      expect(played?.masteredCount).toBe(1);
+      expect(played?.wordCount).toBe(world.words.length);
+    });
+  });
+
   describe('the end of a session (US-033)', () => {
     /** Answers every question of a session, right or wrong as asked. */
     async function playThrough(

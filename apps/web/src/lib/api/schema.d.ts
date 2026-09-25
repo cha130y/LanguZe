@@ -340,6 +340,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ProgressController_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -590,6 +606,26 @@ export interface components {
             mastery: components["schemas"]["MasteryChangeDto"];
             sessionCompleted: boolean;
             summary?: components["schemas"]["SessionSummaryDto"] | null;
+        };
+        MasteryCountsDto: {
+            /** @description Never answered. */
+            NEW: number;
+            LEARNING: number;
+            FAMILIAR: number;
+            MASTERED: number;
+        };
+        WorldProgressDto: {
+            id: string;
+            name: string;
+            wordCount: number;
+            masteredCount: number;
+        };
+        ProgressDto: {
+            /** @description Only ever rises, whatever is deleted (V4). */
+            totalXp: number;
+            words: components["schemas"]["MasteryCountsDto"];
+            /** @description Every world the learner has, newest first. */
+            worlds: components["schemas"]["WorldProgressDto"][];
         };
         HealthResponseDto: {
             /** @enum {string} */
@@ -1311,6 +1347,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ProgressController_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgressDto"];
                 };
             };
         };

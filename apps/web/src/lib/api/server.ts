@@ -4,6 +4,7 @@ import {
   isProvider,
   type Account,
   type PracticeSession,
+  type Progress,
   type Provider,
   type Usage,
   type World,
@@ -46,6 +47,9 @@ export const getWorld = (worldId: string) =>
  * refuse it itself.
  */
 export const getUsage = () => read<Usage>('/v1/me/usage');
+
+/** What the learner has to show for their practice (FR-061, US-060). */
+export const getProgress = () => read<Progress>('/v1/progress');
 
 /** One practice session, or null when it is not this learner's (FR-008). */
 export const getSession = (sessionId: string) =>

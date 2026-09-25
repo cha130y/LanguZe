@@ -6,6 +6,7 @@ import { PhotoDeletionReason } from '../generated/prisma/enums.js';
 import type {
   StoredPhotoModel,
   VocabularyWordModel,
+  WordMasteryModel,
   WordOccurrenceModel,
   WorldModel,
 } from '../generated/prisma/models.js';
@@ -37,7 +38,7 @@ type WorldWithPhotos = WorldModel & {
   photo: StoredPhotoModel | null;
   thumbnail: StoredPhotoModel | null;
   occurrences?: (WordOccurrenceModel & {
-    vocabularyWord: VocabularyWordModel;
+    vocabularyWord: VocabularyWordModel & { mastery: WordMasteryModel | null };
   })[];
 };
 
@@ -46,7 +47,9 @@ const WITH_PHOTOS_AND_WORDS = {
   photo: true,
   thumbnail: true,
   occurrences: {
-    include: { vocabularyWord: true },
+    // The mastery comes with the word, because a world's page and the list both
+    // report how far the learner has got with each one (FR-013, FR-014).
+    include: { vocabularyWord: { include: { mastery: true } } },
     orderBy: { createdAt: 'asc' },
   },
 } as const;
@@ -203,6 +206,16 @@ export class WorldsService {
         })),
       }),
       this.prisma.world.delete({ where: { id: worldId } }),
+      /*
+       * A word exists because a photo had it in view. Once its last occurrence
+       * goes with the world, so does the word, and with it the mastery and the
+       * mistakes it collected (FR-015, US-014 criterion 3). Removing one word at
+       * a time already did this; deleting a whole world did not, and left words
+       * nothing could reach but progress still counted.
+       */
+      this.prisma.vocabularyWord.deleteMany({
+        where: { learnerId, occurrences: { none: {} } },
+      }),
       this.prisma.storedPhoto.deleteMany({
         where: { id: { in: photos.map((photo) => photo.id) } },
       }),
@@ -279,8 +292,9 @@ export class WorldsService {
       failureReason: world.failureReason,
       thumbnailUrl: await this.linkTo(world.thumbnail),
       wordCount: world.occurrences?.length ?? 0,
-      // Mastery arrives with the game; until then nothing has been learned yet.
-      masteredCount: 0,
+      masteredCount: (world.occurrences ?? []).filter(
+        (occurrence) => occurrence.vocabularyWord.mastery?.level === 'MASTERED',
+      ).length,
       createdAt: world.createdAt.toISOString(),
     };
   }
@@ -301,8 +315,8 @@ export class WorldsService {
           width: occurrence.boxWidth,
           height: occurrence.boxHeight,
         },
-        // The game has not been built yet, so nothing has a mastery level.
-        mastery: 'NEW',
+        // A word with no mastery row has never been answered, which is NEW.
+        mastery: occurrence.vocabularyWord.mastery?.level ?? 'NEW',
       })),
     };
   }

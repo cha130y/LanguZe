@@ -5,15 +5,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { api, type World, type WorldWord } from '@/lib/api/client';
 import { messageForError } from '@/lib/api/error-messages';
+import { masteryText } from '@/lib/mastery';
 import { WorldPhoto } from './world-photo';
-
-/** How far the learner has got with a word, until the game gives it meaning. */
-const MASTERY_TEXT: Record<string, string> = {
-  NEW: 'ยังไม่ได้ฝึก',
-  LEARNING: 'กำลังเรียน',
-  FAMILIAR: 'เริ่มคุ้น',
-  MASTERED: 'จำได้แล้ว',
-};
 
 /**
  * The words found in the photo, each with the box it came from (FR-014, US-022).
@@ -116,7 +109,7 @@ export function WorldWords({ world }: { world: World }) {
                       {word.cefrLevel}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {MASTERY_TEXT[word.mastery] ?? word.mastery}
+                      {masteryText(word.mastery)}
                     </span>
                   </p>
                   <p className="text-sm">{word.thaiMeaning}</p>

@@ -1,13 +1,8 @@
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import type { SessionSummary } from '@/lib/api/client';
+import { masteryText } from '@/lib/mastery';
 import { PlayActions } from './play-actions';
-
-const MASTERY_TEXT: Record<string, string> = {
-  LEARNING: 'กำลังเรียน',
-  FAMILIAR: 'เริ่มคุ้น',
-  MASTERED: 'จำได้แล้ว',
-};
 
 /**
  * The end of a session (FR-035, US-033): how many answers were right, the XP they
@@ -47,7 +42,7 @@ export function SessionResult({
               >
                 <span className="font-semibold">{change.english}</span>
                 <span className="text-muted-foreground">
-                  {MASTERY_TEXT[change.level] ?? change.level}
+                  {masteryText(change.level)}
                 </span>
               </li>
             ))}
