@@ -56,7 +56,11 @@ export class SessionsController {
     @Query() query: CurrentSessionQuery,
     @Res({ passthrough: true }) res: Response,
   ): Promise<SessionDto | undefined> {
-    const session = await this.sessions.current(user.id, query.worldId);
+    const session = await this.sessions.current(
+      user.id,
+      query.kind,
+      query.worldId,
+    );
     if (!session) {
       res.status(HttpStatus.NO_CONTENT);
       return undefined;
@@ -70,13 +74,16 @@ export class SessionsController {
   @ApiNotFoundResponse({ type: ErrorResponseDto, description: 'NOT_FOUND' })
   @ApiConflictResponse({
     type: ErrorResponseDto,
-    description: 'WORLD_NOT_READY',
+    description: 'WORLD_NOT_READY, or NOTHING_TO_REVIEW (FR-053)',
   })
   start(
     @CurrentUser() user: SessionContext['user'],
     @Body() dto: StartSessionDto,
   ): Promise<SessionDto> {
-    return this.sessions.start(user.id, dto.worldId);
+    return dto.kind === 'REVIEW'
+      ? this.sessions.startReview(user.id)
+      : // The DTO requires a world for a game, so this is one by then.
+        this.sessions.start(user.id, dto.worldId!);
   }
 
   @Get(':sessionId')

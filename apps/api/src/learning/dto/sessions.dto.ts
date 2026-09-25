@@ -16,30 +16,34 @@ import type {
 import { HighlightBoxDto } from '../../worlds/dto/worlds.dto.js';
 import { MAX_ANSWER_LENGTH } from '../answer-check.js';
 
-/** Reading the open session of one kind. Only `GAME` until review is built. */
+/** Reading the open session of one kind. A review has no world (FR-050). */
 export class CurrentSessionQuery {
-  @ApiProperty({ enum: ['GAME'] })
-  @IsIn(['GAME'])
-  kind: 'GAME';
+  @ApiProperty({ enum: ['GAME', 'REVIEW'] })
+  @IsIn(['GAME', 'REVIEW'])
+  kind: SessionKind;
 
-  @ApiProperty({ format: 'uuid' })
+  @ApiPropertyOptional({ format: 'uuid', description: 'Required for a game.' })
+  @ValidateIf((query: CurrentSessionQuery) => query.kind === 'GAME')
   @IsUUID()
-  worldId: string;
+  worldId?: string;
 }
 
 /**
- * Starting a session. Only `GAME` for now: a review picks its words from every
- * world by a rule of its own (FR-050), which arrives with the review increment.
- * Naming a kind the API cannot serve would be a promise it could not keep.
+ * Starting a session. A game is of one world; a review draws from all of them by
+ * a rule of its own (FR-030, FR-050), so it names no world.
  */
 export class StartSessionDto {
-  @ApiProperty({ enum: ['GAME'] })
-  @IsIn(['GAME'])
-  kind: 'GAME';
+  @ApiProperty({ enum: ['GAME', 'REVIEW'] })
+  @IsIn(['GAME', 'REVIEW'])
+  kind: SessionKind;
 
-  @ApiProperty({ format: 'uuid', description: 'The world to play (FR-030).' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'The world to play; required for a game only (FR-030).',
+  })
+  @ValidateIf((body: StartSessionDto) => body.kind === 'GAME')
   @IsUUID()
-  worldId: string;
+  worldId?: string;
 }
 
 /**
