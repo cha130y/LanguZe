@@ -11,15 +11,10 @@ import {
   type Question,
 } from '@/lib/api/client';
 import { messageForError } from '@/lib/api/error-messages';
+import { masteryText } from '@/lib/mastery';
 
 /** The longest answer the API accepts (V19); the input says so too. */
 const MAX_ANSWER = 100;
-
-const MASTERY_TEXT: Record<string, string> = {
-  LEARNING: 'กำลังเรียน',
-  FAMILIAR: 'เริ่มคุ้น',
-  MASTERED: 'จำได้แล้ว',
-};
 
 /**
  * One question and what comes of answering it (FR-031, FR-033, US-031, US-032).
@@ -190,7 +185,7 @@ function Feedback({
 
       {result.mastery.before !== result.mastery.after ? (
         <p className="text-sm text-muted-foreground">
-          ระดับความจำของคำนี้: {MASTERY_TEXT[result.mastery.after]}
+          ระดับความจำของคำนี้: {masteryText(result.mastery.after)}
         </p>
       ) : null}
 
