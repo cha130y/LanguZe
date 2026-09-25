@@ -3,6 +3,7 @@ import {
   API_BASE_URL,
   isProvider,
   type Account,
+  type PracticeSession,
   type Provider,
   type Usage,
   type World,
@@ -45,6 +46,18 @@ export const getWorld = (worldId: string) =>
  * refuse it itself.
  */
 export const getUsage = () => read<Usage>('/v1/me/usage');
+
+/** One practice session, or null when it is not this learner's (FR-008). */
+export const getSession = (sessionId: string) =>
+  read<PracticeSession>(`/v1/sessions/${sessionId}`);
+
+/**
+ * The game still open for a world, if any (FR-036, US-034). `null` covers both
+ * "none is open" (the API answers 204) and "the API could not say", which the page
+ * treats the same way: it offers a new game.
+ */
+export const getCurrentGame = (worldId: string) =>
+  read<PracticeSession>(`/v1/sessions/current?kind=GAME&worldId=${worldId}`);
 
 /**
  * The provider sign-ins the API offers (FR-003). Asking the API keeps the two in
