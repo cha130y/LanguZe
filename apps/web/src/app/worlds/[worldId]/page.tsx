@@ -6,6 +6,7 @@ import { AnalysisFailure } from '@/components/worlds/analysis-failure';
 import { AnalysisProgress } from '@/components/worlds/analysis-progress';
 import { WorldActions } from '@/components/worlds/world-actions';
 import { WorldStatusBadge } from '@/components/worlds/world-status-badge';
+import { WordsHidden } from '@/components/worlds/words-hidden';
 import { WorldWords } from '@/components/worlds/world-words';
 import { getAccount, getCurrentGame, getWorld } from '@/lib/api/server';
 
@@ -65,7 +66,12 @@ export default async function WorldPage({
             <h2 className="font-bold">ฝึกคำศัพท์ของโลกนี้</h2>
             <PlayActions worldId={world.id} openGame={openGame} />
           </section>
-          <WorldWords world={world} />
+          {/* The words are the answers, so they wait until the game is over (S8). */}
+          {openGame ? (
+            <WordsHidden world={world} />
+          ) : (
+            <WorldWords world={world} />
+          )}
         </>
       )}
 

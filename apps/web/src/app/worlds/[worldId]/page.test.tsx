@@ -133,19 +133,21 @@ test('offers a game on a world that is ready (US-030)', async () => {
   expect(getCurrentGame).toHaveBeenCalledWith('world-1');
 });
 
+const openGame = {
+  id: 'session-9',
+  kind: 'GAME',
+  status: 'IN_PROGRESS',
+  worldId: 'world-1',
+  answeredCount: 5,
+  questionCount: 10,
+  nextQuestion: null,
+  startedAt: '2026-09-25T04:00:00.000Z',
+  summary: null,
+} as Awaited<ReturnType<typeof getCurrentGame>>;
+
 /* US-034 criterion 3: the game left unfinished is offered back first. */
 test('offers to continue an unfinished game', async () => {
-  vi.mocked(getCurrentGame).mockResolvedValue({
-    id: 'session-9',
-    kind: 'GAME',
-    status: 'IN_PROGRESS',
-    worldId: 'world-1',
-    answeredCount: 5,
-    questionCount: 10,
-    nextQuestion: null,
-    startedAt: '2026-09-25T04:00:00.000Z',
-    summary: null,
-  } as Awaited<ReturnType<typeof getCurrentGame>>);
+  vi.mocked(getCurrentGame).mockResolvedValue(openGame);
 
   render(await WorldPage({ params }));
 
@@ -164,4 +166,27 @@ test('offers no game while a world is still being analysed', async () => {
 
   expect(screen.queryByRole('button', { name: 'เริ่มเล่นเกม' })).toBeNull();
   expect(getCurrentGame).not.toHaveBeenCalled();
+});
+
+/*
+ * S8: the words are the answers. A learner mid-game could otherwise read them off
+ * this page, and the mastery they banked would then describe someone else.
+ */
+test('hides the words while a game on this world is unfinished', async () => {
+  vi.mocked(getCurrentGame).mockResolvedValue(openGame);
+
+  render(await WorldPage({ params }));
+
+  expect(screen.queryByText('sofa')).toBeNull();
+  expect(screen.queryByText('โซฟา')).toBeNull();
+  expect(screen.getByText('ซ่อนคำศัพท์ไว้ระหว่างเล่นเกม')).toBeInTheDocument();
+  // The photo stays: it gives nothing away on its own.
+  expect(screen.getByAltText('รูปภาพของ ห้องครัว')).toBeInTheDocument();
+});
+
+test('shows them again once no game is unfinished (US-012)', async () => {
+  render(await WorldPage({ params }));
+
+  expect(screen.getByText('sofa')).toBeInTheDocument();
+  expect(screen.queryByText('ซ่อนคำศัพท์ไว้ระหว่างเล่นเกม')).toBeNull();
 });
