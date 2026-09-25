@@ -125,6 +125,33 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   GEMINI_EXTRACTION_MODEL: string = 'gemini-flash-lite-latest';
 
+  /**
+   * The tutor's model (ADR-0004). Not the Flash-Lite of the photo jobs: the tutor
+   * has to hold a long instruction, decide when to call a tool, and explain in
+   * Thai, and a model that skips its tools invents the history FR-075 forbids.
+   * The evaluation set (AIR-008) decides whether a cheaper one passes.
+   */
+  @IsString()
+  @IsNotEmpty()
+  GEMINI_TUTOR_MODEL: string = 'gemini-flash-latest';
+
+  /**
+   * How many times the tutor may look something up before it has to answer, and
+   * how long the whole reply may take (ADR-0004). Both bound what one message can
+   * cost and how long a learner waits.
+   */
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(10)
+  AI_TUTOR_MAX_TOOL_ROUNDS: number = 5;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1000)
+  @Max(120_000)
+  AI_TUTOR_TIMEOUT_MS: number = 30_000;
+
   /** How long one AI call may take before it counts as lost (NFR-001, V16). */
   @Type(() => Number)
   @IsInt()

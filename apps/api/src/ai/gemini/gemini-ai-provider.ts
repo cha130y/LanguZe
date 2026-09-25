@@ -1,6 +1,11 @@
-import type {
-  GenerateContentParameters,
-  GenerateContentResponse,
+import {
+  Type,
+  type Content,
+  type FunctionCall,
+  type FunctionDeclaration,
+  type GenerateContentParameters,
+  type GenerateContentResponse,
+  type Part,
 } from '@google/genai';
 import type { AiPurpose, BlockCategory } from '../../generated/prisma/enums.js';
 import type { ExtractedItem } from '../../vocabulary/extraction-rules.js';
@@ -12,6 +17,8 @@ import {
   type PhotoForAi,
   type SafetyVerdict,
   type TutorEvent,
+  type TutorTool,
+  type TutorTurn,
 } from '../ai-provider.js';
 import {
   BLOCK_CATEGORIES,
@@ -19,6 +26,7 @@ import {
   EXTRACTION_SCHEMA,
   SAFETY_INSTRUCTION,
   SAFETY_SCHEMA,
+  TUTOR_INSTRUCTION,
 } from './prompts.js';
 
 /** The part of the SDK this adapter uses, so a test can stand in for the network. */
@@ -26,12 +34,19 @@ export interface GeminiModels {
   generateContent(
     request: GenerateContentParameters,
   ): Promise<GenerateContentResponse>;
+  generateContentStream(
+    request: GenerateContentParameters,
+  ): Promise<AsyncGenerator<GenerateContentResponse>>;
 }
 
 export interface GeminiSettings {
   safetyModel: string;
   extractionModel: string;
+  tutorModel: string;
   timeoutMs: number;
+  /** The whole tutor reply, tool rounds included, and how many of those (ADR-0004). */
+  tutorTimeoutMs: number;
+  maxToolRounds: number;
 }
 
 /** Gemini's own words for why it refused, mapped to LanguZe's categories (FR-091). */
@@ -65,9 +80,9 @@ export class GeminiAiProvider extends AiProvider {
   }
 
   modelFor(purpose: AiPurpose): string {
-    return purpose === 'EXTRACTION'
-      ? this.settings.extractionModel
-      : this.settings.safetyModel;
+    if (purpose === 'EXTRACTION') return this.settings.extractionModel;
+    if (purpose === 'TUTOR') return this.settings.tutorModel;
+    return this.settings.safetyModel;
   }
 
   /**
@@ -154,15 +169,133 @@ export class GeminiAiProvider extends AiProvider {
   }
 
   /**
-   * The tutor's reply. Gemini's streaming and tool calling arrive with the tutor
-   * adapter, in the next change; until then this refuses plainly rather than
-   * answering badly, and the API turns that into AI_PROVIDER_UNAVAILABLE.
+   * The tutor's reply, streamed, with Gemini calling LanguZe's tools as it needs
+   * them (FR-070, FR-073, NFR-003). This is the only place that knows Gemini's
+   * function-calling protocol; the tools themselves know nothing about it.
+   *
+   * Only the instruction, the conversation, and tool results are sent: the turn
+   * holds nothing else, so no email address, display name, or photo can travel
+   * with it (AIR-006).
    */
-  tutorReply(): AsyncIterable<TutorEvent> {
+  async *tutorReply(turn: TutorTurn): AsyncIterable<TutorEvent> {
+    const byName = new Map(turn.tools.map((tool) => [tool.name, tool]));
+    const contents: Content[] = [
+      ...turn.history.map((exchange) => ({
+        role: exchange.role === 'LEARNER' ? 'user' : 'model',
+        parts: [{ text: exchange.content }],
+      })),
+      { role: 'user', parts: [{ text: turn.message }] },
+    ];
+
+    /*
+     * One deadline for the whole turn rather than one per call, so five slow tool
+     * rounds cannot keep a learner waiting five times the limit (ADR-0004).
+     */
+    const deadline = AbortSignal.timeout(this.settings.tutorTimeoutMs);
+    const usage: AiUsage = { inputTokens: 0, outputTokens: 0 };
+    let saidSomething = false;
+
+    for (let round = 0; round <= this.settings.maxToolRounds; round += 1) {
+      const stream = await this.askStream({
+        model: this.settings.tutorModel,
+        contents,
+        config: {
+          systemInstruction: TUTOR_INSTRUCTION,
+          tools: [{ functionDeclarations: turn.tools.map(declarationOf) }],
+          abortSignal: deadline,
+        },
+      });
+
+      const calls: FunctionCall[] = [];
+      let spoken = '';
+      // Streamed usage is the running total for the call, so the last one counts.
+      let roundUsage: AiUsage = {};
+
+      try {
+        for await (const chunk of stream) {
+          const text = chunk.text;
+          if (text) {
+            spoken += text;
+            saidSomething = true;
+            yield { type: 'delta', text };
+          }
+          calls.push(...(chunk.functionCalls ?? []));
+          if (chunk.usageMetadata) roundUsage = usageOf(chunk);
+        }
+      } catch (error) {
+        throw failure(error);
+      }
+
+      usage.inputTokens =
+        (usage.inputTokens ?? 0) + (roundUsage.inputTokens ?? 0);
+      usage.outputTokens =
+        (usage.outputTokens ?? 0) + (roundUsage.outputTokens ?? 0);
+
+      if (calls.length === 0) {
+        /*
+         * Nothing said and nothing asked for: Gemini's own filters refused, or it
+         * returned an empty answer. Either way there is no reply to show, so this
+         * fails and the message is released rather than saved empty (FR-071).
+         */
+        if (!saidSomething) {
+          throw new AiProviderError(
+            'INVALID_OUTPUT',
+            'Gemini answered with nothing.',
+          );
+        }
+        yield { type: 'done', usage };
+        return;
+      }
+
+      if (round === this.settings.maxToolRounds) break;
+
+      contents.push({ role: 'model', parts: partsOf(spoken, calls) });
+      contents.push({
+        role: 'user',
+        parts: await Promise.all(
+          calls.map((call) => this.answerCall(call, byName)),
+        ),
+      });
+    }
+
     throw new AiProviderError(
       'PROVIDER_ERROR',
-      'The Gemini tutor is not wired up yet.',
+      `Gemini was still looking things up after ${this.settings.maxToolRounds} rounds.`,
     );
+  }
+
+  /**
+   * Runs one tool Gemini asked for. A name LanguZe does not know is answered with
+   * an explanation rather than with data, because a model inventing a tool is not
+   * a reason to fail the learner's message.
+   */
+  private async answerCall(
+    call: FunctionCall,
+    byName: Map<string, TutorTool>,
+  ): Promise<Part> {
+    const tool = call.name ? byName.get(call.name) : undefined;
+    const result = tool
+      ? await tool.run(call.args ?? {})
+      : { error: `There is no tool called ${String(call.name)}.` };
+
+    return {
+      functionResponse: {
+        ...(call.id ? { id: call.id } : {}),
+        name: call.name,
+        response: asRecord(result),
+      },
+    };
+  }
+
+  /** The streaming twin of `ask`, failing in exactly the same ways. */
+  private async askStream(
+    request: GenerateContentParameters,
+  ): Promise<AsyncGenerator<GenerateContentResponse>> {
+    try {
+      return await this.models.generateContentStream(request);
+    } catch (error) {
+      throw failure(error);
+    }
   }
 
   /** One call, with every way it can fail turned into one of LanguZe's own. */
@@ -172,21 +305,54 @@ export class GeminiAiProvider extends AiProvider {
     try {
       return await this.models.generateContent(request);
     } catch (error) {
-      if (isTimeout(error)) {
-        throw new AiProviderError(
-          'TIMED_OUT',
-          'Gemini did not answer in time',
-          {
-            cause: error,
-          },
-        );
-      }
-      throw new AiProviderError('PROVIDER_ERROR', 'Gemini could not answer', {
-        cause: error,
-      });
+      throw failure(error);
     }
   }
 }
+
+/** Whatever went wrong, as one of LanguZe's own failures (FR-025, FR-071). */
+const failure = (error: unknown): AiProviderError =>
+  isTimeout(error)
+    ? new AiProviderError('TIMED_OUT', 'Gemini did not answer in time', {
+        cause: error,
+      })
+    : new AiProviderError('PROVIDER_ERROR', 'Gemini could not answer', {
+        cause: error,
+      });
+
+/**
+ * One of LanguZe's tools as Gemini describes functions. No parameter is required:
+ * the tools answer a missing or nonsensical one with a default rather than an
+ * error, so declaring them required would only invite a refusal.
+ */
+const declarationOf = (tool: TutorTool): FunctionDeclaration => ({
+  name: tool.name,
+  description: tool.description,
+  parameters: {
+    type: Type.OBJECT,
+    properties: Object.fromEntries(
+      tool.parameters.map((parameter) => [
+        parameter.name,
+        {
+          type: parameter.type === 'integer' ? Type.INTEGER : Type.STRING,
+          description: parameter.description,
+        },
+      ]),
+    ),
+  },
+});
+
+/** What Gemini said in the round it asked for tools, put back as its own turn. */
+const partsOf = (spoken: string, calls: FunctionCall[]): Part[] => [
+  ...(spoken ? [{ text: spoken }] : []),
+  ...calls.map((functionCall) => ({ functionCall })),
+];
+
+/** A tool result as Gemini expects it: an object, whatever the tool returned. */
+const asRecord = (value: unknown): Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : { output: value };
 
 const imagePart = (photo: PhotoForAi) => ({
   inlineData: {
