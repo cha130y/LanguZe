@@ -55,17 +55,20 @@ export function SessionResult({
         )}
       </div>
 
-      {worldId ? (
-        <div className="grid gap-3">
-          <PlayActions worldId={worldId} openGame={null} />
-          <Link
-            href={`/worlds/${worldId}`}
-            className={buttonVariants({ variant: 'outline', size: 'xl' })}
-          >
-            กลับไปที่โลกนี้
-          </Link>
-        </div>
-      ) : null}
+      {/* A review has no world, so it offers another review instead (FR-050). */}
+      <div className="grid gap-3">
+        <PlayActions
+          kind={worldId ? 'GAME' : 'REVIEW'}
+          worldId={worldId ?? undefined}
+          openSession={null}
+        />
+        <Link
+          href={worldId ? `/worlds/${worldId}` : '/review'}
+          className={buttonVariants({ variant: 'outline', size: 'xl' })}
+        >
+          {worldId ? 'กลับไปที่โลกนี้' : 'กลับไปหน้าทบทวน'}
+        </Link>
+      </div>
     </section>
   );
 }

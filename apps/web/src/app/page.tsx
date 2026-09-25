@@ -51,6 +51,12 @@ export default async function Home() {
             โลกของฉัน
           </Link>
           <Link
+            href="/review"
+            className={buttonVariants({ variant: 'outline', size: 'xl' })}
+          >
+            ทบทวนคำศัพท์
+          </Link>
+          <Link
             href="/progress"
             className={buttonVariants({ variant: 'outline', size: 'xl' })}
           >
