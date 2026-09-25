@@ -20,6 +20,11 @@ export type World = Json<
 export type WorldSummary = Json<
   paths['/v1/worlds']['get']['responses'][200]
 >[number];
+export type WorldWord = World['words'][number];
+export type WorldStatus = Json<
+  paths['/v1/worlds/{worldId}/status']['get']['responses'][200]
+>;
+export type Usage = Json<paths['/v1/me/usage']['get']['responses'][200]>;
 
 /** The providers LanguZe can offer (FR-003); the API says which are configured. */
 export const PROVIDERS = ['google', 'line'] as const;
@@ -162,6 +167,20 @@ export const api = {
     }),
   deleteWorld: (worldId: string) =>
     call<void>(`/v1/worlds/${worldId}`, { method: 'DELETE' }),
+
+  /** The status alone, which the waiting page asks for every 3 seconds (P3). */
+  worldStatus: (worldId: string) =>
+    call<WorldStatus>(`/v1/worlds/${worldId}/status`),
+
+  /** Analyses the same photo again after a failure (FR-025, US-021). */
+  retryAnalysis: (worldId: string) =>
+    call<void>(`/v1/worlds/${worldId}/retry`, { method: 'POST' }),
+
+  /** Removes one word the analysis got wrong (FR-026, US-022). */
+  removeWord: (worldId: string, occurrenceId: string) =>
+    call<void>(`/v1/worlds/${worldId}/words/${occurrenceId}`, {
+      method: 'DELETE',
+    }),
 
   /**
    * Creates a world from a photo (US-010). The body is `multipart/form-data`, so

@@ -1,13 +1,5 @@
+import { failureHeadline } from '@/lib/analysis-failures';
 import type { World } from '@/lib/api/client';
-
-/** What each failure means for the learner (API design, section 3.3). */
-const FAILURE_TEXT: Record<string, string> = {
-  BLOCKED: 'รูปภาพนี้ไม่ผ่านกฎการใช้งาน',
-  TOO_FEW_WORDS: 'หาคำศัพท์จากรูปนี้ได้น้อยเกินไป',
-  PROVIDER_ERROR: 'ระบบ AI ขัดข้องชั่วคราว',
-  INVALID_OUTPUT: 'ผลลัพธ์จาก AI ไม่สมบูรณ์',
-  TIMED_OUT: 'ใช้เวลานานเกินไป',
-};
 
 /** The world's analysis status, in words a learner can act on (FR-013, FR-021). */
 export function WorldStatusBadge({
@@ -28,7 +20,7 @@ export function WorldStatusBadge({
   if (status === 'FAILED') {
     return (
       <p className="w-fit rounded-full bg-destructive/15 px-3 py-1 text-xs font-semibold text-destructive">
-        {(failureReason && FAILURE_TEXT[failureReason]) ?? 'วิเคราะห์ไม่สำเร็จ'}
+        {failureHeadline(failureReason)}
       </p>
     );
   }
