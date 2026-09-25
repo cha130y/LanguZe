@@ -1,17 +1,21 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
 import type { Account, World, WorldWord } from '@/lib/api/client';
-import { getAccount, getWorld } from '@/lib/api/server';
+import { getAccount, getCurrentGame, getWorld } from '@/lib/api/server';
 import WorldPage from './page';
 
 vi.mock('@/lib/api/server', () => ({
   getAccount: vi.fn(),
+  getCurrentGame: vi.fn(),
   getWorld: vi.fn(),
 }));
 
 vi.mock('@/lib/api/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/api/client')>()),
-  api: { worldStatus: vi.fn(() => new Promise(() => {})) },
+  api: {
+    worldStatus: vi.fn(() => new Promise(() => {})),
+    startGame: vi.fn(),
+  },
 }));
 
 const { redirect, notFound } = vi.hoisted(() => ({
@@ -68,6 +72,7 @@ const params = Promise.resolve({ worldId: 'world-1' });
 beforeEach(() => {
   vi.mocked(getAccount).mockReset().mockResolvedValue(account);
   vi.mocked(getWorld).mockReset().mockResolvedValue(world());
+  vi.mocked(getCurrentGame).mockReset().mockResolvedValue(null);
   redirect.mockClear();
   notFound.mockClear();
 });
@@ -116,4 +121,47 @@ test('sends a visitor to sign in', async () => {
   vi.mocked(getAccount).mockResolvedValue(null);
 
   await expect(WorldPage({ params })).rejects.toThrow('redirected to /sign-in');
+});
+
+/** US-012 criterion 2: a ready world is one you can play. */
+test('offers a game on a world that is ready (US-030)', async () => {
+  render(await WorldPage({ params }));
+
+  expect(
+    screen.getByRole('button', { name: 'เริ่มเล่นเกม' }),
+  ).toBeInTheDocument();
+  expect(getCurrentGame).toHaveBeenCalledWith('world-1');
+});
+
+/* US-034 criterion 3: the game left unfinished is offered back first. */
+test('offers to continue an unfinished game', async () => {
+  vi.mocked(getCurrentGame).mockResolvedValue({
+    id: 'session-9',
+    kind: 'GAME',
+    status: 'IN_PROGRESS',
+    worldId: 'world-1',
+    answeredCount: 5,
+    questionCount: 10,
+    nextQuestion: null,
+    startedAt: '2026-09-25T04:00:00.000Z',
+    summary: null,
+  } as Awaited<ReturnType<typeof getCurrentGame>>);
+
+  render(await WorldPage({ params }));
+
+  expect(
+    screen.getByRole('link', { name: 'เล่นต่อ (ข้อ 6 จาก 10)' }),
+  ).toHaveAttribute('href', '/sessions/session-9');
+});
+
+/* A world with no words to play is never asked about, and offers no game. */
+test('offers no game while a world is still being analysed', async () => {
+  vi.mocked(getWorld).mockResolvedValue(
+    world({ status: 'ANALYZING', words: [] }),
+  );
+
+  render(await WorldPage({ params }));
+
+  expect(screen.queryByRole('button', { name: 'เริ่มเล่นเกม' })).toBeNull();
+  expect(getCurrentGame).not.toHaveBeenCalled();
 });
