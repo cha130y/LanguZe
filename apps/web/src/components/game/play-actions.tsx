@@ -7,29 +7,57 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { api, type PracticeSession } from '@/lib/api/client';
 import { messageForError } from '@/lib/api/error-messages';
 
+/** The same job in two voices: getting into a game, or into a review. */
+const WORDS = {
+  GAME: {
+    start: 'เริ่มเล่นเกม',
+    again: 'เริ่มเกมใหม่',
+    starting: 'กำลังเริ่ม…',
+    replaces:
+      'การเริ่มเกมใหม่จะปิดเกมที่ค้างอยู่ และคำตอบที่ตอบไปแล้วจะยังถูกบันทึกไว้',
+  },
+  REVIEW: {
+    start: 'เริ่มทบทวน',
+    again: 'เริ่มทบทวนใหม่',
+    starting: 'กำลังเริ่ม…',
+    replaces:
+      'การเริ่มทบทวนใหม่จะปิดรอบที่ค้างอยู่ และคำตอบที่ตอบไปแล้วจะยังถูกบันทึกไว้',
+  },
+} as const;
+
 /**
- * Getting into a game (US-030, US-034).
+ * Getting into a session (US-030, US-034, US-050).
  *
- * A game left unfinished is offered back before a new one, because starting a new
- * one closes it without a summary (FR-036) — that has to be the deliberate choice,
- * not the one that happens by pressing the obvious button.
+ * A session left unfinished is offered back before a new one, because starting a
+ * new one closes it without a summary (FR-036) — that has to be the deliberate
+ * choice, not the one that happens by pressing the obvious button.
+ *
+ * A game names its world; a review draws from all of them, so it names none. That
+ * is the only difference, which is why both are this one component: two copies
+ * would drift apart on the rule above, which is the part that matters.
  */
 export function PlayActions({
+  kind,
   worldId,
-  openGame,
+  openSession,
 }: {
-  worldId: string;
-  openGame: PracticeSession | null;
+  kind: 'GAME' | 'REVIEW';
+  worldId?: string;
+  openSession: PracticeSession | null;
 }) {
   const router = useRouter();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const words = WORDS[kind];
 
   const start = async () => {
     setStarting(true);
     setError(null);
     try {
-      const session = await api.startGame(worldId);
+      const session =
+        kind === 'REVIEW'
+          ? await api.startReview()
+          : await api.startGame(worldId ?? '');
       router.push(`/sessions/${session.id}`);
       router.refresh();
     } catch (caught) {
@@ -41,37 +69,30 @@ export function PlayActions({
   return (
     <div className="grid gap-3">
       <div className="grid gap-3 sm:flex">
-        {openGame ? (
+        {openSession ? (
           <Link
-            href={`/sessions/${openGame.id}`}
+            href={`/sessions/${openSession.id}`}
             className={`${buttonVariants({ variant: 'cta', size: 'xl' })} sm:flex-1`}
           >
-            เล่นต่อ (ข้อ {openGame.answeredCount + 1} จาก{' '}
-            {openGame.questionCount})
+            เล่นต่อ (ข้อ {openSession.answeredCount + 1} จาก{' '}
+            {openSession.questionCount})
           </Link>
         ) : null}
 
         <Button
           type="button"
-          variant={openGame ? 'outline' : 'cta'}
+          variant={openSession ? 'outline' : 'cta'}
           size="xl"
           className="sm:flex-1"
           disabled={starting}
           onClick={() => void start()}
         >
-          {starting
-            ? 'กำลังเริ่ม…'
-            : openGame
-              ? 'เริ่มเกมใหม่'
-              : 'เริ่มเล่นเกม'}
+          {starting ? words.starting : openSession ? words.again : words.start}
         </Button>
       </div>
 
-      {openGame ? (
-        <p className="text-xs text-muted-foreground">
-          การเริ่มเกมใหม่จะปิดเกมที่ค้างอยู่
-          และคำตอบที่ตอบไปแล้วจะยังถูกบันทึกไว้
-        </p>
+      {openSession ? (
+        <p className="text-xs text-muted-foreground">{words.replaces}</p>
       ) : null}
 
       {error ? (

@@ -64,7 +64,11 @@ export default async function WorldPage({
         <>
           <section className="glass-panel grid gap-4 rounded-3xl p-6">
             <h2 className="font-bold">ฝึกคำศัพท์ของโลกนี้</h2>
-            <PlayActions worldId={world.id} openGame={openGame} />
+            <PlayActions
+              kind="GAME"
+              worldId={world.id}
+              openSession={openGame}
+            />
           </section>
           {/* The words are the answers, so they wait until the game is over (S8). */}
           {openGame ? (
