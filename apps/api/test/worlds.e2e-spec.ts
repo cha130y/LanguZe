@@ -354,6 +354,77 @@ describe('Worlds (e2e)', () => {
       expect(cleanup.every((row) => row.reason === 'WORLD_DELETED')).toBe(true);
     });
 
+    /*
+     * US-014 criterion 3, FR-015. A word exists because a photo had it in view;
+     * once the last photo with it goes, the word goes too, and takes its mastery
+     * and mistakes with it. Removing one word at a time already did this — a
+     * whole world did not, and left words nothing could reach.
+     */
+    it('takes the words with it, and their mastery and mistakes', async () => {
+      const { agent, id } = await learner();
+      const world = (await createWorld(agent).expect(202))
+        .body as WorldDetailDto;
+      await app.get(AnalysisService).settled(world.id);
+      const occurrence = await prisma.wordOccurrence.findFirstOrThrow({
+        where: { worldId: world.id },
+      });
+      await prisma.wordMastery.create({
+        data: {
+          vocabularyWordId: occurrence.vocabularyWordId,
+          learnerId: id,
+          level: 'LEARNING',
+          lastPractisedAt: new Date(),
+        },
+      });
+      await prisma.attempt.create({
+        data: {
+          learnerId: id,
+          vocabularyWordId: occurrence.vocabularyWordId,
+          answerText: 'zzz',
+          isCorrect: false,
+          levelAfter: 'LEARNING',
+        },
+      });
+
+      await agent
+        .delete(`/v1/worlds/${world.id}`)
+        .set('Origin', WEB_ORIGIN)
+        .expect(204);
+
+      expect(
+        await prisma.vocabularyWord.count({ where: { learnerId: id } }),
+      ).toBe(0);
+      expect(await prisma.wordMastery.count({ where: { learnerId: id } })).toBe(
+        0,
+      );
+      expect(await prisma.attempt.count({ where: { learnerId: id } })).toBe(0);
+    });
+
+    /* US-014 criterion 2: a word in another world of theirs stays, and keeps it. */
+    it('keeps a word that another world still has', async () => {
+      const { agent, id } = await learner();
+      const first = (await createWorld(agent).expect(202))
+        .body as WorldDetailDto;
+      await app.get(AnalysisService).settled(first.id);
+      const second = (await createWorld(agent).expect(202))
+        .body as WorldDetailDto;
+      await app.get(AnalysisService).settled(second.id);
+      const words = await prisma.vocabularyWord.count({
+        where: { learnerId: id },
+      });
+      expect(words).toBeGreaterThan(0);
+
+      await agent
+        .delete(`/v1/worlds/${first.id}`)
+        .set('Origin', WEB_ORIGIN)
+        .expect(204);
+
+      // Both worlds held the same words, so all of them survive in the second.
+      expect(
+        await prisma.vocabularyWord.count({ where: { learnerId: id } }),
+      ).toBe(words);
+    });
+
     it('is gone from the list afterwards', async () => {
       const { agent } = await learner();
       const world = (await createWorld(agent).expect(202))
