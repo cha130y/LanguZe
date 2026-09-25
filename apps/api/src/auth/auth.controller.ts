@@ -21,6 +21,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { ErrorResponseDto } from '../platform/errors/error-response.dto.js';
+import { nextBangkokMidnight } from '../platform/time/bangkok-day.js';
 import { AuthService } from './auth.service.js';
 import {
   AcceptTermsDto,
@@ -41,7 +42,6 @@ import {
 } from './session.decorators.js';
 import type { SessionContext } from './auth.service.js';
 import { AnalysisService } from '../worlds/analysis.service.js';
-import { nextReset } from '../worlds/daily-limit.js';
 import { UsageResponseDto } from '../worlds/dto/worlds.dto.js';
 
 /** Rate limits from the API design, section 5. */
@@ -240,7 +240,7 @@ export class MeController {
     return {
       analysesLeft: left,
       analysesLimit: limit,
-      resetsAt: nextReset(now).toISOString(),
+      resetsAt: nextBangkokMidnight(now).toISOString(),
     };
   }
 
