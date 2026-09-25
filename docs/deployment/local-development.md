@@ -142,8 +142,8 @@ pnpm dev
 
 ## Seeing each analysis result
 
-Photo analysis uses a fake AI provider until a Gemini key is configured (B4), so it
-costs nothing and always answers the same. `AI_FAKE_BEHAVIOUR` in `apps/api/.env`
+Photo analysis and the tutor use a fake AI provider until a Gemini key is
+configured (B4), so both cost nothing and always answer the same. `AI_FAKE_BEHAVIOUR` in `apps/api/.env`
 decides which path it takes, which is how the failure screens can be seen at all:
 
 | Value            | What a learner sees                                   |
@@ -166,14 +166,20 @@ own.
 
 ## Using the real Gemini
 
-Setting `GEMINI_API_KEY` switches photo analysis from the fake provider to Gemini
-(ADR-0004); the API logs which one it uses at startup. Everything else stays the
-same, because the analysis only knows LanguZe's own AI interface.
+Setting `GEMINI_API_KEY` switches photo analysis and the tutor from the fake
+provider to Gemini (ADR-0004); the API logs which one it uses at startup.
+Everything else stays the same, because both only know LanguZe's own AI interface.
 
 1. In [Google AI Studio](https://aistudio.google.com/apikey), create an API key
 2. Put it in `apps/api/.env` as `GEMINI_API_KEY` and restart
-3. `GEMINI_SAFETY_MODEL` and `GEMINI_EXTRACTION_MODEL` choose the models; both
-   default to a Flash-Lite model, which costs a fraction of a cent per photo
+3. `GEMINI_SAFETY_MODEL` and `GEMINI_EXTRACTION_MODEL` choose the photo models;
+   both default to a Flash-Lite model, which costs a fraction of a cent per photo
+4. `GEMINI_TUTOR_MODEL` chooses the tutor's, and defaults to a full Flash model:
+   the tutor has to decide when to call a tool, and one that skips them invents
+   the learning history FR-075 forbids
+
+`AI_TUTOR_MAX_TOOL_ROUNDS` (5) and `AI_TUTOR_TIMEOUT_MS` (30000) bound what one
+tutor message can cost and how long a learner waits for it.
 
 **Which key to use.** On the free tier Google uses submitted content to improve its
 products, so it may only be used with test photos. Anything holding real learner

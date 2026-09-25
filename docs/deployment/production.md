@@ -84,8 +84,9 @@ Names only. Values live in each provider's settings and never in the repository,
 | `COOKIE_DOMAIN`                                                                             | `.languze.com` — see section 6                                              |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`                                                  | From the LanguZe project in Google Cloud Console                            |
 | `GEMINI_API_KEY`                                                                            | A **paid** Gemini key; the free tier may not hold learner photos (ADR-0004) |
-| `GEMINI_SAFETY_MODEL`, `GEMINI_EXTRACTION_MODEL`                                            | The pinned model IDs; changing one needs an evaluation run                  |
+| `GEMINI_SAFETY_MODEL`, `GEMINI_EXTRACTION_MODEL`, `GEMINI_TUTOR_MODEL`                      | The pinned model IDs; changing one needs an evaluation run                  |
 | `AI_TIMEOUT_MS`                                                                             | How long one AI call may take; 30000 unless there is a reason               |
+| `AI_TUTOR_MAX_TOOL_ROUNDS`, `AI_TUTOR_TIMEOUT_MS`                                           | What one tutor message may cost and how long it may take; 5 and 30000       |
 | `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_BUCKET`                                      | The R2 bucket's S3 endpoint, `auto`, and the bucket name                    |
 | `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`                                        | An R2 API token limited to that one bucket                                  |
 | `PHOTO_LINK_TTL_SECONDS`                                                                    | How long a photo link works; 900 unless there is a reason                   |
