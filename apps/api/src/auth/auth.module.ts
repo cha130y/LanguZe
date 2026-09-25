@@ -9,6 +9,7 @@ import {
 } from '../notifications/templates/account-emails.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { TutorModule } from '../tutor/tutor.module.js';
 import { WorldsModule } from '../worlds/worlds.module.js';
 import { AuthController, MeController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
@@ -24,7 +25,12 @@ const mailLogger = new Logger('AccountEmails');
  * triggered it: the learner can ask for a new one (UC-001 extension 4a).
  */
 @Module({
-  imports: [PrismaModule, NotificationsModule, forwardRef(() => WorldsModule)],
+  imports: [
+    PrismaModule,
+    NotificationsModule,
+    forwardRef(() => WorldsModule),
+    TutorModule,
+  ],
   controllers: [AuthController, MeController],
   providers: [
     PendingSignUpCleanupService,

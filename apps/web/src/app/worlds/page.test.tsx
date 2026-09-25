@@ -40,6 +40,8 @@ const account: Account = {
 const usage: Usage = {
   analysesLeft: 7,
   analysesLimit: 10,
+  messagesLeft: 30,
+  messagesLimit: 30,
   resetsAt: '2026-09-25T17:00:00.000Z',
 };
 

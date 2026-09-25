@@ -116,7 +116,7 @@ export class WorldDetailDto extends WorldSummaryDto {
   words: WorldWordDto[];
 }
 
-/** What is left of today's limits (FR-080, US-080). */
+/** What is left of today's limits, both of them (FR-080, US-080). */
 export class UsageResponseDto {
   @ApiProperty({ description: 'Photo analyses left today.' })
   analysesLeft: number;
@@ -124,7 +124,15 @@ export class UsageResponseDto {
   @ApiProperty({ description: 'How many a learner gets each day.' })
   analysesLimit: number;
 
-  @ApiProperty({ description: 'When the count starts again, in Bangkok time.' })
+  @ApiProperty({ description: 'Tutor messages left today (FR-071).' })
+  messagesLeft: number;
+
+  @ApiProperty({ description: 'How many a learner gets each day.' })
+  messagesLimit: number;
+
+  @ApiProperty({
+    description: 'When both counts start again, in Bangkok time.',
+  })
   resetsAt: string;
 }
 
