@@ -40,6 +40,52 @@ export class AiProviderError extends Error {
   }
 }
 
+/** One parameter a tutor tool takes. Two shapes are all three tools need. */
+export interface ToolParameter {
+  name: string;
+  type: 'integer' | 'string';
+  description: string;
+}
+
+/**
+ * Something the tutor may look up (FR-072). LanguZe builds these already bound to
+ * the signed-in learner, so no tool takes a learner identifier and the model has
+ * no way to name one: whose data is read is settled before the model sees a tool.
+ *
+ * Tools only read. Nothing here can change a learner's words, mastery, or XP.
+ */
+export interface TutorTool {
+  readonly name: string;
+  readonly description: string;
+  readonly parameters: readonly ToolParameter[];
+  /**
+   * Answers the model's question. Input from the model is untrusted, so each tool
+   * checks it and answers a bad one with an explanation rather than with data.
+   */
+  run(input: Record<string, unknown>): Promise<unknown>;
+}
+
+/** What the learner and the tutor have said so far, oldest first (FR-070). */
+export interface TutorExchange {
+  role: 'LEARNER' | 'TUTOR';
+  content: string;
+}
+
+/** One turn of the conversation, and what the tutor may look up during it. */
+export interface TutorTurn {
+  history: readonly TutorExchange[];
+  message: string;
+  tools: readonly TutorTool[];
+}
+
+/**
+ * The reply as it arrives (NFR-003). A learner waiting for a paragraph should see
+ * it being written rather than a spinner, so the reply is streamed rather than
+ * returned whole, and the cost comes at the end with the last piece (AIR-007).
+ */
+export type TutorEvent =
+  { type: 'delta'; text: string } | { type: 'done'; usage?: AiUsage };
+
 /**
  * What LanguZe asks an AI provider to do (AIR-001). Business rules depend on this
  * interface and never on a provider's SDK, so a provider change is a new adapter
@@ -65,4 +111,14 @@ export abstract class AiProvider {
   abstract extractVocabulary(
     photo: PhotoForAi,
   ): Promise<AiAnswer<ExtractedItem[]>>;
+
+  /**
+   * The tutor's reply, piece by piece (FR-070, FR-073, NFR-003). The provider runs
+   * the tool conversation itself, calling the tools LanguZe handed it — so the
+   * protocol stays the provider's business while the data stays LanguZe's.
+   *
+   * Whatever comes back is text for a learner to read, never an instruction: a
+   * reply is shown, and nothing in it is acted upon.
+   */
+  abstract tutorReply(turn: TutorTurn): AsyncIterable<TutorEvent>;
 }

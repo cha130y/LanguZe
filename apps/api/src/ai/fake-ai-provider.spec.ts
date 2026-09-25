@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkedItems } from '../vocabulary/extraction-rules.js';
-import { AiProviderError } from './ai-provider.js';
+import {
+  AiProviderError,
+  type TutorEvent,
+  type TutorTool,
+} from './ai-provider.js';
 import { FakeAiProvider } from './fake-ai-provider.js';
 
 const photo = { data: Buffer.from('photo'), contentType: 'image/jpeg' };
@@ -148,5 +152,76 @@ describe('the delay a developer can ask for', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+/** The tutor half of the fake (FR-070, NFR-003). */
+describe('the fake tutor', () => {
+  const MESSAGE = 'ทำไมฉันจำคำนี้ไม่ได้';
+
+  const weakWords = (result: unknown): TutorTool => ({
+    name: 'weak_words',
+    description: 'The learner’s weakest words.',
+    parameters: [],
+    run: () => Promise.resolve(result),
+  });
+
+  async function collect(
+    provider: FakeAiProvider,
+    tools: TutorTool[] = [],
+  ): Promise<TutorEvent[]> {
+    const events: TutorEvent[] = [];
+    for await (const event of provider.tutorReply({
+      history: [],
+      message: MESSAGE,
+      tools,
+    })) {
+      events.push(event);
+    }
+    return events;
+  }
+
+  it('answers in pieces, and says what it cost at the end', async () => {
+    const provider = new FakeAiProvider();
+
+    const events = await collect(provider);
+
+    expect(
+      events.filter((event) => event.type === 'delta').length,
+    ).toBeGreaterThan(1);
+    expect(events.at(-1)).toEqual({
+      type: 'done',
+      usage: { inputTokens: 400, outputTokens: 60 },
+    });
+    expect(provider.calls).toEqual([
+      { purpose: 'TUTOR', bytes: MESSAGE.length },
+    ]);
+  });
+
+  /* The tool path is the part worth exercising without a key (FR-072). */
+  it('looks the learner up through the tool it was given', async () => {
+    const provider = new FakeAiProvider();
+    const words = { words: [{ english: 'sofa' }] };
+
+    await collect(provider, [weakWords(words)]);
+
+    expect(provider.lastToolResult).toEqual(words);
+  });
+
+  it('manages without any tools at all', async () => {
+    const provider = new FakeAiProvider();
+
+    const events = await collect(provider);
+
+    expect(provider.lastToolResult).toBeNull();
+    expect(events.some((event) => event.type === 'delta')).toBe(true);
+  });
+
+  /* A provider failure must reach the caller, which releases the message (S6). */
+  it('fails the way a provider fails', async () => {
+    const provider = new FakeAiProvider();
+    provider.behaviour = 'PROVIDER_ERROR';
+
+    await expect(collect(provider)).rejects.toBeInstanceOf(AiProviderError);
   });
 });

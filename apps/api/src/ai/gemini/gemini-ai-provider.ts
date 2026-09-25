@@ -11,6 +11,7 @@ import {
   type AiAnswer,
   type PhotoForAi,
   type SafetyVerdict,
+  type TutorEvent,
 } from '../ai-provider.js';
 import {
   BLOCK_CATEGORIES,
@@ -150,6 +151,18 @@ export class GeminiAiProvider extends AiProvider {
       value: answer.items.map(asExtractedItem),
       usage: usageOf(response),
     };
+  }
+
+  /**
+   * The tutor's reply. Gemini's streaming and tool calling arrive with the tutor
+   * adapter, in the next change; until then this refuses plainly rather than
+   * answering badly, and the API turns that into AI_PROVIDER_UNAVAILABLE.
+   */
+  tutorReply(): AsyncIterable<TutorEvent> {
+    throw new AiProviderError(
+      'PROVIDER_ERROR',
+      'The Gemini tutor is not wired up yet.',
+    );
   }
 
   /** One call, with every way it can fail turned into one of LanguZe's own. */
