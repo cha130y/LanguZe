@@ -4,6 +4,7 @@ import {
   isProvider,
   type Account,
   type Provider,
+  type Usage,
   type World,
   type WorldSummary,
 } from './client';
@@ -36,6 +37,14 @@ export const getWorlds = () => read<WorldSummary[]>('/v1/worlds');
 /** One world, or null when it does not exist or belongs to someone else (FR-008). */
 export const getWorld = (worldId: string) =>
   read<World>(`/v1/worlds/${worldId}`);
+
+/**
+ * What is left of today's analyses (FR-080, US-080). `null` means the API could not
+ * say, and every page treats that as "unknown" rather than as "none left": refusing
+ * an upload because a count could not be read would be worse than letting the API
+ * refuse it itself.
+ */
+export const getUsage = () => read<Usage>('/v1/me/usage');
 
 /**
  * The provider sign-ins the API offers (FR-003). Asking the API keeps the two in

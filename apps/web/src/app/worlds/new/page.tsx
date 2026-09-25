@@ -2,19 +2,29 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { CreateWorldForm } from '@/components/worlds/create-world-form';
-import { getAccount } from '@/lib/api/server';
+import { DailyAnalyses } from '@/components/worlds/daily-analyses';
+import { buttonVariants } from '@/components/ui/button';
+import { getAccount, getUsage } from '@/lib/api/server';
+import { resetsAtText } from '@/lib/daily-limit';
 
 export const metadata: Metadata = { title: 'สร้างโลกใหม่ · LanguZe' };
 
-/** Naming a place and uploading its photo (US-010). */
+/** Naming a place and uploading its photo (US-010), within today's limit (US-080). */
 export default async function NewWorldPage() {
-  const account = await getAccount();
+  const [account, usage] = await Promise.all([getAccount(), getUsage()]);
 
   if (!account) redirect('/sign-in');
   if (!account.termsAccepted) redirect('/terms');
   // Analysis is an AI feature, so an unverified learner is sent back to the list,
   // which explains what to do about it (FR-006).
   if (!account.verifiedForAi) redirect('/worlds');
+
+  /*
+   * Uploading with nothing left would refuse the photo after it had been sent, on
+   * a phone connection, so the form is not offered at all (US-080 criterion 2).
+   * A count the API could not give is not treated as zero.
+   */
+  const exhausted = usage?.analysesLeft === 0 ? usage : null;
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-10">
@@ -31,9 +41,28 @@ export default async function NewWorldPage() {
         </p>
       </div>
 
-      <section className="glass-panel rounded-3xl p-6">
-        <CreateWorldForm />
-      </section>
+      {exhausted ? (
+        <section className="glass-panel grid gap-2 rounded-3xl p-6">
+          <h2 className="font-bold">วันนี้วิเคราะห์ครบแล้ว</h2>
+          <p className="text-sm text-muted-foreground">
+            คุณใช้การวิเคราะห์รูปภาพครบ {exhausted.analysesLimit}{' '}
+            ครั้งของวันนี้แล้ว ระบบจะเริ่มนับใหม่{' '}
+            {resetsAtText(exhausted.resetsAt)} น. ตามเวลาไทย
+            ระหว่างนี้ฝึกคำศัพท์ในโลกที่มีอยู่ได้ตามปกติ
+          </p>
+          <Link
+            href="/worlds"
+            className={`${buttonVariants({ variant: 'outline', size: 'xl' })} mt-2 justify-self-start`}
+          >
+            กลับไปที่โลกของฉัน
+          </Link>
+        </section>
+      ) : (
+        <section className="glass-panel grid gap-4 rounded-3xl p-6">
+          <DailyAnalyses usage={usage} />
+          <CreateWorldForm />
+        </section>
+      )}
     </main>
   );
 }

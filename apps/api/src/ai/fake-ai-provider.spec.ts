@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkedItems } from '../vocabulary/extraction-rules.js';
 import { AiProviderError } from './ai-provider.js';
 import { FakeAiProvider } from './fake-ai-provider.js';
@@ -112,5 +112,41 @@ describe('FakeAiProvider (B4)', () => {
       'SAFETY_CHECK',
       'EXTRACTION',
     ]);
+  });
+});
+
+/* Development-only: the real analysis takes about 20 seconds, the fake none at all. */
+describe('the delay a developer can ask for', () => {
+  it('answers at once by default', async () => {
+    const provider = new FakeAiProvider();
+
+    await expect(provider.checkPhoto(photo)).resolves.toMatchObject({
+      value: { allowed: true },
+    });
+  });
+
+  it('waits that long before answering, and before failing', async () => {
+    vi.useFakeTimers();
+    try {
+      const provider = new FakeAiProvider();
+      provider.delayMs = 5_000;
+
+      const answer = provider.extractVocabulary(photo);
+      let settled = false;
+      void answer.then(() => (settled = true));
+      await vi.advanceTimersByTimeAsync(4_000);
+      expect(settled).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(settled).toBe(true);
+
+      provider.behaviour = 'PROVIDER_ERROR';
+      const failing = provider.checkPhoto(photo);
+      const caught = expect(failing).rejects.toBeInstanceOf(AiProviderError);
+      await vi.advanceTimersByTimeAsync(5_000);
+      await caught;
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

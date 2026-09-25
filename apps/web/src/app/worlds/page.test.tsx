@@ -1,20 +1,30 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
-import type { Account, WorldSummary } from '@/lib/api/client';
-import { getAccount, getWorlds } from '@/lib/api/server';
+import type { Account, Usage, WorldSummary } from '@/lib/api/client';
+import { getAccount, getUsage, getWorlds } from '@/lib/api/server';
 import WorldsPage from './page';
 
 vi.mock('@/lib/api/server', () => ({
   getAccount: vi.fn(),
+  getUsage: vi.fn(),
   getWorlds: vi.fn(),
+}));
+
+vi.mock('@/lib/api/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/api/client')>()),
+  api: { worldStatus: vi.fn(() => new Promise(() => {})) },
 }));
 
 const redirect = vi.fn((path: string) => {
   throw new Error(`redirected to ${path}`);
 });
-vi.mock('next/navigation', () => ({
-  redirect: (path: string) => redirect(path),
-}));
+vi.mock('next/navigation', () => {
+  const router = { refresh: vi.fn(), push: vi.fn() };
+  return {
+    redirect: (path: string) => redirect(path),
+    useRouter: () => router,
+  };
+});
 
 const account: Account = {
   id: 'learner-1',
@@ -25,6 +35,12 @@ const account: Account = {
   role: 'LEARNER',
   termsAccepted: true,
   aiAccess: { available: true, reason: null },
+};
+
+const usage: Usage = {
+  analysesLeft: 7,
+  analysesLimit: 10,
+  resetsAt: '2026-09-25T17:00:00.000Z',
 };
 
 const world: WorldSummary = {
@@ -41,6 +57,7 @@ const world: WorldSummary = {
 beforeEach(() => {
   vi.mocked(getAccount).mockReset().mockResolvedValue(account);
   vi.mocked(getWorlds).mockReset().mockResolvedValue([]);
+  vi.mocked(getUsage).mockReset().mockResolvedValue(usage);
   redirect.mockClear();
 });
 
@@ -101,4 +118,38 @@ test('sends a visitor to sign in', async () => {
   vi.mocked(getAccount).mockResolvedValue(null);
 
   await expect(WorldsPage()).rejects.toThrow('redirected to /sign-in');
+});
+
+/** US-080 criterion 1: how many analyses are left today, before one is spent. */
+test('shows what is left of today’s analyses', async () => {
+  render(await WorldsPage());
+
+  expect(
+    screen.getByText('วันนี้วิเคราะห์รูปได้อีก 7 จาก 10 ครั้ง'),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('link', { name: 'สร้างโลกใหม่' }),
+  ).toBeInTheDocument();
+});
+
+/** US-080 criterion 2: with none left, creating a world is closed, with the reset. */
+test('closes creation when today’s analyses are used up', async () => {
+  vi.mocked(getUsage).mockResolvedValue({ ...usage, analysesLeft: 0 });
+
+  render(await WorldsPage());
+
+  expect(screen.queryByRole('link', { name: 'สร้างโลกใหม่' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'สร้างโลกใหม่' })).toBeDisabled();
+  expect(screen.getByText(/เริ่มนับใหม่ 26 ก.ย. 00:00/)).toBeInTheDocument();
+});
+
+/* A count the API could not give must not lock a learner out of their own app. */
+test('still offers creation when the count is unknown', async () => {
+  vi.mocked(getUsage).mockResolvedValue(null);
+
+  render(await WorldsPage());
+
+  expect(
+    screen.getByRole('link', { name: 'สร้างโลกใหม่' }),
+  ).toBeInTheDocument();
 });

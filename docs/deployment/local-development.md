@@ -157,6 +157,13 @@ decides which path it takes, which is how the failure screens can be seen at all
 
 Restart the API after changing it, as with every environment value.
 
+The fake provider answers at once, so the waiting page is gone before it can be
+seen. `AI_FAKE_DELAY_MS=8000` makes each call take eight seconds instead. An
+analysis is two calls — the safety check and the extraction — so the world takes
+about sixteen seconds, close enough to a real one (about 20 seconds) to watch the
+page ask for the result, leave it and come back, and see the words arrive on their
+own.
+
 ## Using the real Gemini
 
 Setting `GEMINI_API_KEY` switches photo analysis from the fake provider to Gemini

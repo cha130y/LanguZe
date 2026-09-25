@@ -115,7 +115,9 @@ sequenceDiagram
   W-->>L: Show the words, or the failure with what to do next
 ```
 
-Polling stops when the status is `READY` or `FAILED`, or when the learner leaves the page (P3).
+Polling stops when the status is `READY` or `FAILED`, when the learner leaves the page, and after six minutes (P3). Six minutes is the 5-minute rule (V16) plus the minute the sweep can take to notice, so a page that has waited longer than that is waiting on something no amount of asking will fix: it says so and offers a refresh rather than spinning for ever.
+
+Both the list of worlds and one world's page ask, so a learner who goes back to the list still sees the result arrive. Only worlds that are `ANALYZING` are asked about, and the status endpoint is used rather than reloading the page, because a reload signs new photo links each time and the pictures would flicker.
 
 ## 5. World status
 
