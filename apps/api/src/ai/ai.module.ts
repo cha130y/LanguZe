@@ -39,10 +39,12 @@ import { GeminiAiProvider } from './gemini/gemini-ai-provider.js';
         }
 
         const provider = new FakeAiProvider();
-        // Lets a developer see a blocked photo or a provider error in the browser.
+        // Lets a developer see a blocked photo or a provider error in the browser,
+        // and take long enough over it to watch the page wait (FR-021).
         provider.behaviour = config.get('AI_FAKE_BEHAVIOUR', { infer: true });
+        provider.delayMs = config.get('AI_FAKE_DELAY_MS', { infer: true });
         logger.log(
-          `Photo analysis uses the fake provider (${provider.behaviour})`,
+          `Photo analysis uses the fake provider (${provider.behaviour}, ${provider.delayMs} ms)`,
         );
         return provider;
       },

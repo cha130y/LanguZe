@@ -148,6 +148,17 @@ export class EnvironmentVariables {
   AI_FAKE_BEHAVIOUR: string = 'ALLOWED';
 
   /**
+   * How long the fake provider takes to answer. Zero means at once, which is what
+   * tests want; a few seconds lets a developer watch the waiting page do its work
+   * in the browser (FR-021), because the real thing takes about 20 seconds.
+   */
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(120_000)
+  AI_FAKE_DELAY_MS: number = 0;
+
+  /**
    * Photo storage (A3): SeaweedFS from docker-compose locally, Cloudflare R2 in
    * production. Both speak S3, so only these values differ between them.
    */

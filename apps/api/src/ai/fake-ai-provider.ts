@@ -130,6 +130,13 @@ export class FakeAiProvider extends AiProvider {
   /** What every call does unless a test asks for something else. */
   behaviour: FakeBehaviour = 'ALLOWED';
 
+  /**
+   * How long an answer takes. Zero keeps tests instant; `AI_FAKE_DELAY_MS` sets it
+   * to a few seconds so a developer can see the waiting page as a learner does,
+   * since a real analysis takes about 20 seconds (NFR-001).
+   */
+  delayMs = 0;
+
   /** Used once, then forgotten: for a test that needs one call to differ. */
   private next: FakeBehaviour | null = null;
 
@@ -155,23 +162,25 @@ export class FakeAiProvider extends AiProvider {
     this.calls.push({ purpose: 'SAFETY_CHECK', bytes: photo.data.byteLength });
     const behaviour = this.take();
     const failure = this.failureFor(behaviour);
-    if (failure) return Promise.reject(failure);
 
-    return Promise.resolve({
-      value:
-        behaviour === 'BLOCKED'
-          ? { allowed: false, category: 'VIOLENCE' }
-          : { allowed: true },
-      // A made-up but plausible cost, so the recorded numbers are not all empty.
-      usage: { inputTokens: 780, outputTokens: 12 },
-    });
+    return this.after(() =>
+      failure
+        ? Promise.reject(failure)
+        : Promise.resolve({
+            value:
+              behaviour === 'BLOCKED'
+                ? { allowed: false, category: 'VIOLENCE' }
+                : { allowed: true },
+            // A made-up but plausible cost, so the numbers recorded are not empty.
+            usage: { inputTokens: 780, outputTokens: 12 },
+          }),
+    );
   }
 
   extractVocabulary(photo: PhotoForAi): Promise<AiAnswer<ExtractedItem[]>> {
     this.calls.push({ purpose: 'EXTRACTION', bytes: photo.data.byteLength });
     const behaviour = this.take();
     const failure = this.failureFor(behaviour);
-    if (failure) return Promise.reject(failure);
 
     const value =
       behaviour === 'TOO_FEW_WORDS'
@@ -179,10 +188,27 @@ export class FakeAiProvider extends AiProvider {
         : behaviour === 'INVALID_OUTPUT'
           ? NONSENSE
           : LIVING_ROOM;
-    return Promise.resolve({
-      value,
-      usage: { inputTokens: 820, outputTokens: 40 * value.length },
-    });
+    return this.after(() =>
+      failure
+        ? Promise.reject(failure)
+        : Promise.resolve({
+            value,
+            usage: { inputTokens: 820, outputTokens: 40 * value.length },
+          }),
+    );
+  }
+
+  /**
+   * Answers after `delayMs`, so a developer can watch the page wait (FR-021). The
+   * answer is made only once the wait is over: a rejected promise left lying around
+   * for a few seconds would be reported as unhandled before anyone could catch it.
+   */
+  private after<T>(answer: () => Promise<T>): Promise<T> {
+    return this.delayMs > 0
+      ? new Promise<void>((resolve) => setTimeout(resolve, this.delayMs)).then(
+          answer,
+        )
+      : answer();
   }
 
   /**

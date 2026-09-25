@@ -33,6 +33,12 @@ export default defineConfig({
        */
       GEMINI_API_KEY: '',
       /*
+       * And no delay: a developer who slows the fake provider down to watch the
+       * waiting page in the browser would otherwise add that wait to every photo
+       * in the suite, twice over — the safety check and the extraction.
+       */
+      AI_FAKE_DELAY_MS: '0',
+      /*
        * Photo storage is pinned to the local SeaweedFS for the same reason: once a
        * developer's .env holds R2 credentials, an unpinned suite would create and
        * delete objects in the real bucket.
