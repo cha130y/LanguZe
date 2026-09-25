@@ -45,13 +45,17 @@ model User {
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  accounts    Account[]
-  sessions    Session[]
-  photos      StoredPhoto[]
-  worlds      World[]
-  analyses    Analysis[]
-  words       VocabularyWord[]
-  photoBlocks PhotoBlock[]
+  accounts         Account[]
+  sessions         Session[]
+  photos           StoredPhoto[]
+  worlds           World[]
+  analyses         Analysis[]
+  words            VocabularyWord[]
+  photoBlocks      PhotoBlock[]
+  mastery          WordMastery[]
+  practiceSessions PracticeSession[]
+  attempts         Attempt[]
+  xp               LearnerXp?
 
   @@map("users")
 }
@@ -204,11 +208,12 @@ model World {
   createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt     DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  learner     User             @relation(fields: [learnerId], references: [id], onDelete: Cascade)
-  photo       StoredPhoto?     @relation("WorldPhoto", fields: [photoId], references: [id], onDelete: SetNull)
-  thumbnail   StoredPhoto?     @relation("WorldThumbnail", fields: [thumbnailId], references: [id], onDelete: SetNull)
+  learner     User              @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  photo       StoredPhoto?      @relation("WorldPhoto", fields: [photoId], references: [id], onDelete: SetNull)
+  thumbnail   StoredPhoto?      @relation("WorldThumbnail", fields: [thumbnailId], references: [id], onDelete: SetNull)
   analyses    Analysis[]
   occurrences WordOccurrence[]
+  sessions    PracticeSession[]
 
   @@index([learnerId, createdAt])
   @@map("worlds")
@@ -287,18 +292,21 @@ model Analysis {
 
 /// A learner's word, identified by the English word and the Thai meaning (FR-043).
 model VocabularyWord {
-  id              String   @id @default(uuid(7)) @db.Uuid
-  learnerId       String   @map("learner_id") @db.Uuid
+  id             String   @id @default(uuid(7)) @db.Uuid
+  learnerId      String   @map("learner_id") @db.Uuid
   /// Normalized, singular base form (SRS 4.2, AIR-003).
-  english         String   @db.VarChar(40)
-  thaiMeaning     String   @map("thai_meaning") @db.VarChar(100)
+  english        String   @db.VarChar(40)
+  thaiMeaning    String   @map("thai_meaning") @db.VarChar(100)
   /// The Thai meaning with outer spaces removed and inner spaces collapsed, so two
   /// spellings of the same meaning are one word.
-  thaiMeaningKey  String   @map("thai_meaning_key") @db.VarChar(100)
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  thaiMeaningKey String   @map("thai_meaning_key") @db.VarChar(100)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  learner     User             @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  learner     User              @relation(fields: [learnerId], references: [id], onDelete: Cascade)
   occurrences WordOccurrence[]
+  mastery     WordMastery?
+  questions   SessionQuestion[]
+  attempts    Attempt[]
 
   @@unique([learnerId, english, thaiMeaningKey])
   @@map("vocabulary_words")
@@ -320,8 +328,10 @@ model WordOccurrence {
   acceptedVariants String[]  @map("accepted_variants") @db.VarChar(40)
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  world          World          @relation(fields: [worldId], references: [id], onDelete: Cascade)
-  vocabularyWord VocabularyWord @relation(fields: [vocabularyWordId], references: [id], onDelete: Cascade)
+  world          World             @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  vocabularyWord VocabularyWord    @relation(fields: [vocabularyWordId], references: [id], onDelete: Cascade)
+  questions      SessionQuestion[]
+  attempts       Attempt[]
 
   @@unique([worldId, vocabularyWordId])
   @@index([vocabularyWordId])
@@ -359,4 +369,131 @@ model AiCall {
 
   @@index([startedAt])
   @@map("ai_calls")
+}
+
+enum MasteryLevel {
+  LEARNING
+  FAMILIAR
+  MASTERED
+
+  @@map("mastery_level")
+}
+
+enum SessionKind {
+  GAME
+  REVIEW
+
+  @@map("session_kind")
+}
+
+enum SessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  /// Left unfinished: 24 hours passed, or a new session replaced it (V17, FR-036).
+  ABANDONED
+
+  @@map("session_status")
+}
+
+/// How well a learner knows one word, shared by every world of theirs that has it
+/// (FR-040, SRS 4.1). No row means `NEW`: the first attempt creates it, so photo
+/// analysis never writes learning data.
+model WordMastery {
+  vocabularyWordId String       @id @map("vocabulary_word_id") @db.Uuid
+  /// Copied from the word so review can ask by learner without a join (FR-050).
+  learnerId        String       @map("learner_id") @db.Uuid
+  level            MasteryLevel
+  /// Correct answers in a row at the current level (SRS 4.1).
+  streak           Int          @default(0) @db.SmallInt
+  /// The Asia/Bangkok day the word last became FAMILIAR; a second correct answer
+  /// on that same day must not count toward MASTERED (SRS 4.1, V1).
+  familiarOn       DateTime?    @map("familiar_on") @db.Date
+  lastPractisedAt  DateTime     @map("last_practised_at") @db.Timestamptz(3)
+  updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  vocabularyWord VocabularyWord @relation(fields: [vocabularyWordId], references: [id], onDelete: Cascade)
+  learner        User           @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  @@index([learnerId, level])
+  @@map("word_mastery")
+}
+
+/// One sitting of practice, for a world (`GAME`) or across worlds (`REVIEW`).
+model PracticeSession {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  learnerId   String        @map("learner_id") @db.Uuid
+  kind        SessionKind
+  /// Set for a game only. Kept as a session when the world goes (FR-036).
+  worldId     String?       @map("world_id") @db.Uuid
+  status      SessionStatus @default(IN_PROGRESS)
+  startedAt   DateTime      @default(now()) @map("started_at") @db.Timestamptz(3)
+  completedAt DateTime?     @map("completed_at") @db.Timestamptz(3)
+
+  learner   User              @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  world     World?            @relation(fields: [worldId], references: [id], onDelete: SetNull)
+  questions SessionQuestion[]
+  attempts  Attempt[]
+
+  @@index([learnerId, startedAt])
+  @@map("practice_sessions")
+}
+
+/// The questions of a session, fixed when it is created, in the order they are asked.
+model SessionQuestion {
+  id               String  @id @default(uuid(7)) @db.Uuid
+  sessionId        String  @map("session_id") @db.Uuid
+  /// 1 to 10, the order the learner sees.
+  position         Int     @db.SmallInt
+  /// Emptied when the word or its occurrence goes; the question is then skipped.
+  vocabularyWordId String? @map("vocabulary_word_id") @db.Uuid
+  occurrenceId     String? @map("occurrence_id") @db.Uuid
+
+  session        PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  vocabularyWord VocabularyWord? @relation(fields: [vocabularyWordId], references: [id], onDelete: SetNull)
+  occurrence     WordOccurrence? @relation(fields: [occurrenceId], references: [id], onDelete: SetNull)
+  attempt        Attempt?
+
+  @@unique([sessionId, position])
+  @@map("session_questions")
+}
+
+/// One answer (FR-034). An incorrect attempt is also the learner's mistake record
+/// (FR-042), which is why it keeps what they typed.
+model Attempt {
+  id               String   @id @default(uuid(7)) @db.Uuid
+  learnerId        String   @map("learner_id") @db.Uuid
+  vocabularyWordId String   @map("vocabulary_word_id") @db.Uuid
+  /// Unique, so one question can never hold two attempts (FR-034, S5).
+  questionId       String?  @unique @map("question_id") @db.Uuid
+  sessionId        String?  @map("session_id") @db.Uuid
+  occurrenceId     String?  @map("occurrence_id") @db.Uuid
+  /// What the learner typed, up to 100 characters; empty for "I don't know" (V19).
+  answerText       String?  @map("answer_text") @db.VarChar(100)
+  isDontKnow       Boolean  @default(false) @map("is_dont_know")
+  isCorrect        Boolean  @map("is_correct")
+  /// 10 for a correct answer, 0 otherwise (FR-060).
+  xpAwarded        Int      @default(0) @map("xp_awarded") @db.SmallInt
+  answeredAt       DateTime @default(now()) @map("answered_at") @db.Timestamptz(3)
+
+  learner        User             @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+  vocabularyWord VocabularyWord   @relation(fields: [vocabularyWordId], references: [id], onDelete: Cascade)
+  question       SessionQuestion? @relation(fields: [questionId], references: [id], onDelete: SetNull)
+  session        PracticeSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  occurrence     WordOccurrence?  @relation(fields: [occurrenceId], references: [id], onDelete: SetNull)
+
+  @@index([learnerId, answeredAt])
+  @@index([vocabularyWordId, answeredAt])
+  @@map("attempts")
+}
+
+/// Total XP, kept apart from the attempts that earned it so that deleting a world
+/// or a word never takes points away (FR-060, V4).
+model LearnerXp {
+  learnerId String   @id @map("learner_id") @db.Uuid
+  totalXp   Int      @default(0) @map("total_xp")
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  learner User @relation(fields: [learnerId], references: [id], onDelete: Cascade)
+
+  @@map("learner_xp")
 }
