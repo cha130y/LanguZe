@@ -38,7 +38,7 @@ export function AnalysisFailure({ world }: { world: World }) {
 
   return (
     <>
-      <WorldPhoto world={world} />
+      <WorldPhoto photoUrl={world.photoUrl} alt={`รูปภาพของ ${world.name}`} />
 
       <section className="glass-panel grid gap-3 rounded-3xl p-6">
         <h2 className="font-bold">วิเคราะห์ไม่สำเร็จ</h2>

@@ -26,6 +26,18 @@ export type WorldStatus = Json<
 >;
 export type Usage = Json<paths['/v1/me/usage']['get']['responses'][200]>;
 
+export type PracticeSession = Json<
+  paths['/v1/sessions/{sessionId}']['get']['responses'][200]
+>;
+export type Question = NonNullable<PracticeSession['nextQuestion']>;
+export type SessionSummary = NonNullable<PracticeSession['summary']>;
+export type AnswerResult = Json<
+  paths['/v1/sessions/{sessionId}/questions/{questionId}/answer']['post']['responses'][200]
+>;
+export type AnswerBody = Json<
+  paths['/v1/sessions/{sessionId}/questions/{questionId}/answer']['post']['requestBody']
+>;
+
 /** The providers LanguZe can offer (FR-003); the API says which are configured. */
 export const PROVIDERS = ['google', 'line'] as const;
 export type Provider = (typeof PROVIDERS)[number];
@@ -175,6 +187,23 @@ export const api = {
   /** Analyses the same photo again after a failure (FR-025, US-021). */
   retryAnalysis: (worldId: string) =>
     call<void>(`/v1/worlds/${worldId}/retry`, { method: 'POST' }),
+
+  /** Starts a game for a world (FR-030, US-030). */
+  startGame: (worldId: string) =>
+    call<PracticeSession>('/v1/sessions', {
+      method: 'POST',
+      body: JSON.stringify({ kind: 'GAME', worldId }),
+    }),
+
+  /**
+   * Answers one question (FR-032). The answer is checked on the server, which is
+   * the only place that knows the word: it was never sent to the browser (S5).
+   */
+  answerQuestion: (sessionId: string, questionId: string, body: AnswerBody) =>
+    call<AnswerResult>(
+      `/v1/sessions/${sessionId}/questions/${questionId}/answer`,
+      { method: 'POST', body: JSON.stringify(body) },
+    ),
 
   /** Removes one word the analysis got wrong (FR-026, US-022). */
   removeWord: (worldId: string, occurrenceId: string) =>

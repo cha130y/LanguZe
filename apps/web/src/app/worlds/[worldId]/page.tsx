@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { PlayActions } from '@/components/game/play-actions';
 import { AnalysisFailure } from '@/components/worlds/analysis-failure';
 import { AnalysisProgress } from '@/components/worlds/analysis-progress';
 import { WorldActions } from '@/components/worlds/world-actions';
 import { WorldStatusBadge } from '@/components/worlds/world-status-badge';
 import { WorldWords } from '@/components/worlds/world-words';
-import { getAccount, getWorld } from '@/lib/api/server';
+import { getAccount, getCurrentGame, getWorld } from '@/lib/api/server';
 
 export const metadata: Metadata = { title: 'โลกของฉัน · LanguZe' };
 
@@ -28,6 +29,13 @@ export default async function WorldPage({
   // here, so this page never confirms that it exists (FR-008).
   const world = await getWorld(worldId);
   if (!world) notFound();
+
+  /*
+   * Only a world that can be played is asked about: a world still being analysed
+   * has no game to continue, and asking would be one request for nothing.
+   */
+  const openGame =
+    world.status === 'READY' ? await getCurrentGame(world.id) : null;
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-10">
@@ -52,7 +60,13 @@ export default async function WorldPage({
       ) : world.status === 'FAILED' ? (
         <AnalysisFailure world={world} />
       ) : (
-        <WorldWords world={world} />
+        <>
+          <section className="glass-panel grid gap-4 rounded-3xl p-6">
+            <h2 className="font-bold">ฝึกคำศัพท์ของโลกนี้</h2>
+            <PlayActions worldId={world.id} openGame={openGame} />
+          </section>
+          <WorldWords world={world} />
+        </>
       )}
 
       <section className="glass-panel grid gap-4 rounded-3xl p-6">

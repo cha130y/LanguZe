@@ -53,7 +53,7 @@ export function WorldWords({ world }: { world: World }) {
 
   return (
     <>
-      <WorldPhoto world={world}>
+      <WorldPhoto photoUrl={world.photoUrl} alt={`รูปภาพของ ${world.name}`}>
         <div aria-hidden className="pointer-events-none absolute inset-0">
           {world.words.map((word, index) => (
             <span

@@ -16,7 +16,7 @@ export function AnalysisProgress({ world }: { world: World }) {
 
   return (
     <>
-      <WorldPhoto world={world} />
+      <WorldPhoto photoUrl={world.photoUrl} alt={`รูปภาพของ ${world.name}`} />
 
       <section
         className="glass-panel grid gap-2 rounded-3xl p-6"
