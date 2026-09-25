@@ -63,6 +63,10 @@ export const getSession = (sessionId: string) =>
 export const getCurrentGame = (worldId: string) =>
   read<PracticeSession>(`/v1/sessions/current?kind=GAME&worldId=${worldId}`);
 
+/** The review still open, if any. `null` covers "none" and "could not say". */
+export const getCurrentReview = () =>
+  read<PracticeSession>('/v1/sessions/current?kind=REVIEW');
+
 /**
  * The provider sign-ins the API offers (FR-003). Asking the API keeps the two in
  * step: a provider whose credentials are missing is never shown as a button that

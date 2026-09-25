@@ -196,6 +196,13 @@ export const api = {
       body: JSON.stringify({ kind: 'GAME', worldId }),
     }),
 
+  /** Starts a review across every world (FR-050, US-050). */
+  startReview: () =>
+    call<PracticeSession>('/v1/sessions', {
+      method: 'POST',
+      body: JSON.stringify({ kind: 'REVIEW' }),
+    }),
+
   /**
    * Answers one question (FR-032). The answer is checked on the server, which is
    * the only place that knows the word: it was never sent to the browser (S5).
